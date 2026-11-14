@@ -1,5 +1,8 @@
 // EdgeOne 边缘函数 - GitHub 托管版本
-// JSON 数据从 GitHub Raw URL 读取，适合从 GitHub 直接导入部署
+// JSON 数据从 GitHub Raw URL 读取
+
+// GitHub Raw URL 基础地址（硬编码，无需环境变量）
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/jiandan2020/hitokoto-cloudflare/edgeone-support';
 
 // 通用响应标头
 const responseHeaders = {
@@ -28,22 +31,13 @@ function createResponse(code, message, extraData = {}, extraHeaders = {}) {
     });
 }
 
-// 通用错误处理函数
-function handleError(code, error, devEnv, customMessage = "服务器内部错误") {
-    if (devEnv === "true") {
-        return createResponse(code, error.message);
-    } else {
-        return createResponse(code, customMessage);
-    }
-}
-
 // 从 GitHub 读取句子数据
-async function getSentencesFromGitHub(category, baseUrl) {
+async function getSentencesFromGitHub(category) {
     try {
-        const url = `${baseUrl}/sentences/${category}.json`;
+        const url = `${GITHUB_RAW_URL}/sentences/${category}.json`;
         const response = await fetch(url, {
             cf: {
-                cacheTtl: 3600, // 缓存 1 小时
+                cacheTtl: 3600,
                 cacheEverything: true,
             }
         });
@@ -60,20 +54,14 @@ async function getSentencesFromGitHub(category, baseUrl) {
     }
 }
 
-async function handleRequest(request, env) {
+async function handleRequest(request) {
     try {
         // 处理 OPTIONS 请求
         if (request.method === "OPTIONS") {
             return new Response(null, {
-                headers: {
-                    ...responseHeaders,
-                },
+                headers: responseHeaders,
             });
         }
-
-        // GitHub Raw URL 基础地址
-        // 从 edgeone-support 分支读取
-        const githubRawUrl = env.GITHUB_RAW_URL || 'https://raw.githubusercontent.com/jiandan2020/hitokoto-cloudflare/edgeone-support';
 
         const url = new URL(request.url);
         const categoryKey = url.searchParams.get("c");
@@ -107,24 +95,22 @@ async function handleRequest(request, env) {
 
         // 选择句子分类
         if (categoryKey) {
-            sentences = await getSentencesFromGitHub(categoryKey, githubRawUrl);
+            sentences = await getSentencesFromGitHub(categoryKey);
             if (sentences.length === 0) {
-                sentences = await getSentencesFromGitHub('a', githubRawUrl); // 默认使用 a 类别
+                sentences = await getSentencesFromGitHub('a');
             }
         } else {
-            // 随机选择一个类别
             const randomKey = categories[Math.floor(Math.random() * categories.length)];
-            sentences = await getSentencesFromGitHub(randomKey, githubRawUrl);
+            sentences = await getSentencesFromGitHub(randomKey);
         }
 
         // 长度筛选
         if (minLength || maxLength) {
             if (categoryKey) {
-                sentences = await getSentencesFromGitHub(categoryKey, githubRawUrl);
+                sentences = await getSentencesFromGitHub(categoryKey);
             } else {
-                // 聚合所有分类
                 const allSentences = await Promise.all(
-                    categories.map(cat => getSentencesFromGitHub(cat, githubRawUrl))
+                    categories.map(cat => getSentencesFromGitHub(cat))
                 );
                 sentences = allSentences.flat();
             }
@@ -208,11 +194,11 @@ async function handleRequest(request, env) {
         }
     } catch (error) {
         console.error("Unexpected error:", error);
-        return handleError(500, error, env?.DEV_ENV || "false");
+        return createResponse(500, `服务器错误: ${error.message}`);
     }
 }
 
 // EdgeOne 边缘函数入口
 addEventListener('fetch', event => {
-    event.respondWith(handleRequest(event.request, event.env || {}));
+    event.respondWith(handleRequest(event.request));
 });
