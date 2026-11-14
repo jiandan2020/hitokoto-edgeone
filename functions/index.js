@@ -113,46 +113,38 @@ export async function onRequest(context) {
             return createResponse(400, "max_length 不能小于 min_length");
         }
 
-        let sentences = [];
-
-        // 如果有 categoryKey 并且该类别存在，则使用对应类别的一言
-        if (categoryKey) {
-            sentences = sentencesMap[categoryKey] || sentencesMap["a"]; // 如果没有该类别，默认使用 a 类别
-        } else {
-            // 如果没有提供 categoryKey，则随机选择一个类别
-            const keys = Object.keys(sentencesMap);
-            const randomKey = keys[Math.floor(Math.random() * keys.length)];
-            sentences = sentencesMap[randomKey];
-        }
-
-        // 如果有 minLength 或 maxLength 参数，进行长度筛选
-        if (minLength || maxLength) {
-            // 如果有 categoryKey，则仅筛选该类别的一言
-            if (categoryKey) {
-                sentences = sentencesMap[categoryKey] || [];
-            } else {
-                // 如果没有 categoryKey，则聚合所有一言的集合
-                sentences = Object.values(sentencesMap).flat();
-            }
-
-            // 过滤不符合 min_length 和 max_length 条件的一言
-            sentences = sentences.filter(sentence => {
-                const isMinLengthValid = !minLength || sentence.length >= minLength;
-                const isMaxLengthValid = !maxLength || sentence.length <= maxLength;
-                return isMinLengthValid && isMaxLengthValid;
-            });
-
-            // 如果没有符合条件的一言，返回提示信息
-            if (sentences.length === 0) {
-                if (categoryKey) {
-                    return createResponse(404, "没有在该类别找到符合长度条件的一言");
-                }
-                return createResponse(404, "没有找到符合长度条件的一言");
+        // 使用构建时生成的长度索引，等概率选出匹配的句子，再读取所在分类。
+        const keys = categoryKey ? [categoryKey] : Object.keys(sentenceIndex);
+        const candidates = [];
+        let total = 0;
+        for (const key of keys) {
+            if (!Object.prototype.hasOwnProperty.call(sentenceIndex, key)) continue;
+            for (const [length, indexes] of Object.entries(sentenceIndex[key])) {
+                if (Number(length) < minLength || Number(length) > maxLength) continue;
+                candidates.push({ key, indexes });
+                total += indexes.length;
             }
         }
-
-        // 从选中的分类中随机选择一条一言
-        const randomSentence = sentences[Math.floor(Math.random() * sentences.length)];
+        if (!total) return createResponse(404, categoryKey
+            ? "没有在该类别找到符合长度条件的一言" : "没有找到符合长度条件的一言");
+        let selected = Math.floor(Math.random() * total);
+        let chosen;
+        for (const candidate of candidates) {
+            if (selected < candidate.indexes.length) { chosen = candidate; break; }
+            selected -= candidate.indexes.length;
+        }
+        const hostname = url.hostname.toLowerCase();
+        if (!["http:", "https:"].includes(url.protocol) || !(hostname === "hitokoto.xzccs.top" || hostname.endsWith(".edgeone.cool"))) {
+            throw new Error("不支持的部署域名");
+        }
+        const asset = new URL(`/sentences/${chosen.key}.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
+        const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim())
+            .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
+        const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual" });
+        if (!result.ok) throw new Error(`句子库读取失败: ${result.status}`);
+        const records = await result.json();
+        const randomSentence = records[chosen.indexes[selected]];
+        if (!randomSentence || randomSentence.type !== chosen.key) throw new Error("句子库与索引不一致");
 
         // 构造响应数据
         const response = {
