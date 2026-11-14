@@ -22,7 +22,7 @@
 - `/api?encode=text`：纯文本
 - `/api?min_length=10&max_length=20`：筛选长度
 
-实现沿用原项目的参数与行为。详细用法参见 [一言开发者中心](https://developer.hitokoto.cn/sentence/)。
+`GET /api` 的全部查询参数：`c`（单个分类 a–l）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见部署后的首页。默认 `max_length=30`；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
 
 ## 数据与许可
 
