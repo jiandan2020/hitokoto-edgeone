@@ -17,7 +17,7 @@ const page = `<!doctype html>
   <h1>每一次请求，<br>遇见一句话。</h1>
   <p>一个简单的一言接口。获取随机语录，按类别和长度筛选，或选择适合你的返回格式。</p>
   <a class="button" href="/api" target="_blank" rel="noopener">试试接口 ↗</a>
-  <p class="note" style="overflow-wrap:anywhere">当前句子库版本：<span id="bundle-version">暂不可用</span></p>
+  <p class="note" style="overflow-wrap:anywhere">当前 API 版本：<span id="api-version">暂不可用</span><br>当前句子库版本：<span id="bundle-version">暂不可用</span></p>
 </header>
 <main>
   <section>
@@ -95,6 +95,17 @@ const page = `<!doctype html>
 </main>
 <footer>语录数据来自 <a href="https://github.com/hitokoto-osc/sentences-bundle">sentences-bundle</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone">项目源码</a></footer>
 <script>
+  fetch('/package.json', { cache: 'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('API 版本信息不可用');
+      return response.json();
+    })
+    .then(data => {
+      if (data && typeof data.version === 'string' && data.version.trim()) {
+        document.getElementById('api-version').textContent = data.version.trim();
+      }
+    })
+    .catch(() => {});
   fetch('/version.json', { cache: 'no-store' })
     .then(response => {
       if (!response.ok) throw new Error('版本信息不可用');
