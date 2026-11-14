@@ -142,7 +142,7 @@ export async function onRequest(context) {
 
         const maxLength = url.searchParams.has("max_length") // 从 URL 中获取 max_length 参数，返回一言的最大长度（包含）
             ? parseInt(url.searchParams.get("max_length"), 10) 
-            : 30;
+            : Infinity;
 
         // 在 minLength 被传入时进行正整数检查
         if (url.searchParams.has("min_length") && (minLength <= 0 || !Number.isInteger(minLength))) {

@@ -45,7 +45,7 @@ const page = `<!doctype html>
         <tr><td><code>c</code></td><td>分类代码，取值 a–l。不传或为空时从所有分类中筛选；只读取第一个 <code>c</code>，不支持多分类同时筛选。未知分类通常返回 404。</td><td><code>c=a</code></td></tr>
         <tr><td><code>encode</code></td><td>返回格式：<code>json</code>（默认）、<code>text</code> 或 <code>js</code>。其他值按 JSON 返回，不应用 callback。</td><td><code>encode=text</code></td></tr>
         <tr><td><code>min_length</code></td><td>最小长度，包含边界；不传时不限制下限。建议使用正整数。</td><td><code>min_length=10</code></td></tr>
-        <tr><td><code>max_length</code></td><td>最大长度，包含边界；默认 30。建议使用正整数，且不能小于最小长度。</td><td><code>max_length=20</code></td></tr>
+        <tr><td><code>max_length</code></td><td>最大长度，包含边界；不传时不限制上限。建议使用正整数，且不能小于最小长度。</td><td><code>max_length=20</code></td></tr>
         <tr><td><code>select</code></td><td>仅用于 <code>encode=js</code>，指定页面上的 CSS 选择器；默认 <code>.hitokoto</code>。目标元素必须存在。</td><td><code>select=%23hitokoto</code></td></tr>
         <tr><td><code>callback</code></td><td>非空时将 json、text 或 js 结果包装为 JavaScript 函数调用；json 的参数是 JSON 字符串，而非对象。</td><td><code>callback=show</code></td></tr>
       </tbody>
