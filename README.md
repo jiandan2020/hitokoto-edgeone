@@ -30,7 +30,7 @@
 
 ## 站点统计
 
-`/stats` 展示固定域名 `hitokoto.xzccs.top` 最近 24 个完整小时的请求数、EdgeOne 响应流量和 5xx 错误率；数据包含首页和静态资源，默认不包含 Web 防护缓释请求。时间窗口结束于至少 10 分钟以前，统计接口的数据也可能延迟。统计接口公开，无身份验证；所有访问者可查看汇总数据。实例内缓存 10 分钟并合并并发请求，不是全局限流，不同实例的冷启动仍会调用腾讯云 API。
+`/stats` 展示固定域名 `hitokoto.xzccs.top` 最近 24 个完整小时的请求数、EdgeOne 响应流量和 5xx 错误率，并单独展示路径精确等于 `/api` 的请求数（不包含查询参数）；数据包含首页和静态资源，默认不包含 Web 防护缓释请求。时间窗口结束于至少 10 分钟以前，统计接口的数据也可能延迟。统计接口公开，无身份验证；所有访问者可查看汇总数据。实例内缓存 10 分钟并合并并发请求，不是全局限流，不同实例的冷启动仍会调用腾讯云 API。
 
 在 EdgeOne Pages 项目的 Project Settings → Environment Management 中为对应环境设置 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`，然后重新部署；变更只作用于新部署。使用具备站点 `zone-3ry57u0agvak` 的 `teo:DescribeTimingL7AnalysisData` 必要权限的子用户，避免管理员密钥；具体资源级授权能力以腾讯云 CAM 实际支持为准。不要将真实密钥提交仓库、写入客户端或日志，保护项目管理权限与旧部署。未配置、鉴权失败或查询失败时显示暂不可用；5xx 查询无记录时显示暂无数据，不直接假定为零。官方配置参考：https://pages.edgeone.ai/document/build-guide
 

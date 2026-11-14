@@ -16,12 +16,13 @@ async function hmac(key, value) {
     const cryptoKey = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
     return new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(value)));
 }
-async function query(secretId, secretKey, start, end, errorOnly) {
+async function query(secretId, secretKey, start, end, kind) {
     const timestamp = Math.floor(Date.now() / 1000);
     const date = new Date(timestamp * 1000).toISOString().slice(0, 10);
     const filters = [{ Key: "domain", Operator: "equals", Value: [domain] }];
-    if (errorOnly) filters.push({ Key: "statusCode", Operator: "equals", Value: ["5xx"] });
-    const body = JSON.stringify({ ZoneIds: [zone], StartTime: start, EndTime: end, Interval: "hour", MetricNames: errorOnly ? ["l7Flow_request"] : ["l7Flow_request", "l7Flow_outFlux"], Filters: filters });
+    if (kind === "errors") filters.push({ Key: "statusCode", Operator: "equals", Value: ["5xx"] });
+    if (kind === "api") filters.push({ Key: "url", Operator: "equals", Value: ["/api"] });
+    const body = JSON.stringify({ ZoneIds: [zone], StartTime: start, EndTime: end, Interval: "hour", MetricNames: kind === "total" ? ["l7Flow_request", "l7Flow_outFlux"] : ["l7Flow_request"], Filters: filters });
     const contentType = "application/json; charset=utf-8";
     const headers = `content-type:${contentType}\nhost:${host}\n`;
     const signedHeaders = "content-type;host";
@@ -62,16 +63,18 @@ async function load(env) {
     const start = new Date(end.getTime() - 24 * 3600000);
     const startTime = start.toISOString().replace('.000Z', 'Z');
     const endTime = end.toISOString().replace('.000Z', 'Z');
-    const [total, errors] = await Promise.all([
-        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, false),
-        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, true),
+    const [total, errors, api] = await Promise.all([
+        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "total"),
+        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "errors"),
+        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "api").catch(() => null),
     ]);
     const requests = total.l7Flow_request;
     const bytes = total.l7Flow_outFlux;
     if (!Number.isFinite(requests) || !Number.isFinite(bytes)) throw new Error("统计数据不完整");
     const errorCount = errors.l7Flow_request ?? null;
     if (errorCount !== null && errorCount > requests) throw new Error("统计数据不一致");
-    return { domain, start: start.toISOString(), end: end.toISOString(), fetchedAt: new Date().toISOString(), requests, bytes, errorCount, errorRate: errorCount !== null && requests > 0 ? errorCount / requests : null };
+    const apiRequests = api?.l7Flow_request ?? null;
+    return { domain, start: start.toISOString(), end: end.toISOString(), fetchedAt: new Date().toISOString(), requests, bytes, errorCount, errorRate: errorCount !== null && requests > 0 ? errorCount / requests : null, apiRequests: apiRequests !== null && apiRequests <= requests ? apiRequests : null };
 }
 export default async function onRequest({ request, env }) {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET" } });
