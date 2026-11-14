@@ -24,6 +24,10 @@
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见部署后的首页。默认 `max_length=30`；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
 
+## 版本维护
+
+首页 API 版本取自 `package.json` 的 `version`，表示本项目的版本，不是上游接口版本。发布包含 API 实现变更的版本时同步更新 `package.json` 和 `package-lock.json`：不兼容变更递增主版本，兼容的新功能递增次版本，兼容的修复或性能优化递增修订版本。仅更新句子数据、文档或首页样式不递增 API 版本；句子库有自己的版本号。
+
 ## 句子库自动同步
 
 GitHub Actions 每天 03:17 UTC（北京时间 11:17）检查 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master`；也可在 Actions 的“同步一言句子库”中手动运行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成 API；仅在文件变化时提交到 `main`。分类变化或验证失败时停止，不会提交不完整数据。
