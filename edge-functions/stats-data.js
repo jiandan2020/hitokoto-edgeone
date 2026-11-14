@@ -48,13 +48,15 @@ async function query(secretId, secretKey, start, end, kind) {
     const result = (await response.json()).Response;
     if (!result || result.Error || !Array.isArray(result.Data)) throw new Error("统计服务返回错误");
     const metrics = {};
+    let requestDetail = null;
     for (const row of result.Data) {
         for (const item of row.TypeValue || []) {
             if (!Number.isFinite(item.Sum) || item.Sum < 0 || metrics[item.MetricName] !== undefined) throw new Error("统计数据格式错误");
             metrics[item.MetricName] = item.Sum;
+            if (item.MetricName === "l7Flow_request") requestDetail = item.Detail;
         }
     }
-    return metrics;
+    return { metrics, requestDetail };
 }
 async function load(env) {
     if (!env?.TENCENT_SECRET_ID || !env?.TENCENT_SECRET_KEY) throw new Error("统计服务未配置");
@@ -68,13 +70,26 @@ async function load(env) {
         query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "errors"),
         query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "api").catch(() => null),
     ]);
-    const requests = total.l7Flow_request;
-    const bytes = total.l7Flow_outFlux;
+    const requests = total.metrics.l7Flow_request;
+    const bytes = total.metrics.l7Flow_outFlux;
     if (!Number.isFinite(requests) || !Number.isFinite(bytes)) throw new Error("统计数据不完整");
-    const errorCount = errors.l7Flow_request ?? null;
+    const errorCount = errors.metrics.l7Flow_request ?? null;
     if (errorCount !== null && errorCount > requests) throw new Error("统计数据不一致");
-    const apiRequests = api?.l7Flow_request ?? null;
-    return { domain, start: start.toISOString(), end: end.toISOString(), fetchedAt: new Date().toISOString(), requests, bytes, errorCount, errorRate: errorCount !== null && requests > 0 ? errorCount / requests : null, apiRequests: apiRequests !== null && apiRequests <= requests ? apiRequests : null };
+    const apiRequests = api?.metrics.l7Flow_request ?? null;
+    const buckets = new Map();
+    if (Array.isArray(total.requestDetail)) {
+        for (const item of total.requestDetail) {
+            const time = item?.Timestamp * 1000;
+            if (!Number.isInteger(item?.Timestamp) || time < start.getTime() || time >= end.getTime() || time % 3600000 !== 0) continue;
+            const valid = Number.isSafeInteger(item.Value) && item.Value >= 0;
+            buckets.set(time, buckets.has(time) ? null : (valid ? item.Value : null));
+        }
+    }
+    const hourly = Array.from({ length: 24 }, (_, index) => {
+        const time = start.getTime() + index * 3600000;
+        return { time: new Date(time).toISOString(), requests: buckets.get(time) ?? null };
+    });
+    return { domain, start: start.toISOString(), end: end.toISOString(), fetchedAt: new Date().toISOString(), requests, bytes, errorCount, errorRate: errorCount !== null && requests > 0 ? errorCount / requests : null, apiRequests: apiRequests !== null && apiRequests <= requests ? apiRequests : null, hourly };
 }
 export default async function onRequest({ request, env }) {
     if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET" } });
