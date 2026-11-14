@@ -93,7 +93,7 @@ const page = `<!doctype html>
     </div>
   </section>
 </main>
-<footer>语录数据来自 <a href="https://github.com/hitokoto-osc/sentences-bundle">sentences-bundle</a> · <a href="https://github.com/jiandan2020/hitokoto-cloudflare">项目源码</a></footer>
+<footer>语录数据来自 <a href="https://github.com/hitokoto-osc/sentences-bundle">sentences-bundle</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone">项目源码</a></footer>
 <script>
   fetch('/version.json', { cache: 'no-store' })
     .then(response => {

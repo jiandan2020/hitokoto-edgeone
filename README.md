@@ -4,7 +4,7 @@
 
 ## 部署
 
-在 EdgeOne Pages 从 GitHub 导入此仓库的 `edgeone-support` 分支：
+在 EdgeOne Pages 从 GitHub 导入此仓库的 `main` 分支：
 
 - 构建命令：`npm run build`
 - 首页说明：`edge-functions/index.js`，路由为 `/`；一言接口：`edge-functions/api.js`，路由为 `/api`（由 Pages 自动识别）
@@ -26,9 +26,9 @@
 
 ## 句子库自动同步
 
-GitHub Actions 每天 03:17 UTC（北京时间 11:17）检查 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master`；也可在 Actions 的“同步一言句子库”中手动运行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成 API；仅在文件变化时提交到 `edgeone-support`。分类变化或验证失败时停止，不会提交不完整数据。
+GitHub Actions 每天 03:17 UTC（北京时间 11:17）检查 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master`；也可在 Actions 的“同步一言句子库”中手动运行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成 API；仅在文件变化时提交到 `main`。分类变化或验证失败时停止，不会提交不完整数据。
 
-定时工作流必须存在于仓库默认分支 `main`；同步逻辑运行于 `edgeone-support`。需要允许 Actions 对该分支写入，并在 EdgeOne 配置跟踪 `edgeone-support` 的 Git 推送自动部署。自动提交能否触发该集成需以实际运行验证；构建、同步和部署结果分别查看 GitHub Actions 与 EdgeOne 部署记录。GitHub 定时任务可能延迟，仓库长期不活跃时也可能暂停。
+定时工作流运行于仓库默认分支 `main`。需要允许 Actions 对该分支写入，并在 EdgeOne 配置跟踪 `main` 的 Git 推送自动部署。自动提交能否触发该集成需以实际运行验证；构建、同步和部署结果分别查看 GitHub Actions 与 EdgeOne 部署记录。GitHub 定时任务可能延迟，仓库长期不活跃时也可能暂停。
 
 ## 数据与许可
 
