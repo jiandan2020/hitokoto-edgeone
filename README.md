@@ -34,6 +34,12 @@
 
 在 EdgeOne Pages 项目的 Project Settings → Environment Management 中为对应环境设置 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`，然后重新部署；变更只作用于新部署。使用具备站点 `zone-3ry57u0agvak` 的 `teo:DescribeTimingL7AnalysisData` 必要权限的子用户，避免管理员密钥；具体资源级授权能力以腾讯云 CAM 实际支持为准。不要将真实密钥提交仓库、写入客户端或日志，保护项目管理权限与旧部署。未配置、鉴权失败或查询失败时显示暂不可用；5xx 查询无记录时显示暂无数据，不直接假定为零。官方配置参考：https://pages.edgeone.ai/document/build-guide
 
+### 每日累计和趋势
+
+GitHub Actions 每天北京时间 02:17 采集前一天完整的 24 个小时，保存到公开仓库的 `daily-stats.json`，页面展示自 **2026-11-15** 起的已采集累计值及最近 30 天柱状图；缺失天数明确标注，不当成零，也不含当天。此时间不是网站成立时间，不能称为历史总量。该文件及其 Git 历史公开，默认口径是 EdgeOne 防护后的整个域名请求。
+
+在 GitHub 仓库 **Settings → Secrets and variables → Actions → Repository secrets** 单独添加 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`（Pages 的环境变量不会同步到 GitHub），并确保工作流有 `contents: write` 权限；可在 Actions →「采集域名每日请求数」手动运行。任务按日期幂等保存，失败后再次运行会补采仍处于保守 29 天范围内的缺失日期；API 实际数据保留时长未确认，超期或无数据不会视为零，需检查 Actions 日志。采集成功后提交 main 是否触发 EdgeOne 自动部署需实际验证；否则页面上的数据不会更新。自动提交可能触发每日构建部署。
+
 ## 句子库自动同步
 
 GitHub Actions 每天 03:17 UTC（北京时间 11:17）检查 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master`；也可在 Actions 的“同步一言句子库”中手动运行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成索引与 API，并与语料一起提交；仅在文件变化时提交到 `main`。分类变化或验证失败时停止，不会提交不完整数据。

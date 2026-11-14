@@ -1,5 +1,7 @@
 # 项目记忆
 
+- 2026-11-14：新增 GitHub Actions 按北京时间自然日采集域名请求数到公开 `daily-stats.json`，从 2026-11-15 起累计，页面显示缺失天数和最近 30 日趋势；不含当天、不将缺失视为零。需要 GitHub Actions secrets `TENCENT_SECRET_ID`、`TENCENT_SECRET_KEY`（与 Pages 环境变量独立），仓库写权限、EdgeOne 自动部署；定时任务及部署链路仍需线上确认。采集最近 29 天内缺失日，超过范围不自动恢复，API 保留期未确认。
+
 - 2026-11-14：新增公开 `/stats` 和 `/stats-data`，展示固定域名 `hitokoto.xzccs.top` 最近 24 个完整小时的域名级请求数、响应流量、5xx 错误率；调用腾讯云 EdgeOne DescribeTimingL7AnalysisData，站点 ID `zone-3ry57u0agvak`，数据约延迟 10 分钟，函数实例缓存 10 分钟且非全局限流。5xx 无记录为未知，不当作零。`TENCENT_SECRET_ID`、`TENCENT_SECRET_KEY` 由 Pages 项目运行时环境变量提供，不入仓库，修改后需新部署。本机使用用户 CSV 中的子用户凭证进行本地真实调用成功，线上运行时与环境变量尚未验证。
 
 - 首页页脚显示 API 版本及其更新时间（`package.json` 的 `apiUpdatedAt`，发布新 API 版本时维护）、句子库版本及上游更新时间（`version.json` 的 `updated_at`），统一按北京时间显示；上游更新时间不等于本项目同步或部署时间。
