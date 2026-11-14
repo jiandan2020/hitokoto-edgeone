@@ -87,12 +87,8 @@ const page = `<!doctype html>
         <tr><td><code>type</code></td><td>分类代码</td></tr>
         <tr><td><code>from</code></td><td>出处</td></tr>
         <tr><td><code>from_who</code></td><td>作者或来源人物，可能为 null</td></tr>
-        <tr><td><code>creator</code></td><td>提交者名称</td></tr>
-        <tr><td><code>creator_uid</code></td><td>提交者用户编号</td></tr>
-        <tr><td><code>reviewer</code></td><td>审核者编号</td></tr>
-        <tr><td><code>commit_from</code></td><td>提交来源</td></tr>
-        <tr><td><code>created_at</code></td><td>数据记录的创建时间</td></tr>
         <tr><td><code>length</code></td><td>数据记录的语录长度</td></tr>
+        <tr><td><code>timestamp</code></td><td>响应生成时的 Unix 时间戳，单位毫秒</td></tr>
       </tbody></table></div>
     <h3>纯文本与 JavaScript</h3>
     <p><code>encode=text</code> 只返回语录正文。<code>encode=js</code> 返回一段脚本，执行时将正文写入 <code>select</code> 指定元素的 <code>innerText</code>。</p>

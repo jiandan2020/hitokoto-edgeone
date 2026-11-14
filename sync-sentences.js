@@ -21,6 +21,10 @@ for (const key of keys) {
         !item || typeof item.hitokoto !== "string" || typeof item.length !== "number" ||
         !Number.isFinite(item.length) || item.type !== key || item.id == null || !item.uuid
     )) throw new Error(`上游分类 ${key} 数据不完整或格式不兼容`);
+    const reduced = records.map(({ id, uuid, hitokoto, type, from, from_who, length }) => ({
+        id, uuid, hitokoto, type, from: from ?? null, from_who: from_who ?? null, length,
+    }));
+    contents.set(`sentences/${key}.json`, Buffer.from(`[\n${reduced.map(item => `  ${JSON.stringify(item)}`).join(",\n")}\n]\n`));
     console.log(`${key}: ${records.length} 条`);
 }
 for (const [file, data] of contents) writeFileSync(file, data);

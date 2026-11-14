@@ -204,12 +204,8 @@ export async function onRequest(context) {
             type: randomSentence.type, // 一言类型
             from: randomSentence.from, // 一言的来源
             from_who: randomSentence.from_who, // 一言的作者
-            creator: randomSentence.creator, // 一言的创建者
-            creator_uid: randomSentence.creator_uid, // 一言的创建者的 UUID
-            reviewer: randomSentence.reviewer, // 一言的审核者
-            commit_from: randomSentence.commit_from, // 一言的提交来源
-            created_at: randomSentence.created_at, // 一言的创建时间
             length: randomSentence.length, // 一言的长度
+            timestamp: Date.now(), // 响应生成时的 Unix 毫秒时间戳
         };
 
         // 如果有 encodeType、callback、select 参数则处理并返回相应的内容

@@ -1,5 +1,7 @@
 # 项目记忆
 
+- 2026-11-14：语料与同步脚本只保留 `id`、`uuid`、`hitokoto`、`type`、`from`、`from_who`、`length`，保持顺序；成功 JSON 增加响应时生成的 Unix 毫秒 `timestamp`，文本和脚本格式不变。删除旧字段为不兼容变更，API 版本升至 2.0.0，部署及自动同步仍需线上确认。下方旧版本描述为历史记录。
+
 - 目标：将 `jiandan2020/hitokoto-edgeone` 部署到 EdgeOne Pages，只保留 `main` 分支。用户确认将现有 EdgeOne 内容合入 main、删除 edgeone-support 并重命名仓库。
 - 用户没有 KV 权限；无需依赖 KV 或 Blob。语录数据保存在仓库 `sentences/`。
 - EdgeOne Pages 使用默认导出处理函数，不支持 `addEventListener`。`edge-functions/index.js` 为 `/` 接口说明首页，`edge-functions/api.js` 为 `/api` 一言接口；根路径不再返回一言 JSON。
