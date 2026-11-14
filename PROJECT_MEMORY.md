@@ -1,5 +1,7 @@
 # 项目记忆
 
+- 2026-11-14：新增公开 `/stats` 和 `/stats-data`，展示固定域名 `hitokoto.xzccs.top` 最近 24 个完整小时的域名级请求数、响应流量、5xx 错误率；调用腾讯云 EdgeOne DescribeTimingL7AnalysisData，站点 ID `zone-3ry57u0agvak`，数据约延迟 10 分钟，函数实例缓存 10 分钟且非全局限流。5xx 无记录为未知，不当作零。`TENCENT_SECRET_ID`、`TENCENT_SECRET_KEY` 由 Pages 项目运行时环境变量提供，不入仓库，修改后需新部署。本机使用用户 CSV 中的子用户凭证进行本地真实调用成功，线上运行时与环境变量尚未验证。
+
 - 首页页脚显示 API 版本及其更新时间（`package.json` 的 `apiUpdatedAt`，发布新 API 版本时维护）、句子库版本及上游更新时间（`version.json` 的 `updated_at`），统一按北京时间显示；上游更新时间不等于本项目同步或部署时间。
 
 - 2026-11-14：语料与同步脚本只保留 `id`、`hitokoto`、`type`、`from`、`from_who`、`length`，保持顺序；成功 JSON 增加响应时生成的 Unix 毫秒 `timestamp`，文本和脚本格式不变。按用户要求移除 `uuid` 属于不兼容变更，API 版本升至 3.0.0；部署及自动同步仍需线上确认。下方旧版本描述为历史记录。

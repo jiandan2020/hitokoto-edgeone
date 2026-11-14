@@ -8,7 +8,7 @@
 
 - 构建命令：`npm run build`（只校验仓库已有的部署文件，不生成索引）
 - 首页说明：`edge-functions/index.js`，路由为 `/`；一言接口：`edge-functions/api.js`，路由为 `/api`（由 Pages 自动识别）
-- 不需要环境变量和存储服务。
+- 一言 API 不需要环境变量或存储服务；可选的站点统计页面需要单独配置环境变量，见下文。
 
 `npm run generate` 在本地或 GitHub Actions 中从 `sentences/` 生成独立的 `sentence-index.json`，并根据 `functions/index.js` 生成 `edge-functions/api.js`。两者均保存在仓库；更改语录或原始函数后应在提交前运行 `npm run generate` 并提交生成文件。EdgeOne 的 `npm run build` 只校验已提交的索引、语料和函数是否一致，不生成文件；校验失败时部署会停止。运行时读取同一部署的索引并核对版本，再按选中的分类读取静态句子文件；索引缓存 1 小时，句子实例内按需缓存最多 12 个分类、保留 1 小时，预览授权请求也使用实例共享缓存，缓存未命中时会转发预览凭据；缓存命中时不再检查静态资源授权，因此不要依赖静态资源授权限制 API 访问。函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
 
@@ -27,6 +27,12 @@
 ## 版本维护
 
 首页 API 版本取自 `package.json` 的 `version`，表示本项目的版本，不是上游接口版本。发布包含 API 实现变更的版本时同步更新 `package.json` 和 `package-lock.json`：不兼容变更递增主版本，兼容的新功能递增次版本，兼容的修复或性能优化递增修订版本。仅更新句子数据、文档或首页样式不递增 API 版本；句子库有自己的版本号。发布 API 新版本时同时更新 `package.json` 的 `apiUpdatedAt`（带时区的发布时间）；首页句子库上游更新时间来自 `version.json` 的 `updated_at`，并非本项目的同步或部署时间。
+
+## 站点统计
+
+`/stats` 展示固定域名 `hitokoto.xzccs.top` 最近 24 个完整小时的请求数、EdgeOne 响应流量和 5xx 错误率；数据包含首页和静态资源，默认不包含 Web 防护缓释请求。时间窗口结束于至少 10 分钟以前，统计接口的数据也可能延迟。统计接口公开，无身份验证；所有访问者可查看汇总数据。实例内缓存 10 分钟并合并并发请求，不是全局限流，不同实例的冷启动仍会调用腾讯云 API。
+
+在 EdgeOne Pages 项目的 Project Settings → Environment Management 中为对应环境设置 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`，然后重新部署；变更只作用于新部署。使用具备站点 `zone-3ry57u0agvak` 的 `teo:DescribeTimingL7AnalysisData` 必要权限的子用户，避免管理员密钥；具体资源级授权能力以腾讯云 CAM 实际支持为准。不要将真实密钥提交仓库、写入客户端或日志，保护项目管理权限与旧部署。未配置、鉴权失败或查询失败时显示暂不可用；5xx 查询无记录时显示暂无数据，不直接假定为零。官方配置参考：https://pages.edgeone.ai/document/build-guide
 
 ## 句子库自动同步
 
