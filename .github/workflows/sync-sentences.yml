@@ -37,6 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           node sync-sentences.js ../upstream
+          npm run generate
           npm run build
           node -e 'const size = require("node:fs").statSync("edge-functions/api.js").size; console.log(`Generated function: ${size} bytes`); if (size > 5_000_000) throw new Error("Function exceeds conservative 5 MB source size limit");'
           node --check edge-functions/api.js

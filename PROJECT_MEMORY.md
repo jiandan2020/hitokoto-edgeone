@@ -3,7 +3,7 @@
 - 目标：将 `jiandan2020/hitokoto-edgeone` 部署到 EdgeOne Pages，只保留 `main` 分支。用户确认将现有 EdgeOne 内容合入 main、删除 edgeone-support 并重命名仓库。
 - 用户没有 KV 权限；无需依赖 KV 或 Blob。语录数据保存在仓库 `sentences/`。
 - EdgeOne Pages 使用默认导出处理函数，不支持 `addEventListener`。`edge-functions/index.js` 为 `/` 接口说明首页，`edge-functions/api.js` 为 `/api` 一言接口；根路径不再返回一言 JSON。
-- 2026-11-14 用户要求索引独立：`npm run build` 生成仓库根目录 `sentence-index.json` 和 `edge-functions/api.js`；运行时按部署域名读取索引并校验内嵌版本，再读取句子。索引缓存 5 分钟，句子实例内最多缓存 3 个分类、5 分钟，带预览凭据的请求不缓存；自动同步同时提交索引与语料。新增一次冷加载请求，线上部署与性能尚未验证，索引版本校验不保证句子资源字节一致。
+- 2026-11-14 用户要求索引独立：`npm run generate` 在 GitHub Actions 或本地生成仓库根目录 `sentence-index.json` 和 `edge-functions/api.js`，EdgeOne 的 `npm run build` 仅读取并校验仓库已有产物，不生成文件；运行时按部署域名读取索引并校验内嵌版本，再读取句子。索引缓存 5 分钟，句子实例内最多缓存 3 个分类、5 分钟，带预览凭据的请求不缓存；自动同步同时提交索引与语料。新增一次冷加载请求，线上部署与性能尚未验证，索引版本校验不保证句子资源字节一致。
 - 2026-11-14：提交 b74d183 的预览中 OPTIONS、文本、JS 和 JSONP 返回 200，但 JSON 返回 545；改用 `new Response(JSON.stringify(...))` 后，用户确认可用，HTTP 域名根路径返回 JSON 200，非法参数返回 400。没有运行栈，无法确定 545 的底层原因。
 - HTTPS 域名在本机 curl 证书验证失败（SEC_E_WRONG_PRINCIPAL）；绕过证书验证后返回 200。需在其他网络复核证书与域名绑定，不能将绕过验证视为 HTTPS 正常。
 - 首页详列 `/api` 的六个查询参数、分类、响应字段和状态码；浏览器标签图标为根目录 `favicon.svg`。API 版本读取同源 `/package.json` 的 `version`；用户要求 API 代码变更时维护版本：兼容新功能升次版本，兼容修复和性能优化升修订号，不兼容变更升主版本，仅语录或页面文档更新不升 API 版本；同步维护 `package-lock.json`。独立索引的 API 实现变更升级为 1.1.1。句子库版本来自 `/version.json` 的 `bundle_version`，互相独立。
