@@ -10,7 +10,7 @@
 - 首页说明：`edge-functions/index.js`，路由为 `/`；一言接口：`edge-functions/api.js`，路由为 `/api`（由 Pages 自动识别）
 - 不需要环境变量和存储服务。
 
-`npm run build` 从 `sentences/` 生成长度索引，并与 `functions/index.js` 合并生成 `edge-functions/api.js`。仓库中保留生成文件；更改语录或原始函数后应重新运行构建并提交生成文件。运行时按选中的分类读取同一部署的静态句子文件；实例内最多缓存 3 个分类、保留 5 分钟，预览授权请求不使用该缓存。函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
+`npm run build` 从 `sentences/` 生成独立的 `sentence-index.json`，并根据 `functions/index.js` 生成 `edge-functions/api.js`。两者均保存在仓库；更改语录或原始函数后应重新运行构建并提交生成文件。运行时读取同一部署的索引并核对版本，再按选中的分类读取静态句子文件；索引缓存 5 分钟，句子实例内最多缓存 3 个分类、保留 5 分钟，预览授权请求不使用共享缓存。函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
 
 如果项目此前在控制台手动设置了边缘函数或路由，请检查是否与本项目的 `/` 路由冲突，并确认部署的是最新提交。构建成功并不等同于运行验证成功。
 
@@ -30,7 +30,7 @@
 
 ## 句子库自动同步
 
-GitHub Actions 每天 03:17 UTC（北京时间 11:17）检查 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master`；也可在 Actions 的“同步一言句子库”中手动运行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成 API；仅在文件变化时提交到 `main`。分类变化或验证失败时停止，不会提交不完整数据。
+GitHub Actions 每天 03:17 UTC（北京时间 11:17）检查 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master`；也可在 Actions 的“同步一言句子库”中手动运行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成索引与 API，并与语料一起提交；仅在文件变化时提交到 `main`。分类变化或验证失败时停止，不会提交不完整数据。
 
 定时工作流运行于仓库默认分支 `main`。需要允许 Actions 对该分支写入，并在 EdgeOne 配置跟踪 `main` 的 Git 推送自动部署。自动提交能否触发该集成需以实际运行验证；构建、同步和部署结果分别查看 GitHub Actions 与 EdgeOne 部署记录。GitHub 定时任务可能延迟，仓库长期不活跃时也可能暂停。
 

@@ -1,6 +1,6 @@
 {
   "name": "hitokoto-edgeone",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Hitokoto API for Tencent EdgeOne",
   "type": "module",
   "scripts": {

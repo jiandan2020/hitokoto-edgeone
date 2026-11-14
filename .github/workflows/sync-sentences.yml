@@ -45,7 +45,7 @@ jobs:
         working-directory: project
         run: |
           set -euo pipefail
-          git add sentences/ categories.json version.json edge-functions/api.js
+          git add sentences/ categories.json version.json sentence-index.json edge-functions/api.js
           if git diff --cached --quiet; then
             echo '上游数据没有变化，无需提交。'
             exit 0

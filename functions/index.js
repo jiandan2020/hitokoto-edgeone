@@ -69,6 +69,25 @@ async function loadSentences(asset, cookie) {
     return records;
 }
 
+// 索引独立保存，并按部署域名缓存；预览授权请求不使用共享缓存。
+const indexCache = new Map();
+async function loadIndex(asset, cookie) {
+    const key = asset.toString();
+    const cached = !cookie && indexCache.get(key);
+    if (cached && cached.expires > Date.now()) return cached.index;
+    const result = await fetch(key, { headers: cookie ? { cookie } : {}, redirect: "manual" });
+    if (!result.ok) throw new Error(`索引读取失败: ${result.status}`);
+    const data = await result.json();
+    if (data.version !== sentenceVersion || !data.index || typeof data.index !== "object") {
+        throw new Error("句子索引版本不一致或格式错误");
+    }
+    if (!cookie) {
+        indexCache.clear();
+        indexCache.set(key, { index: data.index, expires: Date.now() + CACHE_TTL_MS });
+    }
+    return data.index;
+}
+
 async function fetchSentences(asset, cookie) {
     const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual" });
     if (!result.ok) throw new Error(`句子库读取失败: ${result.status}`);
@@ -144,6 +163,15 @@ export async function onRequest(context) {
             return createResponse(400, "max_length 不能小于 min_length");
         }
 
+        const hostname = url.hostname.toLowerCase();
+        if (!["http:", "https:"].includes(url.protocol) || !(hostname === "hitokoto.xzccs.top" || hostname.endsWith(".edgeone.cool"))) {
+            throw new Error("不支持的部署域名");
+        }
+        const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim())
+            .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
+        const indexAsset = new URL(`/sentence-index.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
+        const sentenceIndex = await loadIndex(indexAsset, cookie);
+
         // 使用构建时生成的长度索引，等概率选出匹配的句子，再读取所在分类。
         const keys = categoryKey ? [categoryKey] : Object.keys(sentenceIndex);
         const candidates = [];
@@ -164,13 +192,7 @@ export async function onRequest(context) {
             if (selected < candidate.indexes.length) { chosen = candidate; break; }
             selected -= candidate.indexes.length;
         }
-        const hostname = url.hostname.toLowerCase();
-        if (!["http:", "https:"].includes(url.protocol) || !(hostname === "hitokoto.xzccs.top" || hostname.endsWith(".edgeone.cool"))) {
-            throw new Error("不支持的部署域名");
-        }
         const asset = new URL(`/sentences/${chosen.key}.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
-        const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim())
-            .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
         const records = await loadSentences(asset, cookie);
         const randomSentence = records[chosen.indexes[selected]];
         if (!randomSentence || randomSentence.type !== chosen.key) {
