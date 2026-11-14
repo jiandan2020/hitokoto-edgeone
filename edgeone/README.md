@@ -10,7 +10,39 @@
 
 ## 🚀 部署方案
 
-### 方案一：KV 存储版本（推荐）✅
+### 方案一：GitHub 托管版本（最简单）✅
+
+**优势**:
+- ✅ 无需配置外部存储
+- ✅ 直接从 GitHub 导入即可使用
+- ✅ 代码体积小（约 6KB）
+- ✅ GitHub CDN 加速
+- ✅ 数据更新只需推送到 GitHub
+
+**部署步骤**:
+
+1. 在 EdgeOne 控制台从 GitHub 导入项目
+   - 仓库：`https://github.com/jiandan2020/hitokoto-cloudflare`
+   - 分支：`edgeone-support`
+   - 入口文件：`edgeone/index-github.js`
+
+2. （可选）配置环境变量
+   - 如果要使用其他分支，设置 `GITHUB_RAW_URL`
+   - 例如：`https://raw.githubusercontent.com/jiandan2020/hitokoto-cloudflare/main`
+
+3. 配置触发路由并发布
+
+4. 测试访问
+
+**注意**: GitHub Raw URL 有频率限制，但配合 EdgeOne 缓存（1小时）足够使用。
+
+### 方案二：Blob 存储版本
+
+**适用场景**: 有 Blob 存储权限，需要更好的性能
+
+**部署步骤**: 参考 `BLOB-DEPLOYMENT-GUIDE.md`
+
+### 方案三：KV 存储版本
 
 **优势**:
 - ✅ 代码体积小（约 5KB），符合 EdgeOne 限制
@@ -120,16 +152,19 @@ curl https://your-domain.com/?min_length=10&max_length=20
 
 ```
 edgeone/
-├── index.js                  # 原始代码（带 import）
-├── index-kv.js              # KV 存储版本（推荐使用）✅
-├── index.bundle.js          # 构建后的完整文件（2.8MB，超限）
-├── build.js                 # 构建脚本
-├── prepare-kv-upload.js     # KV 上传准备脚本
-├── upload-kv.sh            # Linux/Mac 批量上传脚本
-├── upload-kv.bat           # Windows 批量上传脚本
-├── KV-UPLOAD-GUIDE.md      # KV 上传详细指南
-├── package.json            # 项目配置
-└── README.md              # 本文件
+├── index-github.js            # GitHub 托管版本（推荐）✅
+├── index-blob.js              # Blob 存储版本
+├── index-kv.js                # KV 存储版本
+├── index.js                   # 原始代码（带 import）
+├── index.bundle.js            # 构建后的完整文件（2.8MB，超限）
+├── build.js                   # 构建脚本
+├── prepare-kv-upload.js       # KV 上传准备脚本
+├── upload-kv.sh              # Linux/Mac 批量上传脚本
+├── upload-kv.bat             # Windows 批量上传脚本
+├── KV-UPLOAD-GUIDE.md        # KV 上传详细指南
+├── BLOB-DEPLOYMENT-GUIDE.md  # Blob 部署指南
+├── package.json              # 项目配置
+└── README.md                # 本文件
 ```
 
 ## 🔧 EdgeOne 与 Cloudflare 差异
@@ -173,29 +208,26 @@ const data = await env.HITOKOTO_KV.get('key', { type: 'json' });
 
 ## 🎯 快速开始
 
-**推荐流程**（5 分钟完成部署）：
+**推荐流程**（最快 3 分钟完成部署）：
 
-1. 运行 KV 上传准备脚本
-   ```bash
-   cd edgeone
-   node prepare-kv-upload.js
-   ```
+#### 方法 A：GitHub 导入（最简单）
 
-2. 执行批量上传（Windows）
-   ```cmd
-   upload-kv.bat
-   ```
+1. EdgeOne 控制台 > 边缘函数 > 从 GitHub 导入
+   - 仓库：`https://github.com/jiandan2020/hitokoto-cloudflare`
+   - 分支：`edgeone-support`
+   - 入口：`edgeone/index-github.js`
 
-3. 在 EdgeOne 控制台创建边缘函数，使用 `index-kv.js` 代码
+2. 配置触发路由 > 发布
 
-4. 绑定 KV 命名空间 `HITOKOTO_KV`
+3. 测试：`curl https://your-domain.com/?c=a`
 
-5. 配置触发路由并发布
+#### 方法 B：Blob 存储（需要上传 JSON）
 
-6. 测试访问
-   ```bash
-   curl https://your-domain.com/?c=a
-   ```
+参考 `BLOB-DEPLOYMENT-GUIDE.md`
+
+#### 方法 C：KV 存储（需要 KV 权限）
+
+参考原 KV 部署步骤
 
 ## 📝 许可证
 
