@@ -36,7 +36,7 @@
 
 ### 每日累计和趋势
 
-GitHub Actions 每天北京时间 02:17 采集前一天完整的 24 个小时，保存到公开仓库 `stats-data` 分支的 `daily-stats.json`；统计页从 GitHub Raw 直接读取该分支的文件，展示自 **2026-11-15** 起的已采集累计值及最近 30 天柱状图，更新不依赖 EdgeOne 重新部署。缺失天数明确标注，不当成零，也不含当天。此时间不是网站成立时间，不能称为历史总量。该文件及其 Git 历史公开，默认口径是 EdgeOne 防护后的整个域名请求。访客浏览器必须能访问 GitHub Raw，网络或缓存可能导致读取失败或更新延迟；失败时页面显示暂不可用，不回退到旧部署数据。
+GitHub Actions 每天北京时间 02:17 采集前一天完整的 24 个小时，保存到公开仓库 `stats-data` 分支的 `daily-stats.json`；统计页通过 jsDelivr CDN 读取该分支的文件，展示自 **2026-11-15** 起的已采集累计值及最近 30 天柱状图，更新不依赖 EdgeOne 重新部署。缺失天数明确标注，不当成零，也不含当天。此时间不是网站成立时间，不能称为历史总量。该文件及其 Git 历史公开，默认口径是 EdgeOne 防护后的整个域名请求。访客浏览器必须能访问 jsDelivr。采集工作流每次运行后请求刷新 CDN 缓存，刷新可能失败或有传播延迟；失败时查看 Actions 日志并重新运行。网络不可用时页面显示暂不可用，不回退到旧部署数据。
 
 在 GitHub 仓库 **Settings → Secrets and variables → Actions → Repository secrets** 单独添加 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`（Pages 的环境变量不会同步到 GitHub），并确保工作流有 `contents: write` 权限；可在 Actions →「采集域名每日请求数」手动运行。任务按日期幂等保存，失败后再次运行会补采仍处于保守 29 天范围内的缺失日期；API 实际数据保留时长未确认，超期或无数据不会视为零，需检查 Actions 日志。采集成功后只推送 `stats-data` 分支，不推送 `main`；确保 EdgeOne 生产部署跟踪 `main`，并检查其他分支的预览部署设置，否则统计分支推送仍可能触发预览构建。首次使用须先部署读取 `stats-data` 分支的页面。
 

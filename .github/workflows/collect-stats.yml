@@ -42,17 +42,35 @@ jobs:
         run: |
           set -euo pipefail
           git add daily-stats.json
-          if git diff --cached --quiet; then exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'chore: 更新每日域名请求统计'
-          for attempt in 1 2 3; do
-            git fetch origin stats-data
-            git rebase origin/stats-data
-            if git push origin HEAD:stats-data; then exit 0; fi
-          done
-          echo '多次推送失败，请重新运行工作流。' >&2
-          exit 1
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'chore: 更新每日域名请求统计'
+            pushed=false
+            for attempt in 1 2 3; do
+              git fetch origin stats-data
+              git rebase origin/stats-data
+              if git push origin HEAD:stats-data; then pushed=true; break; fi
+            done
+            if [ "$pushed" != true ]; then
+              echo '多次推送失败，请重新运行工作流。' >&2
+              exit 1
+            fi
+          fi
+      - name: 刷新 jsDelivr 缓存
+        run: |
+          node --input-type=module <<'NODE'
+          const url = 'https://purge.jsdelivr.net/gh/jiandan2020/hitokoto-edgeone@stats-data/daily-stats.json';
+          const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+          if (!response.ok) throw new Error(`刷新缓存失败：HTTP ${response.status}`);
+          const result = await response.json();
+          const path = result.paths?.['/gh/jiandan2020/hitokoto-edgeone@stats-data/daily-stats.json'];
+          const providers = Object.values(path?.providers || {});
+          if (result.status !== 'finished' || !path || path.throttled || !providers.length || providers.some(ok => ok !== true)) {
+            throw new Error('jsDelivr 未确认缓存刷新，请检查任务日志或稍后重试');
+          }
+          console.log('jsDelivr 缓存刷新请求已完成');
+          NODE
       - name: 标记采集失败
         if: steps.collect.outcome == 'failure'
         run: exit 1
