@@ -38,9 +38,17 @@ const responseHeaders = {
     "X-Source-Code": "https://github.com/molikai-work/hitokoto-cloudflare",
 };
 
+// 使用标准 Response 构造 JSON，避免依赖运行时的 Response.json 支持。
+function jsonResponse(data, options = {}) {
+    return new Response(JSON.stringify(data), {
+        ...options,
+        headers: { "Content-Type": "application/json; charset=UTF-8", ...options.headers },
+    });
+}
+
 // 统一返回函数
 function createResponse(code, message, extraData = {}, extraHeaders = {}) {
-    return Response.json({
+    return jsonResponse({
         code: code,
         message: message,
         timestamp: Date.now(),
@@ -209,7 +217,7 @@ export async function onRequest(context) {
             });
         } else {
             // 默认返回 JSON 格式数据
-            return Response.json(response, {
+            return jsonResponse(response, {
                 headers: {
                     "Content-Type": "application/json; charset=UTF-8",
                     ...responseHeaders,
@@ -218,6 +226,6 @@ export async function onRequest(context) {
         }
     } catch (error) {
         console.error("Unexpected error:", error);
-        return handleError(500, error, env.DEV_ENV);
+        return handleError(500, error, env?.DEV_ENV);
     }
 }
