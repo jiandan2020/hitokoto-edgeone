@@ -1,0 +1,57 @@
+name: 同步一言句子库
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-sentences
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出部署分支
+        uses: actions/checkout@v4
+        with:
+          ref: edgeone-support
+          path: project
+      - name: 检出上游句子库
+        uses: actions/checkout@v4
+        with:
+          repository: hitokoto-osc/sentences-bundle
+          ref: master
+          path: upstream
+          persist-credentials: false
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 验证、同步并生成函数
+        working-directory: project
+        run: |
+          set -euo pipefail
+          node sync-sentences.js ../upstream
+          npm run build
+          node -e 'const size = require("node:fs").statSync("edge-functions/api.js").size; console.log(`Generated function: ${size} bytes`); if (size > 5_000_000) throw new Error("Function exceeds conservative 5 MB source size limit");'
+          node --check edge-functions/api.js
+          node --input-type=module -e 'import handler from "./edge-functions/api.js"; const r = await handler({request: new Request("https://example.com/api")}); if (!r.ok || typeof (await r.json()).hitokoto !== "string") throw new Error("API smoke test failed");'
+      - name: 有变化时提交并推送
+        working-directory: project
+        run: |
+          set -euo pipefail
+          git add sentences/ categories.json version.json edge-functions/api.js
+          if git diff --cached --quiet; then
+            echo '上游数据没有变化，无需提交。'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          upstream_sha=$(git -C ../upstream rev-parse HEAD)
+          git commit -m "chore: 同步上游句子库 ${upstream_sha}"
+          git push origin HEAD:edgeone-support
