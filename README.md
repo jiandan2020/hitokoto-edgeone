@@ -215,7 +215,7 @@ const data = await env.HITOKOTO_KV.get('key', { type: 'json' });
 1. EdgeOne 控制台 > 边缘函数 > 从 GitHub 导入
    - 仓库：`https://github.com/jiandan2020/hitokoto-cloudflare`
    - 分支：`edgeone-support`
-   - 入口：`edgeone/index-github.js`
+   - 入口：`index-github.js`
 
 2. 配置触发路由 > 发布
 
