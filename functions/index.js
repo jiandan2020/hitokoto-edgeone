@@ -46,10 +46,10 @@ function jsonResponse(data, options = {}) {
     });
 }
 
-// 每个实例最多保留 3 个分类，5 分钟后重新读取；不缓存失败结果。
+// 每个实例按需缓存最多 12 个分类，1 小时后重新读取；不缓存失败结果。
 const sentenceCache = new Map();
-const CACHE_LIMIT = 3;
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_LIMIT = 12;
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
 async function loadSentences(asset, cookie) {
     // 预览部署的授权信息不进入共享缓存，避免跨请求复用凭据或数据。
