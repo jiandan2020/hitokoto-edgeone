@@ -9,16 +9,23 @@ permissions:
   contents: write
 
 concurrency:
-  group: repository-auto-update
+  group: stats-data-update
   cancel-in-progress: false
 
 jobs:
   collect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 检出最新采集脚本
+        uses: actions/checkout@v4
         with:
           ref: main
+          path: project
+      - name: 检出独立统计数据分支
+        uses: actions/checkout@v4
+        with:
+          ref: stats-data
+          path: data
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -28,8 +35,10 @@ jobs:
         env:
           TENCENT_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
           TENCENT_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
-        run: node collect-stats.js
+        working-directory: data
+        run: node ../project/collect-stats.js
       - name: 提交有效数据
+        working-directory: data
         run: |
           set -euo pipefail
           git add daily-stats.json
@@ -38,9 +47,9 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'chore: 更新每日域名请求统计'
           for attempt in 1 2 3; do
-            git fetch origin main
-            git rebase origin/main
-            if git push origin HEAD:main; then exit 0; fi
+            git fetch origin stats-data
+            git rebase origin/stats-data
+            if git push origin HEAD:stats-data; then exit 0; fi
           done
           echo '多次推送失败，请重新运行工作流。' >&2
           exit 1

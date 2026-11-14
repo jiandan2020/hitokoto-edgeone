@@ -55,7 +55,7 @@ fetch('/stats-data', {cache:'no-store'}).then(r => { if (!r.ok) throw new Error(
   document.getElementById('status').textContent = '统计范围：' + dateFormat.format(new Date(data.start)) + ' 至 ' + dateFormat.format(new Date(data.end)) + '（北京时间） · 获取时间：' + dateFormat.format(new Date(data.fetchedAt)) + '（北京时间）';
   renderHourly(data.hourly);
 }).catch(() => { document.getElementById('status').textContent = '统计数据暂不可用，请稍后再试。'; document.getElementById('status').className = 'error'; document.getElementById('api-requests').textContent = '暂不可用'; document.getElementById('hourly-status').textContent = '每小时数据暂不可用。'; });
-fetch('https://raw.githubusercontent.com/jiandan2020/hitokoto-edgeone/main/daily-stats.json', {cache:'no-store', credentials:'omit', referrerPolicy:'no-referrer'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
+fetch('https://raw.githubusercontent.com/jiandan2020/hitokoto-edgeone/stats-data/daily-stats.json', {cache:'no-store', credentials:'omit', referrerPolicy:'no-referrer'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
   const start = Date.parse(data.startDate + 'T00:00:00+08:00');
   const today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0,10);
   const end = Date.parse(today + 'T00:00:00+08:00');

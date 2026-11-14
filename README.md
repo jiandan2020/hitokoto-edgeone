@@ -36,15 +36,15 @@
 
 ### 每日累计和趋势
 
-GitHub Actions 每天北京时间 02:17 采集前一天完整的 24 个小时，保存到公开仓库的 `daily-stats.json`；统计页从 GitHub Raw 直接读取该文件，展示自 **2026-11-15** 起的已采集累计值及最近 30 天柱状图，更新不依赖 EdgeOne 重新部署。缺失天数明确标注，不当成零，也不含当天。此时间不是网站成立时间，不能称为历史总量。该文件及其 Git 历史公开，默认口径是 EdgeOne 防护后的整个域名请求。访客浏览器必须能访问 GitHub Raw，网络或缓存可能导致读取失败或更新延迟；失败时页面显示暂不可用，不回退到旧部署数据。
+GitHub Actions 每天北京时间 02:17 采集前一天完整的 24 个小时，保存到公开仓库 `stats-data` 分支的 `daily-stats.json`；统计页从 GitHub Raw 直接读取该分支的文件，展示自 **2026-11-15** 起的已采集累计值及最近 30 天柱状图，更新不依赖 EdgeOne 重新部署。缺失天数明确标注，不当成零，也不含当天。此时间不是网站成立时间，不能称为历史总量。该文件及其 Git 历史公开，默认口径是 EdgeOne 防护后的整个域名请求。访客浏览器必须能访问 GitHub Raw，网络或缓存可能导致读取失败或更新延迟；失败时页面显示暂不可用，不回退到旧部署数据。
 
-在 GitHub 仓库 **Settings → Secrets and variables → Actions → Repository secrets** 单独添加 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`（Pages 的环境变量不会同步到 GitHub），并确保工作流有 `contents: write` 权限；可在 Actions →「采集域名每日请求数」手动运行。任务按日期幂等保存，失败后再次运行会补采仍处于保守 29 天范围内的缺失日期；API 实际数据保留时长未确认，超期或无数据不会视为零，需检查 Actions 日志。采集成功后提交 main 即可供统计页读取；如果 EdgeOne 自动部署仍开启，这些提交仍可能触发构建。关闭自动部署可避免每日构建，但代码和句子库更新也需要手动部署。
+在 GitHub 仓库 **Settings → Secrets and variables → Actions → Repository secrets** 单独添加 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`（Pages 的环境变量不会同步到 GitHub），并确保工作流有 `contents: write` 权限；可在 Actions →「采集域名每日请求数」手动运行。任务按日期幂等保存，失败后再次运行会补采仍处于保守 29 天范围内的缺失日期；API 实际数据保留时长未确认，超期或无数据不会视为零，需检查 Actions 日志。采集成功后只推送 `stats-data` 分支，不推送 `main`；确保 EdgeOne 生产部署跟踪 `main`，并检查其他分支的预览部署设置，否则统计分支推送仍可能触发预览构建。首次使用须先部署读取 `stats-data` 分支的页面。
 
-## 句子库自动同步
+## 句子库手动同步
 
-GitHub Actions 每天 03:17 UTC（北京时间 11:17）检查 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master`；也可在 Actions 的“同步一言句子库”中手动运行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成索引与 API，并与语料一起提交；仅在文件变化时提交到 `main`。分类变化或验证失败时停止，不会提交不完整数据。
+在 GitHub Actions 的“同步一言句子库”中手动运行，从 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master` 检查最新语料；不再定时执行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成索引与 API，并与语料一起提交；仅在文件变化时提交到 `main`。分类变化或验证失败时停止，不会提交不完整数据。
 
-定时工作流运行于仓库默认分支 `main`。需要允许 Actions 对该分支写入；要让句子库自动上线，EdgeOne 还需跟踪 `main` 的 Git 推送自动部署。若关闭自动部署，句子同步仍会提交仓库，但线上语录须手动部署才会更新。自动提交能否触发该集成需以实际运行验证；构建、同步和部署结果分别查看 GitHub Actions 与 EdgeOne 部署记录。GitHub 定时任务可能延迟，仓库长期不活跃时也可能暂停。
+工作流定义位于仓库默认分支 `main`，需要允许 Actions 对该分支写入；手动同步有变化时推送 `main`，EdgeOne 是否自动上线取决于部署集成，需查看部署记录验证。统计采集是独立的定时任务，GitHub 定时任务可能延迟，仓库长期不活跃时也可能暂停。
 
 ## 数据与许可
 
