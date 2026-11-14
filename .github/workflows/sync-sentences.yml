@@ -19,7 +19,7 @@ jobs:
       - name: 检出部署分支
         uses: actions/checkout@v4
         with:
-          ref: edgeone-support
+          ref: main
           path: project
       - name: 检出上游句子库
         uses: actions/checkout@v4
@@ -54,4 +54,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           upstream_sha=$(git -C ../upstream rev-parse HEAD)
           git commit -m "chore: 同步上游句子库 ${upstream_sha}"
-          git push origin HEAD:edgeone-support
+          git push origin HEAD:main
