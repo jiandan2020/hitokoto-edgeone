@@ -55,11 +55,11 @@ fetch('/stats-data', {cache:'no-store'}).then(r => { if (!r.ok) throw new Error(
   document.getElementById('status').textContent = '统计范围：' + dateFormat.format(new Date(data.start)) + ' 至 ' + dateFormat.format(new Date(data.end)) + '（北京时间） · 获取时间：' + dateFormat.format(new Date(data.fetchedAt)) + '（北京时间）';
   renderHourly(data.hourly);
 }).catch(() => { document.getElementById('status').textContent = '统计数据暂不可用，请稍后再试。'; document.getElementById('status').className = 'error'; document.getElementById('api-requests').textContent = '暂不可用'; document.getElementById('hourly-status').textContent = '每小时数据暂不可用。'; });
-fetch('/daily-stats.json', {cache:'no-store'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
+fetch('https://raw.githubusercontent.com/jiandan2020/hitokoto-edgeone/main/daily-stats.json', {cache:'no-store', credentials:'omit', referrerPolicy:'no-referrer'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
   const start = Date.parse(data.startDate + 'T00:00:00+08:00');
   const today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0,10);
   const end = Date.parse(today + 'T00:00:00+08:00');
-  if (!Number.isFinite(start) || !data.days || typeof data.days !== 'object' || Array.isArray(data.days)) throw new Error('invalid');
+  if (data.domain !== 'hitokoto.xzccs.top' || data.startDate !== '2026-11-15' || !Number.isFinite(start) || !data.days || typeof data.days !== 'object' || Array.isArray(data.days)) throw new Error('invalid');
   const entries = []; let total = 0; let missing = 0;
   for (let day = start; day < end; day += 86400000) {
     const key = new Date(day + 8 * 3600000).toISOString().slice(0,10);
@@ -78,7 +78,7 @@ fetch('/daily-stats.json', {cache:'no-store'}).then(r => { if (!r.ok) throw new 
     wrap.title = e.key + '：' + (e.value === null ? '未采集' : e.value.toLocaleString('zh-CN') + ' 次'); label.className = 'chart-label'; label.textContent = e.key.slice(5);
     wrap.append(bar, label); chart.append(wrap); row.textContent = wrap.title; list.append(row);
   }
-}).catch(() => { document.getElementById('history-status').textContent = '每日汇总暂不可用。'; });
+}).catch(() => { document.getElementById('history-status').textContent = 'GitHub 每日汇总暂不可用，请稍后再试。'; });
 </script></body></html>`;
 export default function onRequest() {
     return new Response(page, { headers: { "Content-Type": "text/html; charset=UTF-8", "X-Content-Type-Options": "nosniff" } });
