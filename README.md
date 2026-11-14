@@ -10,7 +10,7 @@
 - 首页说明：`edge-functions/index.js`，路由为 `/`；一言接口：`edge-functions/api.js`，路由为 `/api`（由 Pages 自动识别）
 - 不需要环境变量和存储服务。
 
-`npm run build` 从 `sentences/` 生成长度索引，并与 `functions/index.js` 合并生成 `edge-functions/api.js`。仓库中保留生成文件；更改语录或原始函数后应重新运行构建并提交生成文件。运行时按选中的分类读取同一部署的静态句子文件，因此函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
+`npm run build` 从 `sentences/` 生成长度索引，并与 `functions/index.js` 合并生成 `edge-functions/api.js`。仓库中保留生成文件；更改语录或原始函数后应重新运行构建并提交生成文件。运行时按选中的分类读取同一部署的静态句子文件；实例内最多缓存 3 个分类、保留 5 分钟，预览授权请求不使用该缓存。函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
 
 如果项目此前在控制台手动设置了边缘函数或路由，请检查是否与本项目的 `/` 路由冲突，并确认部署的是最新提交。构建成功并不等同于运行验证成功。
 

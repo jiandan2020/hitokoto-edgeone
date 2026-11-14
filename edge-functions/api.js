@@ -20,6 +20,37 @@ function jsonResponse(data, options = {}) {
     });
 }
 
+// 每个实例最多保留 3 个分类，5 分钟后重新读取；不缓存失败结果。
+const sentenceCache = new Map();
+const CACHE_LIMIT = 3;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+async function loadSentences(asset, cookie) {
+    // 预览部署的授权信息不进入共享缓存，避免跨请求复用凭据或数据。
+    if (cookie) return fetchSentences(asset, cookie);
+    const key = asset.toString();
+    const cached = sentenceCache.get(key);
+    if (cached && cached.expires > Date.now()) {
+        sentenceCache.delete(key);
+        sentenceCache.set(key, cached);
+        return cached.records;
+    }
+    if (cached) sentenceCache.delete(key);
+    const records = await fetchSentences(asset, "");
+    sentenceCache.delete(key);
+    sentenceCache.set(key, { records, expires: Date.now() + CACHE_TTL_MS });
+    while (sentenceCache.size > CACHE_LIMIT) sentenceCache.delete(sentenceCache.keys().next().value);
+    return records;
+}
+
+async function fetchSentences(asset, cookie) {
+    const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual" });
+    if (!result.ok) throw new Error(`句子库读取失败: ${result.status}`);
+    const records = await result.json();
+    if (!Array.isArray(records)) throw new Error("句子库格式错误");
+    return records;
+}
+
 // 统一返回函数
 function createResponse(code, message, extraData = {}, extraHeaders = {}) {
     return jsonResponse({
@@ -114,11 +145,12 @@ export default async function onRequest(context) {
         const asset = new URL(`/sentences/${chosen.key}.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
         const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim())
             .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
-        const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual" });
-        if (!result.ok) throw new Error(`句子库读取失败: ${result.status}`);
-        const records = await result.json();
+        const records = await loadSentences(asset, cookie);
         const randomSentence = records[chosen.indexes[selected]];
-        if (!randomSentence || randomSentence.type !== chosen.key) throw new Error("句子库与索引不一致");
+        if (!randomSentence || randomSentence.type !== chosen.key) {
+            sentenceCache.delete(asset.toString());
+            throw new Error("句子库与索引不一致");
+        }
 
         // 构造响应数据
         const response = {
