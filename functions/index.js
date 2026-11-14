@@ -52,8 +52,6 @@ const CACHE_LIMIT = 12;
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 async function loadSentences(asset, cookie) {
-    // 预览部署的授权信息不进入共享缓存，避免跨请求复用凭据或数据。
-    if (cookie) return fetchSentences(asset, cookie);
     const key = asset.toString();
     const cached = sentenceCache.get(key);
     if (cached && cached.expires > Date.now()) {
@@ -62,18 +60,18 @@ async function loadSentences(asset, cookie) {
         return cached.records;
     }
     if (cached) sentenceCache.delete(key);
-    const records = await fetchSentences(asset, "");
+    const records = await fetchSentences(asset, cookie);
     sentenceCache.delete(key);
     sentenceCache.set(key, { records, expires: Date.now() + CACHE_TTL_MS });
     while (sentenceCache.size > CACHE_LIMIT) sentenceCache.delete(sentenceCache.keys().next().value);
     return records;
 }
 
-// 索引独立保存，并按部署域名缓存；预览授权请求不使用共享缓存。
+// 索引独立保存，按部署域名缓存；缓存中不保存预览凭据。
 const indexCache = new Map();
 async function loadIndex(asset, cookie) {
     const key = asset.toString();
-    const cached = !cookie && indexCache.get(key);
+    const cached = indexCache.get(key);
     if (cached && cached.expires > Date.now()) return cached.index;
     const result = await fetch(key, { headers: cookie ? { cookie } : {}, redirect: "manual" });
     if (!result.ok) throw new Error(`索引读取失败: ${result.status}`);
@@ -81,10 +79,8 @@ async function loadIndex(asset, cookie) {
     if (data.version !== sentenceVersion || !data.index || typeof data.index !== "object") {
         throw new Error("句子索引版本不一致或格式错误");
     }
-    if (!cookie) {
-        indexCache.clear();
-        indexCache.set(key, { index: data.index, expires: Date.now() + CACHE_TTL_MS });
-    }
+    indexCache.clear();
+    indexCache.set(key, { index: data.index, expires: Date.now() + CACHE_TTL_MS });
     return data.index;
 }
 
