@@ -45,7 +45,25 @@ const page = `<!doctype html>
   </section>
   <section>
     <h2>分类</h2>
-    <p>a 动画 · b 漫画 · c 游戏 · d 文学 · e 原创 · f 来自网络 · g 其他 · h 影视 · i 诗词 · j 网易云 · k 哲学 · l 抖机灵</p>
+    <p>通过 <code>c</code> 参数指定一个分类；点击分类代码可直接试用。不传 <code>c</code> 时从全部分类中筛选。</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>代码</th><th>分类</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><a href="/api?c=a" target="_blank" rel="noopener"><code>a</code></a></td><td>动画</td><td>动画类语录</td></tr>
+        <tr><td><a href="/api?c=b" target="_blank" rel="noopener"><code>b</code></a></td><td>漫画</td><td>漫画类语录</td></tr>
+        <tr><td><a href="/api?c=c" target="_blank" rel="noopener"><code>c</code></a></td><td>游戏</td><td>游戏类语录</td></tr>
+        <tr><td><a href="/api?c=d" target="_blank" rel="noopener"><code>d</code></a></td><td>文学</td><td>主要收录现代文学，如小说、散文、戏剧</td></tr>
+        <tr><td><a href="/api?c=e" target="_blank" rel="noopener"><code>e</code></a></td><td>原创</td><td>原创类语录</td></tr>
+        <tr><td><a href="/api?c=f" target="_blank" rel="noopener"><code>f</code></a></td><td>网络</td><td>来自网络的语录</td></tr>
+        <tr><td><a href="/api?c=g" target="_blank" rel="noopener"><code>g</code></a></td><td>其他</td><td>其他类语录</td></tr>
+        <tr><td><a href="/api?c=h" target="_blank" rel="noopener"><code>h</code></a></td><td>影视</td><td>影视类语录</td></tr>
+        <tr><td><a href="/api?c=i" target="_blank" rel="noopener"><code>i</code></a></td><td>诗词</td><td>主要收录中国古代文学，如诗、歌、词、赋、曲</td></tr>
+        <tr><td><a href="/api?c=j" target="_blank" rel="noopener"><code>j</code></a></td><td>网易云</td><td>主要收录网易云音乐热评</td></tr>
+        <tr><td><a href="/api?c=k" target="_blank" rel="noopener"><code>k</code></a></td><td>哲学</td><td>哲学类语录</td></tr>
+        <tr><td><a href="/api?c=l" target="_blank" rel="noopener"><code>l</code></a></td><td>抖机灵</td><td>抖机灵类语录</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">分类名称和范围参考句子库的 <code>categories.json</code>。</p>
   </section>
   <section>
     <h2>返回格式与字段</h2>
