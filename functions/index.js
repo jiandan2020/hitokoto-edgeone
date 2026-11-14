@@ -199,7 +199,6 @@ export async function onRequest(context) {
         // 构造响应数据
         const response = {
             id: randomSentence.id, // 一言的唯一标识符
-            uuid: randomSentence.uuid, // 一言的 UUID
             hitokoto: randomSentence.hitokoto, // 一言内容
             type: randomSentence.type, // 一言类型
             from: randomSentence.from, // 一言的来源

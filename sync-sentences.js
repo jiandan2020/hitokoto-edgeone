@@ -19,10 +19,10 @@ for (const key of keys) {
     const records = parse(`sentences/${key}.json`);
     if (!Array.isArray(records) || records.length === 0 || records.some(item =>
         !item || typeof item.hitokoto !== "string" || typeof item.length !== "number" ||
-        !Number.isFinite(item.length) || item.type !== key || item.id == null || !item.uuid
+        !Number.isFinite(item.length) || item.type !== key || item.id == null
     )) throw new Error(`上游分类 ${key} 数据不完整或格式不兼容`);
-    const reduced = records.map(({ id, uuid, hitokoto, type, from, from_who, length }) => ({
-        id, uuid, hitokoto, type, from: from ?? null, from_who: from_who ?? null, length,
+    const reduced = records.map(({ id, hitokoto, type, from, from_who, length }) => ({
+        id, hitokoto, type, from: from ?? null, from_who: from_who ?? null, length,
     }));
     contents.set(`sentences/${key}.json`, Buffer.from(`[\n${reduced.map(item => `  ${JSON.stringify(item)}`).join(",\n")}\n]\n`));
     console.log(`${key}: ${records.length} 条`);

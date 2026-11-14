@@ -82,7 +82,6 @@ const page = `<!doctype html>
     <div class="table-wrap"><table>
       <thead><tr><th>字段</th><th>说明</th></tr></thead><tbody>
         <tr><td><code>id</code></td><td>语录编号</td></tr>
-        <tr><td><code>uuid</code></td><td>语录的 UUID</td></tr>
         <tr><td><code>hitokoto</code></td><td>语录正文</td></tr>
         <tr><td><code>type</code></td><td>分类代码</td></tr>
         <tr><td><code>from</code></td><td>出处</td></tr>
