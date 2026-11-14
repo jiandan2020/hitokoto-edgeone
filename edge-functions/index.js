@@ -28,7 +28,6 @@ const page = `<!doctype html>
   <h1>每一次请求，<br>遇见一句话。</h1>
   <p>一个简单的一言接口。获取随机语录，按类别和长度筛选，或选择适合你的返回格式。</p>
   <a class="button" href="/api" target="_blank" rel="noopener">试试接口 ↗</a>
-  <p class="note" style="overflow-wrap:anywhere">当前 API 版本：<span id="api-version">暂不可用</span><br>当前句子库版本：<span id="bundle-version">暂不可用</span></p>
 </header>
 <main>
   <section>
@@ -118,6 +117,7 @@ const page = `<!doctype html>
   </section>
 </main>
 <footer>
+  <p class="note" style="overflow-wrap:anywhere">当前 API 版本：<span id="api-version">暂不可用</span> · 更新时间：<span id="api-updated">暂不可用</span><br>当前句子库版本：<span id="bundle-version">暂不可用</span> · 上游更新时间：<span id="bundle-updated">暂不可用</span></p>
   <div class="footer-sources"><a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">语录数据来自 sentences-bundle</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">项目源码</a></div>
   <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a>
 </footer>
@@ -136,6 +136,15 @@ const page = `<!doctype html>
       observer.observe(section);
     });
   }
+  function displayTime(value, id) {
+    if ((typeof value !== 'number' && typeof value !== 'string') || value === '') return;
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return;
+    document.getElementById(id).textContent = new Intl.DateTimeFormat('zh-CN', {
+      timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).format(date) + '（北京时间）';
+  }
   fetch('/package.json', { cache: 'no-store' })
     .then(response => {
       if (!response.ok) throw new Error('API 版本信息不可用');
@@ -145,6 +154,7 @@ const page = `<!doctype html>
       if (data && typeof data.version === 'string' && data.version.trim()) {
         document.getElementById('api-version').textContent = data.version.trim();
       }
+      if (data) displayTime(data.apiUpdatedAt, 'api-updated');
     })
     .catch(() => {});
   fetch('/version.json', { cache: 'no-store' })
@@ -156,6 +166,7 @@ const page = `<!doctype html>
       if (data && typeof data.bundle_version === 'string' && data.bundle_version.trim()) {
         document.getElementById('bundle-version').textContent = data.bundle_version.trim();
       }
+      if (data) displayTime(data.updated_at, 'bundle-updated');
     })
     .catch(() => {});
 </script>

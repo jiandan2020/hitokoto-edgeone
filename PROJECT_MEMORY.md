@@ -1,5 +1,7 @@
 # 项目记忆
 
+- 首页页脚显示 API 版本及其更新时间（`package.json` 的 `apiUpdatedAt`，发布新 API 版本时维护）、句子库版本及上游更新时间（`version.json` 的 `updated_at`），统一按北京时间显示；上游更新时间不等于本项目同步或部署时间。
+
 - 2026-11-14：语料与同步脚本只保留 `id`、`hitokoto`、`type`、`from`、`from_who`、`length`，保持顺序；成功 JSON 增加响应时生成的 Unix 毫秒 `timestamp`，文本和脚本格式不变。按用户要求移除 `uuid` 属于不兼容变更，API 版本升至 3.0.0；部署及自动同步仍需线上确认。下方旧版本描述为历史记录。
 
 - 目标：将 `jiandan2020/hitokoto-edgeone` 部署到 EdgeOne Pages，只保留 `main` 分支。用户确认将现有 EdgeOne 内容合入 main、删除 edgeone-support 并重命名仓库。

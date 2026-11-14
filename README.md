@@ -26,7 +26,7 @@
 
 ## 版本维护
 
-首页 API 版本取自 `package.json` 的 `version`，表示本项目的版本，不是上游接口版本。发布包含 API 实现变更的版本时同步更新 `package.json` 和 `package-lock.json`：不兼容变更递增主版本，兼容的新功能递增次版本，兼容的修复或性能优化递增修订版本。仅更新句子数据、文档或首页样式不递增 API 版本；句子库有自己的版本号。
+首页 API 版本取自 `package.json` 的 `version`，表示本项目的版本，不是上游接口版本。发布包含 API 实现变更的版本时同步更新 `package.json` 和 `package-lock.json`：不兼容变更递增主版本，兼容的新功能递增次版本，兼容的修复或性能优化递增修订版本。仅更新句子数据、文档或首页样式不递增 API 版本；句子库有自己的版本号。发布 API 新版本时同时更新 `package.json` 的 `apiUpdatedAt`（带时区的发布时间）；首页句子库上游更新时间来自 `version.json` 的 `updated_at`，并非本项目的同步或部署时间。
 
 ## 句子库自动同步
 
