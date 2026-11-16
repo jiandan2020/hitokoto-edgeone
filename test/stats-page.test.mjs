@@ -51,10 +51,19 @@ test("stats page keeps hourly average and weekly summaries", async () => {
 
 test("stats page uses the homepage palette, not the panel palette", async () => {
     const html = await render();
-    for (const token of ["#fff7e8", "#a83d5c", "#30283f", "HITOKOTO · STATS", "bubbles"]) {
+    for (const token of ["#fff7e8", "#a83d5c", "#30283f", "HITOKOTO · STATUS", "bubbles"]) {
         assert.ok(html.includes(token), `homepage style token missing: ${token}`);
     }
     for (const token of ["#edf2ee", "#0c8a5f"]) {
         assert.ok(!html.includes(token), `panel palette token must be gone: ${token}`);
     }
+});
+
+test("stats page is titled 运行状况", async () => {
+    const html = await render();
+    assert.ok(html.includes("<title>运行状况"), "title must be 运行状况");
+    assert.ok(html.includes(">运行状况</h1>"), "heading must be 运行状况");
+    assert.ok(html.includes("HITOKOTO · STATUS"), "eyebrow must be STATUS");
+    assert.ok(!html.includes("站点访问统计"), "old stats title must be gone");
+    assert.ok(!html.includes("HITOKOTO · STATS"), "old stats eyebrow must be gone");
 });

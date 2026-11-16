@@ -17,7 +17,8 @@
 ## 使用
 
 - `/`：接口说明首页
-- `/status`：运行状态，检查 KV 是否真正生效（绑定、写读、索引与分类缓存）
+- `/stats`：运行状况（健康横幅、KV 状态、随机一言、24 小时与每日访问统计）
+- `/status`：运行状态探针数据，只返回 JSON（绑定、写读、索引与分类缓存）；可视化的运行状况见 `/stats`
 - `/stats-daily`：每日汇总数据（KV 缓存，供统计页使用）
 - `/api`：随机一言，JSON 格式（原根路径接口已迁移）
 - `/api?c=a`：按分类获取（a–l）
@@ -26,6 +27,11 @@
 - `/api?min_length=10&max_length=20`：筛选长度
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见部署后的首页。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
+
+## 优化记录（4.6.0）
+
+- `/stats` 改为运行状况页：标题与眉题改为运行状况，健康横幅、KV 清单、一言、24 小时与每日统计全部保留；首页页脚链接同步改名。
+- `/status` 只返回 JSON 探针数据，不再渲染 HTML 页面；可视化的运行状况见 `/stats`。JSON 字段与探针行为不变，`?probe=read` 只读、`?format=json` 仍可加。
 
 ## 优化记录（4.5.1）
 
@@ -64,9 +70,9 @@
 
 首页 API 版本取自 `package.json` 的 `version`，表示本项目的版本，不是上游接口版本。发布包含 API 实现变更的版本时同步更新 `package.json` 和 `package-lock.json`：不兼容变更递增主版本，兼容的新功能递增次版本，兼容的修复或性能优化递增修订版本。仅更新句子数据、文档或首页样式不递增 API 版本；句子库有自己的版本号。发布 API 新版本时同时更新 `package.json` 的 `apiUpdatedAt`（带时区的发布时间）；首页句子库上游更新时间来自 `version.json` 的 `updated_at`，并非本项目的同步或部署时间。
 
-## 站点统计
+## 运行状况
 
-`/stats` 展示固定域名 `hitokoto.xzccs.top` 最近 24 个完整小时的请求数、EdgeOne 响应流量和 5xx 错误率，并单独展示路径精确等于 `/api` 的请求数（不包含查询参数）；数据包含首页和静态资源，默认不包含 Web 防护缓释请求。时间窗口结束于至少 10 分钟以前，统计接口的数据也可能延迟。统计接口公开，无身份验证；所有访问者可查看汇总数据。缓存 10 分钟并合并并发请求：先读实例内缓存，再读 KV（键 `stats_data_cache`，跨实例共享），未命中才调用腾讯云 API；KV 未绑定时退回实例内缓存。页面按监控面板重做：顶部健康横幅与 KV 状态清单（只读探针，每分钟刷新）、随机一言（12 个分类筛选、换一句、显示往返耗时），再是 24 小时与每日统计；公开页上没有写 KV 的按钮，完整写读检测请去 /status。
+`/stats` 是运行状况页，展示固定域名 `hitokoto.xzccs.top` 最近 24 个完整小时的请求数、EdgeOne 响应流量和 5xx 错误率，并单独展示路径精确等于 `/api` 的请求数（不包含查询参数）；数据包含首页和静态资源，默认不包含 Web 防护缓释请求。时间窗口结束于至少 10 分钟以前，统计接口的数据也可能延迟。统计接口公开，无身份验证；所有访问者可查看汇总数据。缓存 10 分钟并合并并发请求：先读实例内缓存，再读 KV（键 `stats_data_cache`，跨实例共享），未命中才调用腾讯云 API；KV 未绑定时退回实例内缓存。页面顶部是健康横幅与 KV 状态清单（只读探针，每分钟刷新）、随机一言（12 个分类筛选、换一句、显示往返耗时），再是 24 小时与每日统计；公开页上没有写 KV 的按钮，完整写读检测见 `/status`（只返回 JSON）。
 
 在 EdgeOne Pages 项目的 Project Settings → Environment Management 中为对应环境设置 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`，然后重新部署；变更只作用于新部署。使用具备站点 `zone-3ry57u0agvak` 的 `teo:DescribeTimingL7AnalysisData` 必要权限的子用户，避免管理员密钥；具体资源级授权能力以腾讯云 CAM 实际支持为准。不要将真实密钥提交仓库、写入客户端或日志，保护项目管理权限与旧部署。未配置、鉴权失败或查询失败时显示暂不可用；5xx 查询无记录时显示暂无数据，不直接假定为零。官方配置参考：https://pages.edgeone.ai/document/build-guide
 
