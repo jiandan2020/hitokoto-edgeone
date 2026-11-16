@@ -32,7 +32,7 @@ const page = `<!doctype html>
 <main>
   <section>
     <h2>快速开始</h2>
-    <p>发送 GET 请求即可获取一条随机一言。默认返回 JSON，默认最大长度为 30。</p>
+    <p>发送 GET 请求即可获取一条随机一言。默认返回 JSON；不传 <code>max_length</code> 时不限制最大长度。只接受 GET / OPTIONS 请求，其他方法返回 405。</p>
     <pre><code>GET /api</code></pre>
     <p>所有查询参数均为可选。接口支持跨域请求；浏览器预检 <code>OPTIONS /api</code> 返回允许的跨域方法和请求头。</p>
     <p class="note">本服务只有一个一言接口，以下参数均用于 <code>/api</code>，不是分别独立的接口。</p>
@@ -47,10 +47,10 @@ const page = `<!doctype html>
         <tr><td><code>min_length</code></td><td>最小长度，包含边界；不传时不限制下限。建议使用正整数。</td><td><code>min_length=10</code></td></tr>
         <tr><td><code>max_length</code></td><td>最大长度，包含边界；不传时不限制上限。建议使用正整数，且不能小于最小长度。</td><td><code>max_length=20</code></td></tr>
         <tr><td><code>select</code></td><td>仅用于 <code>encode=js</code>，指定页面上的 CSS 选择器；默认 <code>.hitokoto</code>。目标元素必须存在。</td><td><code>select=%23hitokoto</code></td></tr>
-        <tr><td><code>callback</code></td><td>非空时将 json、text 或 js 结果包装为 JavaScript 函数调用；json 的参数是 JSON 字符串，而非对象。</td><td><code>callback=show</code></td></tr>
+        <tr><td><code>callback</code></td><td>非空时将 json、text 或 js 结果包装为 JavaScript 函数调用；json 的参数是 JSON 字符串，而非对象。只接受合法函数名，如 <code>show</code>、<code>App.onHitokoto</code>，其他值返回 400。</td><td><code>callback=show</code></td></tr>
       </tbody>
     </table></div>
-    <p class="note">长度依据数据中的 <code>length</code> 字段。当前实现使用整数解析，可能截取数值前缀（例如 <code>12abc</code> 被解析为 12）；请始终传入纯正整数。相同参数重复出现时只读取第一个值。</p>
+    <p class="note">长度依据数据中的 <code>length</code> 字段，只接受纯正整数，<code>12abc</code>、<code>0x10</code>、<code>1.5</code> 会返回 400。相同参数重复出现时只读取第一个值。</p>
   </section>
   <section>
     <h2>分类</h2>

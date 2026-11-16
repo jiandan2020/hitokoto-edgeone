@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const upstream = process.argv[2];
-if (!upstream) throw new Error("用法：node sync-sentences.js <上游仓库目录>");
+if (!upstream) {throw new Error("用法：node sync-sentences.js <上游仓库目录>");}
 const keys = [..."abcdefghijkl"];
 const files = ["version.json", "categories.json", ...keys.map(key => `sentences/${key}.json`)];
 const contents = new Map(files.map(file => [file, readFileSync(join(upstream, file))]));
@@ -19,13 +19,13 @@ for (const key of keys) {
     const records = parse(`sentences/${key}.json`);
     if (!Array.isArray(records) || records.length === 0 || records.some(item =>
         !item || typeof item.hitokoto !== "string" || typeof item.length !== "number" ||
-        !Number.isFinite(item.length) || item.type !== key || item.id == null
-    )) throw new Error(`上游分类 ${key} 数据不完整或格式不兼容`);
+        !Number.isFinite(item.length) || item.type !== key || item.id === null || item.id === undefined,
+    )) {throw new Error(`上游分类 ${key} 数据不完整或格式不兼容`);}
     const reduced = records.map(({ id, hitokoto, type, from, from_who, length }) => ({
         id, hitokoto, type, from: from ?? null, from_who: from_who ?? null, length,
     }));
     contents.set(`sentences/${key}.json`, Buffer.from(`[\n${reduced.map(item => `  ${JSON.stringify(item)}`).join(",\n")}\n]\n`));
     console.log(`${key}: ${records.length} 条`);
 }
-for (const [file, data] of contents) writeFileSync(file, data);
+for (const [file, data] of contents) {writeFileSync(file, data);}
 console.log(`已同步句子库版本 ${manifest.bundle_version ?? "未知"}`);

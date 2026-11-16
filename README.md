@@ -24,6 +24,14 @@
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见部署后的首页。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
 
+## 优化记录（4.1.0）
+
+- 安全：`callback` 只接受合法 JS 函数名，`select` 只接受简单选择器，JS/JSONP 输出改用 `JSON.stringify` 转义，修复了此前可注入任意 JS 的问题。
+- 参数：`min_length` / `max_length` 只接受纯正整数，`12abc` 等不再被截取解析，改为 400。
+- 正确性：非 GET/OPTIONS 请求返回 405，不支持的域名返回 403（此前为 500）；删掉未使用的句子导入和 `sentencesMap`；索引缓存不再整表清空。
+- 性能：`/api` 响应显式 `Cache-Control: no-store`，避免缓存随机结果；`_headers` 给 `sentences/*.json` 加 `immutable`、给 `sentence-index.json` 加 1 小时缓存；删除了实测无效的 `_redirects`（`/sentences/*.json` 本就直接返回 200）。
+- 工程：新增 `npm run lint` 和 `npm test`，修复全部 ESLint 报错，新增 `test/api.test.mjs` 单元测试。
+
 ## 版本维护
 
 首页 API 版本取自 `package.json` 的 `version`，表示本项目的版本，不是上游接口版本。发布包含 API 实现变更的版本时同步更新 `package.json` 和 `package-lock.json`：不兼容变更递增主版本，兼容的新功能递增次版本，兼容的修复或性能优化递增修订版本。仅更新句子数据、文档或首页样式不递增 API 版本；句子库有自己的版本号。发布 API 新版本时同时更新 `package.json` 的 `apiUpdatedAt`（带时区的发布时间）；首页句子库上游更新时间来自 `version.json` 的 `updated_at`，并非本项目的同步或部署时间。
