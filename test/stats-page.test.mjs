@@ -14,9 +14,23 @@ async function render() {
 
 test("stats page contains panel sections", async () => {
     const html = await render();
-    for (const id of ["health-banner", "health-pill", "health-version", "kv-list", "kv-status", "quote-text", "quote-source", "quote-meta", "quote-chips", "quote-next", "requests", "traffic", "rate", "api-share", "hourly-chart", "cumulative", "week-total", "day-average", "best-day", "chart", "refresh", "updated"]) {
+    for (const id of ["health-banner", "health-pill", "health-title", "health-version", "kv-grid", "kv-status", "quote-text", "quote-source", "quote-meta", "quote-chips", "quote-next", "yesterday-requests", "requests", "traffic", "rate", "api-share", "api-requests", "latency", "hourly-chart", "hourly-avg", "cumulative", "week-total", "day-average", "best-day", "chart", "refresh", "updated"]) {
         assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
     }
+});
+
+test("stats page shows KV status as cards, not a table", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"kv-grid\""), "KV cards grid missing");
+    assert.ok(!html.includes("<table class=\"kv\""), "KV table must be gone");
+    assert.ok(!html.includes("id=\"kv-list\""), "kv-list must be gone");
+});
+
+test("overview cards include yesterday requests and live latency", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"yesterday-requests\""), "yesterday requests card missing");
+    assert.ok(html.includes("id=\"latency\""), "latency card missing");
+    assert.ok(html.includes("最近一次换一句的耗时"), "latency sublabel missing");
 });
 
 test("stats page fetches status with read-only probe only", async () => {

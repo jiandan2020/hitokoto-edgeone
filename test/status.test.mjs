@@ -47,7 +47,7 @@ test("KV unbound reports not bound and ok false", async () => {
     assert.equal(data.kv.bound, false);
     assert.equal(data.kv.writeRead, "skipped");
     assert.equal(data.ok, false);
-    assert.equal(data.version, "4.6.0");
+    assert.equal(data.version, "4.7.0");
 });
 
 test("status returns JSON even without format=json", async () => {
@@ -89,7 +89,7 @@ test("KV bound but empty: write-read ok, nothing cached yet", async () => {
     }
 });
 
-test("KV bound and populated: ok true, 12 categories, 11269 sentences", async () => {
+test("KV bound and populated: ok true, 12 categories, 11276 sentences", async () => {
     const kv = makeKv();
     populateKv(kv);
     globalThis.hitokoto_kv = kv;
@@ -101,7 +101,7 @@ test("KV bound and populated: ok true, 12 categories, 11269 sentences", async ()
         assert.equal(data.kv.indexCached, true);
         assert.equal(data.kv.categoriesCached, 12);
         assert.equal(data.kv.categoriesTotal, 12);
-        assert.equal(data.kv.sentencesCached, 11269);
+        assert.equal(data.kv.sentencesCached, 11276);
         assert.equal(data.kv.statsCached, true);
         assert.equal(data.kv.dailyStatsCached, true);
     } finally {
