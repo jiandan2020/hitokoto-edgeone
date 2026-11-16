@@ -18,6 +18,7 @@
 
 - `/`：接口说明首页
 - `/status`：运行状态，检查 KV 是否真正生效（绑定、写读、索引与分类缓存）
+- `/stats-daily`：每日汇总数据（KV 缓存，供统计页使用）
 - `/api`：随机一言，JSON 格式（原根路径接口已迁移）
 - `/api?c=a`：按分类获取（a–l）
 - `/api?mode=category`：先随机分类、再随机句子，小分类和大分类机会均等（默认 `mode=weighted` 为全库等概率）
@@ -25,6 +26,11 @@
 - `/api?min_length=10&max_length=20`：筛选长度
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见部署后的首页。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
+
+## 优化记录（4.4.0）
+
+- 每日汇总进 KV：新增 `/stats-daily`，把 GitHub Actions 每天采集的 `daily-stats.json` 也放进 KV（键 `daily_stats_cache`，1 小时过期），三层缓存：实例内缓存 → KV → jsDelivr（`stats-data` 分支仍是数据源，采集流程不变）。统计页改为请求同源 `/stats-daily`，访客浏览器不再直接访问 jsDelivr；数据每天只更新一次，过期后重新拉取。`/status` 探针新增每日汇总缓存检查，预热脚本也多请求一次 `/stats-daily`。
+- 统计页显示优化：样式与首页统一（渐变背景、衬线标题、圆角卡片）；新增 /api 请求占比卡片、每小时均值与峰值小时、近 7 日合计、已采集日均、最高单日；每日柱状图最高单日用金色标出；加载时数字位显示骨架动画；新增手动刷新按钮，每 10 分钟自动刷新并显示更新时间；刷新时图表会清空重绘，不再叠加。
 
 ## 优化记录（4.3.0）
 
@@ -56,7 +62,7 @@
 
 ### 每日累计和趋势
 
-GitHub Actions 每天北京时间 02:17 采集前一天完整的 24 个小时，保存到公开仓库 `stats-data` 分支的 `daily-stats.json`；统计页通过 jsDelivr CDN 读取该分支的文件，展示自 **2026-11-15** 起的已采集累计值及最近 30 天柱状图，更新不依赖 EdgeOne 重新部署。缺失天数明确标注，不当成零，也不含当天。此时间不是网站成立时间，不能称为历史总量。该文件及其 Git 历史公开，默认口径是 EdgeOne 防护后的整个域名请求。访客浏览器必须能访问 jsDelivr。采集工作流每次运行后请求刷新 CDN 缓存，刷新可能失败或有传播延迟；失败时查看 Actions 日志并重新运行。网络不可用时页面显示暂不可用，不回退到旧部署数据。
+GitHub Actions 每天北京时间 02:17 采集前一天完整的 24 个小时，保存到公开仓库 `stats-data` 分支的 `daily-stats.json`；统计页通过同源 `/stats-daily` 接口读取该文件，展示自 **2026-11-15** 起的已采集累计值及最近 30 天柱状图，更新不依赖 EdgeOne 重新部署。`/stats-daily` 先读实例内缓存，再读 KV（键 `daily_stats_cache`，1 小时），未命中才请求 jsDelivr 并在校验通过后写回 KV，访客浏览器不再直接访问 jsDelivr。缺失天数明确标注，不当成零，也不含当天。此时间不是网站成立时间，不能称为历史总量。该文件及其 Git 历史公开，默认口径是 EdgeOne 防护后的整个域名请求。采集工作流每次运行后请求刷新 CDN 缓存，刷新可能失败或有传播延迟；失败时查看 Actions 日志并重新运行。网络不可用时页面显示暂不可用，不回退到旧部署数据。
 
 在 GitHub 仓库 **Settings → Secrets and variables → Actions → Repository secrets** 单独添加 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`（Pages 的环境变量不会同步到 GitHub），并确保工作流有 `contents: write` 权限；可在 Actions →「采集域名每日请求数」手动运行。任务按日期幂等保存，失败后再次运行会补采仍处于保守 29 天范围内的缺失日期；API 实际数据保留时长未确认，超期或无数据不会视为零，需检查 Actions 日志。采集成功后只推送 `stats-data` 分支，不推送 `main`；确保 EdgeOne 生产部署跟踪 `main`，并检查其他分支的预览部署设置，否则统计分支推送仍可能触发预览构建。首次使用须先部署读取 `stats-data` 分支的页面。
 
