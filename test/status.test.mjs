@@ -35,6 +35,7 @@ function populateKv(kv) {
         kv.store.set(`sentences_${category}_${indexData.version}`, JSON.stringify(records));
     }
     kv.store.set("stats_data_cache", JSON.stringify({ data: { requests: 1 }, expires: Date.now() + 600000 }));
+    kv.store.set("daily_stats_cache", JSON.stringify({ data: { domain: "hitokoto.xzccs.top", startDate: "2026-11-15", days: { "2026-11-15": 10 } }, expires: Date.now() + 3600000 }));
 }
 
 test("KV unbound reports not bound and ok false", async () => {
@@ -46,7 +47,7 @@ test("KV unbound reports not bound and ok false", async () => {
     assert.equal(data.kv.bound, false);
     assert.equal(data.kv.writeRead, "skipped");
     assert.equal(data.ok, false);
-    assert.equal(data.version, "4.3.0");
+    assert.equal(data.version, "4.4.0");
 });
 
 test("KV unbound HTML page shows 未绑定", async () => {
@@ -68,6 +69,7 @@ test("KV bound but empty: write-read ok, nothing cached yet", async () => {
         assert.equal(data.kv.indexCached, false);
         assert.equal(data.kv.categoriesCached, 0);
         assert.equal(data.kv.statsCached, false);
+        assert.equal(data.kv.dailyStatsCached, false);
         assert.equal(data.ok, false);
         assert.ok(kv.store.has("status_probe"));
     } finally {
@@ -89,6 +91,7 @@ test("KV bound and populated: ok true, 12 categories, 11269 sentences", async ()
         assert.equal(data.kv.categoriesTotal, 12);
         assert.equal(data.kv.sentencesCached, 11269);
         assert.equal(data.kv.statsCached, true);
+        assert.equal(data.kv.dailyStatsCached, true);
     } finally {
         delete globalThis.hitokoto_kv;
     }

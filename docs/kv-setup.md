@@ -20,11 +20,14 @@
 | `sentence_index_<语料版本 SHA-256>` | `sentence-index.json` 的全部内容 | 约 53KB |
 | `sentences_<分类 a–l>_<语料版本 SHA-256>` | 该分类的句子数组 | 每个 14–366KB，共约 1.8MB |
 | `stats_data_cache` | 统计接口最近 24 小时汇总 + `expires` | 很小 |
+| `daily_stats_cache` | 每日汇总 `daily-stats.json` + `expires`（1 小时） | 很小 |
+| `status_probe` | `/status` 探针写读测试用的小值 | 很小 |
 
 键只用字母、数字和下划线，符合 KV 的键规则。索引和句子按语料版本分键：
 新版本部署后读新键，旧键自然失效，不会因为 KV 最长 60 秒的一致性窗口
 读到旧版本数据。统计缓存值里自带 `expires`（10 分钟），过期即重新查询
-腾讯云 API；不同节点最多 60 秒内看到旧值，可以接受。
+腾讯云 API；每日汇总缓存值里自带 `expires`（1 小时），过期即重新请求
+jsDelivr；不同节点最多 60 秒内看到旧值，可以接受。
 
 ## 写入方式：懒写入
 
@@ -40,12 +43,12 @@
 node scripts/warm-kv.mjs https://hitokoto.xzccs.top
 ```
 
-预热会逐分类请求 `/api?c=a` … `/api?c=l`，再请求 `/api?mode=category` 和
-`/stats-data`。不传地址时默认 `https://hitokoto.xzccs.top`。
+预热会逐分类请求 `/api?c=a` … `/api?c=l`，再请求 `/api?mode=category`、
+`/stats-data` 和 `/stats-daily`。不传地址时默认 `https://hitokoto.xzccs.top`。
 
 ## 排查
 
-- 打开 `/status` 看运行状态：会直接显示 KV 是否绑定、写读是否通、索引和 12 个分类是否已在 KV 里，不用猜。
+- 打开 `/status` 看运行状态：会直接显示 KV 是否绑定、写读是否通、索引和 12 个分类是否已在 KV 里，以及统计缓存和每日汇总缓存是否已在 KV 里，不用猜。
 - KV 没绑定：接口正常，但每次冷启动仍要读静态文件；检查绑定变量名是否
   为 `hitokoto_kv`，以及是否重新部署。
 - 语料更新后：`npm run generate` 会生成新版本，函数自动读新键；旧键可

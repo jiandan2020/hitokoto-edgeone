@@ -8,6 +8,7 @@
 // 注意：本函数与 /api 不共享实例内缓存，查到的是跨实例共享的 KV 真实状态。
 const STATUS_PROBE_KEY = "status_probe";
 const STATS_KV_KEY = "stats_data_cache";
+const DAILY_KV_KEY = "daily_stats_cache";
 
 function escapeHtml(value) {
     return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -65,6 +66,7 @@ function renderPage(status) {
         ["索引缓存", kv.indexCached ? badge("已缓存", true) : badge("未缓存", false)],
         ["分类缓存", `${kv.categoriesCached} / ${kv.categoriesTotal} 个分类（${kv.sentencesCached} 条） ${kv.categoriesCached === kv.categoriesTotal && kv.categoriesTotal > 0 ? badge("齐全", true) : badge("不全", false)}`],
         ["统计缓存", kv.statsCached ? badge("已缓存", true) : badge("无 / 已过期", false)],
+        ["每日汇总缓存", kv.dailyStatsCached ? badge("已缓存", true) : badge("无 / 已过期", false)],
         ["检查时间", escapeHtml(new Date(status.timestamp).toISOString())],
     ];
     const body = rows.map(([name, value]) => `<tr><th>${escapeHtml(name)}</th><td>${value}</td></tr>`).join("");
@@ -124,6 +126,7 @@ export default async function onRequest(context) {
         categoriesTotal: 0,
         sentencesCached: 0,
         statsCached: false,
+        dailyStatsCached: false,
     };
 
     if (kv) {
@@ -156,6 +159,9 @@ export default async function onRequest(context) {
         }
         const stats = await kvGetJson(kv, STATS_KV_KEY);
         result.statsCached = stats !== null && stats.data !== undefined && Number.isFinite(stats.expires) && stats.expires > Date.now();
+        const daily = await kvGetJson(kv, DAILY_KV_KEY);
+        result.dailyStatsCached = daily !== null && daily.data !== undefined && daily.data.domain === "hitokoto.xzccs.top"
+            && daily.data.days !== undefined && typeof daily.data.days === "object" && Number.isFinite(daily.expires) && daily.expires > Date.now();
     }
 
     const writeOk = readOnly ? true : result.writeRead === "ok";
