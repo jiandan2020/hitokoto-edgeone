@@ -1,5 +1,5 @@
-// 运行状态探针：/status。公开接口，不含密钥。
-// 检查 KV 到底生没生效，而不是只看请求成不成功：
+// 运行状态探针：/status。公开接口，不含密钥。页面最上方有一句随机一言
+// （12 个分类筛选、换一句、显示往返耗时，同源请求 /api）；下方是 KV 探针：
 //   1. KV 是否绑定（变量名 hitokoto_kv）；
 //   2. 写读是否通：往 KV 写一个很小的探针键 status_probe 再读回，比对内容并计时；
 //   3. 索引和 12 个分类是否已在 KV 里（按语料版本分键核对），以及统计缓存是否在 KV 里。
@@ -84,15 +84,62 @@ function renderPage(status) {
     th,td{padding:12px 16px;border-bottom:1px solid #ebdfe5;text-align:left;vertical-align:top}
     th{color:#6d6279;font-weight:600;width:130px}tr:last-child th,tr:last-child td{border-bottom:0}
     a{color:#a83d5c;text-underline-offset:4px}
+    .chip{padding:6px 14px;border:1px solid #ebdfe5;border-radius:999px;background:rgba(255,255,255,.8);color:#30283f;font:600 13px/1.6 system-ui,sans-serif;cursor:pointer}.chip:hover{border-color:#a83d5c}.chip.active{background:#a83d5c;border-color:#a83d5c;color:#fff}
   </style>
 </head>
 <body>
 <main>
   <h1>运行状态 ${status.ok ? badge("正常", true) : badge("异常", false)}</h1>
   <p class="note">检查 KV 缓存是否真正生效：绑定、写读、索引与分类缓存。${status.error ? `错误：${escapeHtml(status.error)}。` : ""}</p>
+  <section style="background:rgba(255,255,255,.76);border:1px solid rgba(255,255,255,.95);border-radius:16px;padding:22px 24px;margin-bottom:22px;box-shadow:0 16px 45px -30px rgba(90,55,80,.3)">
+    <h2 style="font-size:21px;margin:0 0 6px">随机一言</h2>
+    <div id="quote-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0"></div>
+    <p id="quote-text" style="font-size:24px;line-height:1.6;margin:8px 0;color:#30283f">正在取一句…</p>
+    <p id="quote-source" style="text-align:right;color:#6d6279;font-size:15px;margin:8px 0"></p>
+    <p id="quote-meta" style="font-size:13px;color:#6d6279;margin:8px 0"></p>
+    <button id="quote-next" type="button" style="margin-top:8px;padding:9px 22px;border:0;border-radius:999px;background:linear-gradient(110deg,#cc5a48,#c44d7c);color:#fff;font:600 14px/1.5 system-ui,sans-serif;cursor:pointer">换一句</button>
+  </section>
   <table><tbody>${body}</tbody></table>
   <p class="note"><a href="/status">刷新</a> · <a href="/status?format=json">JSON</a> · <a href="/status?probe=read">只读检测</a> · <a href="/api">一言接口</a> · <a href="/stats">站点统计</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone/blob/main/docs/kv-setup.md" target="_blank" rel="noopener">KV 设置文档</a></p>
   <p class="note">默认每次打开会往 KV 写一个很小的探针键 <code>status_probe</code> 并读回；只读检测不写入。KV 未绑定或未预热时分类缓存会显示不全，跑 <code>node scripts/warm-kv.mjs</code> 预热一次即可。</p>
+<script>
+const CATEGORIES = [["a", "动画"], ["b", "漫画"], ["c", "游戏"], ["d", "文学"], ["e", "原创"], ["f", "网络"], ["g", "其他"], ["h", "影视"], ["i", "诗词"], ["j", "网易云"], ["k", "哲学"], ["l", "抖机灵"]];
+let quoteCategory = '';
+function renderChips() {
+  const box = document.getElementById('quote-chips');
+  box.innerHTML = '';
+  const all = document.createElement('button');
+  all.type = 'button'; all.className = 'chip' + (quoteCategory === '' ? ' active' : ''); all.textContent = '全部';
+  all.addEventListener('click', () => { quoteCategory = ''; renderChips(); loadQuote(); });
+  box.append(all);
+  for (const [key, name] of CATEGORIES) {
+    const chip = document.createElement('button');
+    chip.type = 'button'; chip.className = 'chip' + (quoteCategory === key ? ' active' : ''); chip.textContent = name;
+    chip.addEventListener('click', () => { quoteCategory = key; renderChips(); loadQuote(); });
+    box.append(chip);
+  }
+}
+function loadQuote() {
+  const text = document.getElementById('quote-text');
+  text.textContent = '正在取一句…';
+  document.getElementById('quote-source').textContent = '';
+  document.getElementById('quote-meta').textContent = '';
+  const start = performance.now();
+  const url = quoteCategory ? '/api?c=' + quoteCategory : '/api';
+  return fetch(url, {cache:'no-store'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
+    const ms = Math.round(performance.now() - start);
+    text.textContent = data.hitokoto || '暂无句子';
+    document.getElementById('quote-source').textContent = data.from ? '—— ' + data.from + (data.from_who ? ' · ' + data.from_who : '') : '';
+    const cat = (CATEGORIES.find(([k]) => k === data.type) || [])[1] || data.type || '';
+    document.getElementById('quote-meta').textContent = (cat ? '分类 ' + cat + ' · ' : '') + '编号 #' + data.id + ' · ' + data.length + ' 字 · 往返 ' + ms + ' ms';
+  }).catch(() => {
+    text.textContent = '一言暂不可用，请稍后再试。';
+  });
+}
+document.getElementById('quote-next').addEventListener('click', loadQuote);
+renderChips();
+loadQuote();
+</script>
 </main>
 </body>
 </html>`;

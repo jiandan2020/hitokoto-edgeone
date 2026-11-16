@@ -48,3 +48,13 @@ test("stats page keeps hourly average and weekly summaries", async () => {
     assert.ok(html.includes("近 7 日合计"), "7-day total missing");
     assert.ok(html.includes("最高单日"), "best day missing");
 });
+
+test("stats page uses the homepage palette, not the panel palette", async () => {
+    const html = await render();
+    for (const token of ["#fff7e8", "#a83d5c", "#30283f", "HITOKOTO · STATS", "bubbles"]) {
+        assert.ok(html.includes(token), `homepage style token missing: ${token}`);
+    }
+    for (const token of ["#edf2ee", "#0c8a5f"]) {
+        assert.ok(!html.includes(token), `panel palette token must be gone: ${token}`);
+    }
+});

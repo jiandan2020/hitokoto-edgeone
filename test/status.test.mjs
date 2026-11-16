@@ -47,7 +47,7 @@ test("KV unbound reports not bound and ok false", async () => {
     assert.equal(data.kv.bound, false);
     assert.equal(data.kv.writeRead, "skipped");
     assert.equal(data.ok, false);
-    assert.equal(data.version, "4.5.0");
+    assert.equal(data.version, "4.5.1");
 });
 
 test("KV unbound HTML page shows 未绑定", async () => {
@@ -56,6 +56,21 @@ test("KV unbound HTML page shows 未绑定", async () => {
     assert.equal(res.status, 200);
     assert.match(res.headers.get("Content-Type"), /text\/html/);
     assert.match(await res.text(), /未绑定/);
+});
+
+test("status page shows a random quote section at the top", async () => {
+    delete globalThis.hitokoto_kv;
+    const res = await req("/status?probe=read");
+    const html = await res.text();
+    const quotePos = html.indexOf("id=\"quote-text\"");
+    const tablePos = html.indexOf("<table>");
+    assert.ok(quotePos > 0, "quote section missing");
+    assert.ok(tablePos > quotePos, "quote section must come before the KV table");
+    for (const id of ["quote-chips", "quote-source", "quote-meta", "quote-next"]) {
+        assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
+    }
+    assert.ok(html.includes("'/api?c='"), "quotes must come from /api");
+    assert.ok(html.includes("\"网易云\""), "category names missing");
 });
 
 test("KV bound but empty: write-read ok, nothing cached yet", async () => {
