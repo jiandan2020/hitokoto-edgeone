@@ -43,6 +43,7 @@ const page = `<!doctype html>
       <thead><tr><th>参数</th><th>说明</th><th>示例</th></tr></thead>
       <tbody>
         <tr><td><code>c</code></td><td>分类代码，取值 a–l。不传或为空时从所有分类中筛选；只读取第一个 <code>c</code>，不支持多分类同时筛选。未知分类通常返回 404。</td><td><code>c=a</code></td></tr>
+        <tr><td><code>mode</code></td><td>抽取模式：<code>weighted</code>（默认）全库等概率，大分类更容易被抽中；<code>category</code>（别名 <code>balanced</code>）先在符合条件的分类中等概率抽一个分类，再在该分类内等概率抽一句，小分类和大分类机会均等。只指定一个分类时两种模式结果相同，其他值返回 400。</td><td><code>mode=category</code></td></tr>
         <tr><td><code>encode</code></td><td>返回格式：<code>json</code>（默认）、<code>text</code> 或 <code>js</code>。其他值按 JSON 返回，不应用 callback。</td><td><code>encode=text</code></td></tr>
         <tr><td><code>min_length</code></td><td>最小长度，包含边界；不传时不限制下限。建议使用正整数。</td><td><code>min_length=10</code></td></tr>
         <tr><td><code>max_length</code></td><td>最大长度，包含边界；不传时不限制上限。建议使用正整数，且不能小于最小长度。</td><td><code>max_length=20</code></td></tr>
@@ -96,7 +97,7 @@ const page = `<!doctype html>
     <h2>状态码与错误</h2>
     <div class="table-wrap"><table><thead><tr><th>状态码</th><th>含义</th></tr></thead><tbody>
       <tr><td><code>200</code></td><td>请求成功；OPTIONS 预检也返回 200。</td></tr>
-      <tr><td><code>400</code></td><td>长度参数解析后不是正整数，或最大长度小于最小长度。</td></tr>
+      <tr><td><code>400</code></td><td>长度参数解析后不是正整数，或最大长度小于最小长度，或 <code>mode</code> 不是 <code>weighted</code>、<code>category</code>、<code>balanced</code> 之一。</td></tr>
       <tr><td><code>404</code></td><td>没有符合筛选条件的语录。</td></tr>
       <tr><td><code>500</code></td><td>服务处理请求时发生异常。</td></tr>
     </tbody></table></div>
@@ -110,6 +111,7 @@ const page = `<!doctype html>
       <div>动画分类：<a href="/api?c=a" target="_blank" rel="noopener">/api?c=a</a></div>
       <div>纯文本：<a href="/api?encode=text" target="_blank" rel="noopener">/api?encode=text</a></div>
       <div>长度筛选：<a href="/api?min_length=10&amp;max_length=20" target="_blank" rel="noopener">/api?min_length=10&amp;max_length=20</a></div>
+      <div>分类均衡抽取：<a href="/api?mode=category" target="_blank" rel="noopener">/api?mode=category</a></div>
       <div>生成页面脚本：<a href="/api?encode=js&amp;select=%23hitokoto" target="_blank" rel="noopener">/api?encode=js&amp;select=%23hitokoto</a></div>
       <div>文本回调：<a href="/api?encode=text&amp;callback=show" target="_blank" rel="noopener">/api?encode=text&amp;callback=show</a></div>
       <div>JSON 回调：<a href="/api?callback=show" target="_blank" rel="noopener">/api?callback=show</a></div>

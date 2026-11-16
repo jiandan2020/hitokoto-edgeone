@@ -25,6 +25,45 @@ function parsePositiveInt(value) {
     return Number.isSafeInteger(n) && n > 0 ? n : Number.NaN;
 }
 
+// EdgeOne KV：三层缓存，L1 实例内 Map → L2 KV（跨实例共享）→ L3 同源静态文件。
+// KV 是可选的缓存层，不是主数据源：未绑定、读取失败或写入失败时一律退回
+// 静态文件，接口照常工作。控制台需先开通 KV、创建命名空间，再绑定到项目，
+// 绑定变量名必须为 hitokoto_kv。KV 键只允许字母、数字、下划线，所以用下划线
+// 拼接；索引和句子按语料版本分键，版本更新即换键，旧键自然失效，不怕 KV
+// 最长 60 秒的最终一致性读到旧数据。单值上限 25MB，最大分类文件约 366KB。
+// 不同运行时的绑定注入位置不同：Pages/Makers 文档用全局变量，Cloudflare
+// 风格用 env，所以按 globalThis → env 依次找。
+function resolveKv(env) {
+    const fromGlobal = globalThis.hitokoto_kv;
+    if (fromGlobal && typeof fromGlobal.get === "function") {return fromGlobal;}
+    const fromEnv = env && env.hitokoto_kv;
+    if (fromEnv && typeof fromEnv.get === "function") {return fromEnv;}
+    return null;
+}
+function indexKvKey() {
+    return `sentence_index_${sentenceVersion}`;
+}
+function sentencesKvKey(category) {
+    return `sentences_${category}_${sentenceVersion}`;
+}
+async function kvGetJson(kv, key) {
+    try {
+        const raw = await kv.get(key);
+        if (raw && typeof raw === "object") {return raw;}
+        if (typeof raw !== "string" || !raw) {return null;}
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+}
+async function kvPutJson(kv, key, value) {
+    try {
+        await kv.put(key, JSON.stringify(value));
+    } catch (error) {
+        console.error("KV 写入失败，退回静态文件:", error);
+    }
+}
+
 // 使用标准 Response 构造 JSON，避免依赖运行时的 Response.json 支持。
 // /api 是随机接口，显式 no-store，避免 CDN/浏览器缓存某一条随机结果。
 function jsonResponse(data, options = {}) {
@@ -38,8 +77,15 @@ function jsonResponse(data, options = {}) {
 const sentenceCache = new Map();
 const CACHE_LIMIT = 12;
 const CACHE_TTL_MS = 60 * 60 * 1000;
+const sentencePending = new Map();
 
-async function loadSentences(asset, cookie) {
+function cacheSentences(key, records) {
+    sentenceCache.delete(key);
+    sentenceCache.set(key, { records, expires: Date.now() + CACHE_TTL_MS });
+    while (sentenceCache.size > CACHE_LIMIT) {sentenceCache.delete(sentenceCache.keys().next().value);}
+}
+
+async function loadSentences(asset, cookie, kv, category) {
     const key = asset.toString();
     const cached = sentenceCache.get(key);
     if (cached && cached.expires > Date.now()) {
@@ -48,27 +94,64 @@ async function loadSentences(asset, cookie) {
         return cached.records;
     }
     if (cached) {sentenceCache.delete(key);}
-    const records = await fetchSentences(asset, cookie);
-    sentenceCache.delete(key);
-    sentenceCache.set(key, { records, expires: Date.now() + CACHE_TTL_MS });
-    while (sentenceCache.size > CACHE_LIMIT) {sentenceCache.delete(sentenceCache.keys().next().value);}
-    return records;
+    const pending = sentencePending.get(key);
+    if (pending) {return pending;}
+    const task = (async () => {
+        // L2：KV 命中直接用，不再取静态文件；跨实例共享，一次写入全网受益。
+        if (kv && category) {
+            const fromKv = await kvGetJson(kv, sentencesKvKey(category));
+            if (Array.isArray(fromKv)) {
+                cacheSentences(key, fromKv);
+                return fromKv;
+            }
+        }
+        // L3：静态文件是数据源；读到后顺手写回 KV，下一实例就不用再取了。
+        const records = await fetchSentences(asset, cookie);
+        cacheSentences(key, records);
+        if (kv && category) {await kvPutJson(kv, sentencesKvKey(category), records);}
+        return records;
+    })();
+    sentencePending.set(key, task);
+    try {
+        return await task;
+    } finally {
+        if (sentencePending.get(key) === task) {sentencePending.delete(key);}
+    }
 }
 
 // 索引独立保存，按部署域名缓存；缓存中不保存预览凭据。
 const indexCache = new Map();
-async function loadIndex(asset, cookie) {
+const indexPending = new Map();
+async function loadIndex(asset, cookie, kv) {
     const key = asset.toString();
     const cached = indexCache.get(key);
     if (cached && cached.expires > Date.now()) {return cached.index;}
-    const result = await fetch(key, { headers: cookie ? { cookie } : {}, redirect: "manual" });
-    if (!result.ok) {throw new Error(`索引读取失败: ${result.status}`);}
-    const data = await result.json();
-    if (data.version !== sentenceVersion || !data.index || typeof data.index !== "object") {
-        throw new Error("句子索引版本不一致或格式错误");
+    const pending = indexPending.get(key);
+    if (pending) {return pending;}
+    const task = (async () => {
+        if (kv) {
+            const fromKv = await kvGetJson(kv, indexKvKey());
+            if (fromKv && fromKv.version === sentenceVersion && fromKv.index && typeof fromKv.index === "object") {
+                indexCache.set(key, { index: fromKv.index, expires: Date.now() + CACHE_TTL_MS });
+                return fromKv.index;
+            }
+        }
+        const result = await fetch(key, { headers: cookie ? { cookie } : {}, redirect: "manual" });
+        if (!result.ok) {throw new Error(`索引读取失败: ${result.status}`);}
+        const data = await result.json();
+        if (data.version !== sentenceVersion || !data.index || typeof data.index !== "object") {
+            throw new Error("句子索引版本不一致或格式错误");
+        }
+        indexCache.set(key, { index: data.index, expires: Date.now() + CACHE_TTL_MS });
+        if (kv) {await kvPutJson(kv, indexKvKey(), data);}
+        return data.index;
+    })();
+    indexPending.set(key, task);
+    try {
+        return await task;
+    } finally {
+        if (indexPending.get(key) === task) {indexPending.delete(key);}
     }
-    indexCache.set(key, { index: data.index, expires: Date.now() + CACHE_TTL_MS });
-    return data.index;
 }
 
 async function fetchSentences(asset, cookie) {
@@ -133,6 +216,17 @@ export default async function onRequest(context) {
             return createResponse(400, "select 必须是合法的 CSS 选择器");
         }
 
+        // mode=weighted（默认）：全库等概率，即大分类更容易被抽中；
+        // mode=category（别名 balanced）：先在符合条件的分类中等概率抽一个
+        // 分类，再在该分类内等概率抽一句，小分类和大分类机会均等。
+        // 只指定一个分类时两种模式结果相同。
+        const modeParam = url.searchParams.get("mode");
+        const mode = modeParam === null || modeParam === "" ? "weighted" : modeParam;
+        if (mode !== "weighted" && mode !== "category" && mode !== "balanced") {
+            return createResponse(400, "mode 必须是 weighted、category 或 balanced 之一");
+        }
+        const balancedMode = mode === "category" || mode === "balanced";
+
         const minLength = url.searchParams.has("min_length") // 从 URL 中获取 min_length 参数，返回一言的最小长度（包含）
             ? parsePositiveInt(url.searchParams.get("min_length"))
             : 0;
@@ -162,31 +256,52 @@ export default async function onRequest(context) {
         }
         const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim())
             .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
+        const kv = resolveKv(env);
         const indexAsset = new URL(`/sentence-index.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
-        const sentenceIndex = await loadIndex(indexAsset, cookie);
+        const sentenceIndex = await loadIndex(indexAsset, cookie, kv);
 
         // 使用构建时生成的长度索引，等概率选出匹配的句子，再读取所在分类。
+        // 先按分类汇总候选，两种模式共用同一份候选表，只是抽取方式不同。
         const keys = categoryKey ? [categoryKey] : Object.keys(sentenceIndex);
-        const candidates = [];
+        const perCategory = [];
         let total = 0;
         for (const key of keys) {
             if (!Object.prototype.hasOwnProperty.call(sentenceIndex, key)) {continue;}
+            const buckets = [];
+            let categoryTotal = 0;
             for (const [length, indexes] of Object.entries(sentenceIndex[key])) {
                 if (Number(length) < minLength || Number(length) > maxLength) {continue;}
-                candidates.push({ key, indexes });
-                total += indexes.length;
+                buckets.push({ indexes });
+                categoryTotal += indexes.length;
+            }
+            if (categoryTotal > 0) {
+                perCategory.push({ key, buckets, total: categoryTotal });
+                total += categoryTotal;
             }
         }
         if (!total) {return createResponse(404, categoryKey
             ? "没有在该类别找到符合长度条件的一言" : "没有找到符合长度条件的一言");}
-        let selected = Math.floor(Math.random() * total);
         let chosen;
-        for (const candidate of candidates) {
-            if (selected < candidate.indexes.length) { chosen = candidate; break; }
-            selected -= candidate.indexes.length;
+        let selected;
+        if (balancedMode && perCategory.length > 1) {
+            const category = perCategory[Math.floor(Math.random() * perCategory.length)];
+            selected = Math.floor(Math.random() * category.total);
+            for (const bucket of category.buckets) {
+                if (selected < bucket.indexes.length) {chosen = { key: category.key, indexes: bucket.indexes }; break;}
+                selected -= bucket.indexes.length;
+            }
+        } else {
+            selected = Math.floor(Math.random() * total);
+            for (const category of perCategory) {
+                for (const bucket of category.buckets) {
+                    if (selected < bucket.indexes.length) {chosen = { key: category.key, indexes: bucket.indexes }; break;}
+                    selected -= bucket.indexes.length;
+                }
+                if (chosen) {break;}
+            }
         }
         const asset = new URL(`/sentences/${chosen.key}.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
-        const records = await loadSentences(asset, cookie);
+        const records = await loadSentences(asset, cookie, kv, chosen.key);
         const randomSentence = records[chosen.indexes[selected]];
         if (!randomSentence || randomSentence.type !== chosen.key) {
             sentenceCache.delete(asset.toString());

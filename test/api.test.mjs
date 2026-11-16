@@ -1,4 +1,4 @@
-// API 单元测试：用本地文件模拟 EdgeOne 的同源静态资源请求。
+// API 单元测试：用本地文件模拟 EdgeOne 的同源静态资源请求，用 Map 模拟 KV。
 // 运行：npm test
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -6,15 +6,28 @@ import { readFileSync } from "node:fs";
 import handler from "../edge-functions/api.js";
 
 const root = new URL("..", import.meta.url);
+const indexData = JSON.parse(readFileSync(new URL("../sentence-index.json", import.meta.url), "utf8"));
 
-globalThis.fetch = async (input) => {
+const staticFetch = async (input) => {
     const url = new URL(input);
     const body = readFileSync(new URL(`.${url.pathname}`, root));
     return new Response(body, { headers: { "Content-Type": "application/json" } });
 };
+globalThis.fetch = staticFetch;
 
 function req(path, method = "GET") {
     return handler({ request: new Request(`https://hitokoto.xzccs.top${path}`, { method }) });
+}
+
+// KV 模拟：get 返回字符串或 null，put 存字符串，和 EdgeOne KV 的文本模式一致。
+function makeKv() {
+    const store = new Map();
+    return {
+        store,
+        async get(key) { return store.has(key) ? store.get(key) : null; },
+        async put(key, value) { store.set(key, value); },
+        async delete(key) { store.delete(key); },
+    };
 }
 
 test("GET /api returns a random sentence as JSON", async () => {
@@ -85,4 +98,88 @@ test("unsupported host is rejected with 403, not 500", async () => {
 test("unknown category returns 404", async () => {
     const res = await req("/api?c=z");
     assert.equal(res.status, 404);
+});
+
+test("invalid mode returns 400", async () => {
+    const res = await req("/api?mode=random");
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data.code, 400);
+});
+
+test("mode=category with a single category returns that type", async () => {
+    const res = await req("/api?c=a&mode=category");
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.type, "a");
+});
+
+test("mode=category respects the length filter", async () => {
+    for (let i = 0; i < 5; i++) {
+        const res = await req("/api?mode=category&min_length=10&max_length=20");
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.ok(data.length >= 10 && data.length <= 20);
+    }
+});
+
+test("mode=category draws from many categories, not just the biggest", async () => {
+    const seen = new Set();
+    for (let i = 0; i < 60; i++) {
+        const res = await req("/api?mode=category");
+        const data = await res.json();
+        seen.add(data.type);
+    }
+    // 12 个分类等概率抽 60 次，抽到少于 3 个分类的概率可忽略不计。
+    assert.ok(seen.size >= 3, `只抽到 ${[...seen].join(",")}`);
+});
+
+test("mode=balanced is an alias for category", async () => {
+    const seen = new Set();
+    for (let i = 0; i < 30; i++) {
+        const res = await req("/api?mode=balanced");
+        const data = await res.json();
+        seen.add(data.type);
+    }
+    assert.ok(seen.size >= 2, `只抽到 ${[...seen].join(",")}`);
+});
+
+test("KV miss populates KV from static files", async () => {
+    const kv = makeKv();
+    globalThis.hitokoto_kv = kv;
+    // 用带查询参数的新模块实例：实例内缓存是空的，必须走 KV 再走静态文件。
+    const fresh = (await import("../edge-functions/api.js?kv-miss")).default;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=b") });
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.type, "b");
+        assert.ok(kv.store.has(`sentence_index_${indexData.version}`));
+        assert.ok(kv.store.has(`sentences_b_${indexData.version}`));
+        const cached = JSON.parse(kv.store.get(`sentences_b_${indexData.version}`));
+        assert.ok(Array.isArray(cached) && cached.length > 0);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("KV hit serves without fetching static files", async () => {
+    const kv = makeKv();
+    kv.store.set(`sentence_index_${indexData.version}`, JSON.stringify(indexData));
+    const sentencesA = JSON.parse(readFileSync(new URL("../sentences/a.json", import.meta.url), "utf8"));
+    kv.store.set(`sentences_a_${indexData.version}`, JSON.stringify(sentencesA));
+    globalThis.hitokoto_kv = kv;
+    // 用带查询参数的新模块实例：实例内缓存是空的，只能走 KV，静态请求会抛错。
+    const fresh = (await import("../edge-functions/api.js?kv-hit")).default;
+    const throwingFetch = async () => { throw new Error("静态文件不应被请求"); };
+    globalThis.fetch = throwingFetch;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=a") });
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.type, "a");
+    } finally {
+        globalThis.fetch = staticFetch;
+        delete globalThis.hitokoto_kv;
+    }
 });

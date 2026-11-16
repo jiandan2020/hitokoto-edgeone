@@ -6,6 +6,35 @@ const encoder = new TextEncoder();
 let cached;
 let pending;
 
+// 统计缓存也放 KV 跨实例共享：L1 实例内缓存 → L2 KV → 腾讯云 API。
+// KV 键 stats_data_cache，值里带 expires，过期即重新查询；KV 未绑定或
+// 读写失败时退回原有实例内缓存逻辑。绑定变量名与 /api 共用 hitokoto_kv。
+const STATS_KV_KEY = "stats_data_cache";
+function resolveStatsKv(env) {
+    const fromGlobal = globalThis.hitokoto_kv;
+    if (fromGlobal && typeof fromGlobal.get === "function") {return fromGlobal;}
+    const fromEnv = env && env.hitokoto_kv;
+    if (fromEnv && typeof fromEnv.get === "function") {return fromEnv;}
+    return null;
+}
+async function readStatsKv(kv) {
+    try {
+        const raw = await kv.get(STATS_KV_KEY);
+        if (raw && typeof raw === "object") {return raw;}
+        if (typeof raw !== "string" || !raw) {return null;}
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+}
+async function writeStatsKv(kv, entry) {
+    try {
+        await kv.put(STATS_KV_KEY, JSON.stringify(entry));
+    } catch (error) {
+        console.error("统计 KV 写入失败:", error);
+    }
+}
+
 function hex(bytes) {
     return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, "0")).join("");
 }
@@ -95,7 +124,16 @@ export default async function onRequest({ request, env }) {
     if (request.method !== "GET") {return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET" } });}
     try {
         if (!cached || cached.expires <= Date.now()) {
-            if (!pending) {pending = load(env).then(data => { cached = { data, expires: Date.now() + 10 * 60 * 1000 }; return data; }).finally(() => { pending = undefined; });}
+            const kv = resolveStatsKv(env);
+            if (kv) {
+                const fromKv = await readStatsKv(kv);
+                if (fromKv && fromKv.data && Number.isFinite(fromKv.expires) && fromKv.expires > Date.now()) {
+                    cached = fromKv;
+                }
+            }
+        }
+        if (!cached || cached.expires <= Date.now()) {
+            if (!pending) {pending = load(env).then(async (data) => { cached = { data, expires: Date.now() + 10 * 60 * 1000 }; const kv = resolveStatsKv(env); if (kv) {await writeStatsKv(kv, cached);} return data; }).finally(() => { pending = undefined; });}
             await pending;
         }
         return new Response(JSON.stringify(cached.data), { headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
