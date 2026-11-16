@@ -47,7 +47,7 @@ test("KV unbound reports not bound and ok false", async () => {
     assert.equal(data.kv.bound, false);
     assert.equal(data.kv.writeRead, "skipped");
     assert.equal(data.ok, false);
-    assert.equal(data.version, "4.4.0");
+    assert.equal(data.version, "4.5.0");
 });
 
 test("KV unbound HTML page shows 未绑定", async () => {
