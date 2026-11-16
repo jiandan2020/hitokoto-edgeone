@@ -32,7 +32,7 @@ const page = `<!doctype html>
 <main>
   <section>
     <h2>快速开始</h2>
-    <p>发送 GET 请求即可获取一条随机一言。默认返回 JSON，默认最大长度为 30。</p>
+    <p>发送 GET 请求即可获取一条随机一言。默认返回 JSON；不传 <code>max_length</code> 时不限制最大长度。只接受 GET / OPTIONS 请求，其他方法返回 405。</p>
     <pre><code>GET /api</code></pre>
     <p>所有查询参数均为可选。接口支持跨域请求；浏览器预检 <code>OPTIONS /api</code> 返回允许的跨域方法和请求头。</p>
     <p class="note">本服务只有一个一言接口，以下参数均用于 <code>/api</code>，不是分别独立的接口。</p>
@@ -43,14 +43,15 @@ const page = `<!doctype html>
       <thead><tr><th>参数</th><th>说明</th><th>示例</th></tr></thead>
       <tbody>
         <tr><td><code>c</code></td><td>分类代码，取值 a–l。不传或为空时从所有分类中筛选；只读取第一个 <code>c</code>，不支持多分类同时筛选。未知分类通常返回 404。</td><td><code>c=a</code></td></tr>
+        <tr><td><code>mode</code></td><td>抽取模式：<code>weighted</code>（默认）全库等概率，大分类更容易被抽中；<code>category</code>（别名 <code>balanced</code>）先在符合条件的分类中等概率抽一个分类，再在该分类内等概率抽一句，小分类和大分类机会均等。只指定一个分类时两种模式结果相同，其他值返回 400。</td><td><code>mode=category</code></td></tr>
         <tr><td><code>encode</code></td><td>返回格式：<code>json</code>（默认）、<code>text</code> 或 <code>js</code>。其他值按 JSON 返回，不应用 callback。</td><td><code>encode=text</code></td></tr>
         <tr><td><code>min_length</code></td><td>最小长度，包含边界；不传时不限制下限。建议使用正整数。</td><td><code>min_length=10</code></td></tr>
         <tr><td><code>max_length</code></td><td>最大长度，包含边界；不传时不限制上限。建议使用正整数，且不能小于最小长度。</td><td><code>max_length=20</code></td></tr>
         <tr><td><code>select</code></td><td>仅用于 <code>encode=js</code>，指定页面上的 CSS 选择器；默认 <code>.hitokoto</code>。目标元素必须存在。</td><td><code>select=%23hitokoto</code></td></tr>
-        <tr><td><code>callback</code></td><td>非空时将 json、text 或 js 结果包装为 JavaScript 函数调用；json 的参数是 JSON 字符串，而非对象。</td><td><code>callback=show</code></td></tr>
+        <tr><td><code>callback</code></td><td>非空时将 json、text 或 js 结果包装为 JavaScript 函数调用；json 的参数是 JSON 字符串，而非对象。只接受合法函数名，如 <code>show</code>、<code>App.onHitokoto</code>，其他值返回 400。</td><td><code>callback=show</code></td></tr>
       </tbody>
     </table></div>
-    <p class="note">长度依据数据中的 <code>length</code> 字段。当前实现使用整数解析，可能截取数值前缀（例如 <code>12abc</code> 被解析为 12）；请始终传入纯正整数。相同参数重复出现时只读取第一个值。</p>
+    <p class="note">长度依据数据中的 <code>length</code> 字段，只接受纯正整数，<code>12abc</code>、<code>0x10</code>、<code>1.5</code> 会返回 400。相同参数重复出现时只读取第一个值。</p>
   </section>
   <section>
     <h2>分类</h2>
@@ -96,7 +97,7 @@ const page = `<!doctype html>
     <h2>状态码与错误</h2>
     <div class="table-wrap"><table><thead><tr><th>状态码</th><th>含义</th></tr></thead><tbody>
       <tr><td><code>200</code></td><td>请求成功；OPTIONS 预检也返回 200。</td></tr>
-      <tr><td><code>400</code></td><td>长度参数解析后不是正整数，或最大长度小于最小长度。</td></tr>
+      <tr><td><code>400</code></td><td>长度参数解析后不是正整数，或最大长度小于最小长度，或 <code>mode</code> 不是 <code>weighted</code>、<code>category</code>、<code>balanced</code> 之一。</td></tr>
       <tr><td><code>404</code></td><td>没有符合筛选条件的语录。</td></tr>
       <tr><td><code>500</code></td><td>服务处理请求时发生异常。</td></tr>
     </tbody></table></div>
@@ -110,6 +111,7 @@ const page = `<!doctype html>
       <div>动画分类：<a href="/api?c=a" target="_blank" rel="noopener">/api?c=a</a></div>
       <div>纯文本：<a href="/api?encode=text" target="_blank" rel="noopener">/api?encode=text</a></div>
       <div>长度筛选：<a href="/api?min_length=10&amp;max_length=20" target="_blank" rel="noopener">/api?min_length=10&amp;max_length=20</a></div>
+      <div>分类均衡抽取：<a href="/api?mode=category" target="_blank" rel="noopener">/api?mode=category</a></div>
       <div>生成页面脚本：<a href="/api?encode=js&amp;select=%23hitokoto" target="_blank" rel="noopener">/api?encode=js&amp;select=%23hitokoto</a></div>
       <div>文本回调：<a href="/api?encode=text&amp;callback=show" target="_blank" rel="noopener">/api?encode=text&amp;callback=show</a></div>
       <div>JSON 回调：<a href="/api?callback=show" target="_blank" rel="noopener">/api?callback=show</a></div>

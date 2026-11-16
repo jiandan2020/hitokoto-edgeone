@@ -1,12 +1,14 @@
 {
   "name": "hitokoto-edgeone",
-  "version": "4.0.0",
-  "apiUpdatedAt": "2026-11-14T18:12:20+08:00",
+  "version": "4.2.0",
+  "apiUpdatedAt": "2026-11-16T22:47:00+08:00",
   "description": "Hitokoto API for Tencent EdgeOne",
   "type": "module",
   "scripts": {
     "build": "node check-deployment.js",
-    "generate": "node build.js"
+    "generate": "node build.js",
+    "lint": "eslint .",
+    "test": "node --test"
   },
   "devDependencies": {
     "eslint": "^9.18.0"
