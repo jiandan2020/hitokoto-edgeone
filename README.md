@@ -17,6 +17,7 @@
 ## 使用
 
 - `/`：接口说明首页
+- `/status`：运行状态，检查 KV 是否真正生效（绑定、写读、索引与分类缓存）
 - `/api`：随机一言，JSON 格式（原根路径接口已迁移）
 - `/api?c=a`：按分类获取（a–l）
 - `/api?mode=category`：先随机分类、再随机句子，小分类和大分类机会均等（默认 `mode=weighted` 为全库等概率）
@@ -24,6 +25,10 @@
 - `/api?min_length=10&max_length=20`：筛选长度
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见部署后的首页。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
+
+## 优化记录（4.3.0）
+
+- 运行状态探针：新增 `/status`，公开显示 KV 是否真正生效——是否绑定、写读是否通（往 KV 写一个很小的探针键 `status_probe` 再读回比对并计时）、索引和 12 个分类是否已在 KV 里、统计缓存是否在 KV 里。加 `?format=json` 返回 JSON，加 `?probe=read` 只读不写（适合监控定时拉取）。首页页脚加了运行状态链接。
 
 ## 优化记录（4.2.0）
 
