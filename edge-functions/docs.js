@@ -1,342 +1,42 @@
-// 接口文档页：语句接口（/api）的使用说明，内容以本项目实际实现为准。
-// 本页为纯静态文档，不发任何请求。
-const page = `<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="一言 API 接口文档：随机获取一句话，支持分类、长度筛选和多种返回格式。">
-  <title>接口文档 · 小周的一言API</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-  <script>(function(){try{var t=localStorage.getItem('hitokoto-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
-  <style>
-    :root{
-      color-scheme:light;
-      --md-primary:#b23c00;--md-on-primary:#fff;--md-primary-container:#ffdcc3;--md-on-primary-container:#3a1400;
-      --md-secondary:#775a44;--md-on-secondary:#fff;--md-secondary-container:#ffdcc3;--md-on-secondary-container:#2d1707;
-      --md-tertiary:#8a6100;--md-on-tertiary:#fff;--md-tertiary-container:#ffdea6;--md-on-tertiary-container:#2a1a00;
-      --md-error:#b3261e;--md-on-error:#fff;--md-error-container:#f9dedc;--md-on-error-container:#410e0b;
-      --md-surface:#fff8f2;--md-surface-dim:#e9d8cb;
-      --md-surface-container-lowest:#fff;--md-surface-container-low:#fff3ea;--md-surface-container:#fbe9dc;
-      --md-surface-container-high:#f5dcd0;--md-surface-container-highest:#efd0c0;
-      --md-on-surface:#221a14;--md-on-surface-variant:#53443a;
-      --md-outline:#857265;--md-outline-variant:#dcc7b8;
-      --md-inverse-surface:#372e27;--md-inverse-on-surface:#ffede2;
-      --md-success-container:#dce9dc;--md-on-success-container:#1b4d1f;
-      --md-elev-1:0 1px 2px rgba(0,0,0,.3),0 1px 3px 1px rgba(0,0,0,.15);
-      --md-elev-2:0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15);
-      --md-elev-3:0 1px 3px rgba(0,0,0,.3),0 4px 8px 3px rgba(0,0,0,.15);
-      --md-ease:cubic-bezier(.2,0,0,1);
-      --md-hover:rgba(178,60,0,.08);--md-primary-hover:#8f2f00;
-    }
-    [data-theme="dark"]{
-      color-scheme:dark;
-      --md-primary:#ffb08a;--md-on-primary:#3a1400;--md-primary-container:#5f2a10;--md-on-primary-container:#ffdcc3;
-      --md-secondary:#d8bfa8;--md-on-secondary:#2d1707;--md-secondary-container:#4a3527;--md-on-secondary-container:#ffdcc3;
-      --md-tertiary:#f0c06a;--md-on-tertiary:#2a1a00;--md-tertiary-container:#4d3a00;--md-on-tertiary-container:#ffdea6;
-      --md-error:#ffb4ab;--md-on-error:#410e0b;--md-error-container:#5c1a15;--md-on-error-container:#f9dedc;
-      --md-surface:#1a1512;--md-surface-dim:#120e0b;
-      --md-surface-container-lowest:#120e0b;--md-surface-container-low:#211a15;--md-surface-container:#2a211b;
-      --md-surface-container-high:#352a22;--md-surface-container-highest:#403329;
-      --md-on-surface:#f5e8dd;--md-on-surface-variant:#cbb9a9;
-      --md-outline:#978578;--md-outline-variant:#4a3f36;
-      --md-inverse-surface:#f5e8dd;--md-inverse-on-surface:#221a14;
-      --md-success-container:#1e3a24;--md-on-success-container:#bfe6c4;
-      --md-hover:rgba(255,176,138,.12);--md-primary-hover:#ffc9a8;
-      --md-elev-1:0 1px 2px rgba(0,0,0,.5),0 1px 3px 1px rgba(0,0,0,.35);
-      --md-elev-2:0 1px 2px rgba(0,0,0,.5),0 2px 6px 2px rgba(0,0,0,.35);
-      --md-elev-3:0 1px 3px rgba(0,0,0,.5),0 4px 8px 3px rgba(0,0,0,.35);
-    }
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;min-height:100vh;color:var(--md-on-surface);background:var(--md-surface);font-family:"Google Sans","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;font-size:16px;line-height:1.5}
-    a{color:var(--md-primary);text-decoration:none}
-    a:hover{text-decoration:underline}
-    a:focus-visible{outline:2px solid var(--md-primary);outline-offset:3px;border-radius:4px}
-    button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px;border-radius:4px}
-    header,main,footer{max-width:960px;margin:auto;padding-left:24px;padding-right:24px}
-    header{padding-top:64px;padding-bottom:40px;text-align:center}
-    .eyebrow{font-size:12px;font-weight:500;line-height:1.5;letter-spacing:.12em;text-transform:uppercase;color:var(--md-primary)}
-    h1{font-size:clamp(32px,6vw,45px);font-weight:500;line-height:1.2;letter-spacing:0;margin:16px 0 12px;color:var(--md-on-surface)}
-    header p{color:var(--md-on-surface-variant);max-width:600px;margin:0 auto 24px}
-    .button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;line-height:1.5;text-decoration:none;cursor:pointer;transition:box-shadow .2s var(--md-ease),background .2s var(--md-ease)}
-    .button:hover{background:var(--md-primary-hover);box-shadow:var(--md-elev-1);text-decoration:none}
-    .button:active{transform:scale(.98)}
-    .button.ghost{background:transparent;color:var(--md-primary);border:1px solid var(--md-outline)}
-    .button.ghost:hover{background:var(--md-hover);box-shadow:none}
-    header .note{margin-top:20px;font-size:12px;color:var(--md-on-surface-variant)}
-    section{background:var(--md-surface-container);border-radius:28px;padding:32px;margin-bottom:24px}
-    h2{font-size:22px;font-weight:400;line-height:1.27;margin:0 0 16px;color:var(--md-on-surface)}
-    h3{font-size:16px;font-weight:500;line-height:1.5;margin:20px 0 8px}
-    p{margin:8px 0}
-    code,pre{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;font-size:.9em}
-    code{background:var(--md-surface-container-high);color:var(--md-on-surface-variant);padding:2px 6px;border-radius:4px;overflow-wrap:anywhere}
-    pre{background:var(--md-surface-container-high);padding:16px;border-radius:16px;overflow:auto;line-height:1.6;margin:12px 0}
-    pre code{background:none;padding:0;overflow-wrap:normal}
-    table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}
-    th,td{padding:12px 10px;border-bottom:1px solid var(--md-outline-variant);vertical-align:top}
-    th{color:var(--md-on-surface-variant);font-weight:500}
-    tr:last-child td{border-bottom:0}
-    .table-wrap{overflow-x:auto}
-    .note{color:var(--md-on-surface-variant);font-size:14px}
-    .examples{display:grid;gap:8px}
-    .examples a{overflow-wrap:anywhere}
-    footer{text-align:center;font-size:13px;line-height:1.6;color:var(--md-on-surface-variant);padding-top:24px;padding-bottom:48px}
-    .footer-sources{margin-bottom:16px}
-    .footer-sources a{color:var(--md-on-surface-variant)}
-    .footer-sources a:hover{color:var(--md-primary)}
-    .icp-link{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:999px;background:var(--md-surface-container-high);color:var(--md-on-surface-variant);text-decoration:none;transition:background .2s var(--md-ease),color .2s var(--md-ease)}
-    .icp-link:hover{color:var(--md-primary);background:var(--md-surface-container-highest);text-decoration:none}
-    .edgeone-badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;color:var(--md-on-surface-variant);text-decoration:none;transition:color .2s var(--md-ease)}
-    .edgeone-badge:hover{color:var(--md-primary);text-decoration:none}
-    .edgeone-badge img{height:20px;width:auto;display:block}
-    .icp-link img{width:16px;height:16px;object-fit:contain}
-    .reveal{opacity:0;transform:translateY(16px);transition:opacity .5s var(--md-ease),transform .5s var(--md-ease)}
-    .reveal.visible{opacity:1;transform:none}
-    .docs-layout{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start;max-width:1100px}
-    .toc{position:sticky;top:84px;background:var(--md-surface-container);border-radius:28px;padding:20px}
-    .toc summary{cursor:pointer;list-style:none}
-    .toc summary::-webkit-details-marker{display:none}
-    .toc-title{font-size:14px;font-weight:500;line-height:1.5;margin-bottom:8px;color:var(--md-on-surface)}
-    .toc a{display:block;padding:8px 12px;border-radius:12px;color:var(--md-on-surface-variant);font-size:14px;text-decoration:none}
-    .toc a:hover{background:var(--md-hover);color:var(--md-on-surface);text-decoration:none}
-    .toc a.active{background:var(--md-primary-container);color:var(--md-on-primary-container)}
-    .docs-body{min-width:0}
-    .docs-body section{scroll-margin-top:80px}
-    pre{position:relative}
-    .code-copy{position:absolute;top:8px;right:8px;padding:4px 10px;border:0;border-radius:999px;background:var(--md-surface-container-highest);color:var(--md-on-surface-variant);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer}
-    .code-copy:hover{background:var(--md-hover);color:var(--md-on-surface)}
-    @media(max-width:900px){.docs-layout{grid-template-columns:1fr}.toc{position:static}}
-    @media(max-width:600px){header{padding-top:48px;padding-bottom:32px}section{padding:24px 20px;border-radius:24px}th,td{min-width:110px}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.icp-link,.edgeone-badge{transition:none}.reveal{opacity:1;transform:none}.app-menu-dropdown{animation:none}}
-  
-    .app-bar{position:sticky;top:0;z-index:10;background:var(--md-surface-container-low);box-shadow:var(--md-elev-1)}
-    .app-bar-inner{max-width:960px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px}
-    .app-logo{display:inline-flex;align-items:center;gap:10px;color:var(--md-on-surface);font-size:17px;font-weight:500;text-decoration:none}
-    .app-logo:hover{text-decoration:none}
-    .app-logo img{width:28px;height:28px;display:block}
-    .app-nav-links{display:flex;align-items:center;gap:4px;margin-left:auto}
-    .app-nav-links a{padding:8px 12px;border-radius:999px;color:var(--md-on-surface-variant);font-size:14px;font-weight:500;text-decoration:none}
-    .app-nav-links a:hover{background:var(--md-hover);color:var(--md-on-surface);text-decoration:none}
-    .app-menu{position:relative;display:none;margin-left:auto}
-    .app-menu-btn{width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--md-on-surface);font-size:20px;line-height:1;cursor:pointer}
-    .app-menu-btn:hover{background:var(--md-hover)}
-    .theme-btn{flex:none;width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--md-on-surface);font-size:18px;line-height:1;cursor:pointer}
-    .theme-btn:hover{background:var(--md-hover)}
-    .app-menu-dropdown{position:absolute;top:calc(100% + 8px);right:0;min-width:160px;padding:8px;border-radius:16px;background:var(--md-surface-container-high);box-shadow:var(--md-elev-2);animation:menu-in .2s var(--md-ease)}
-    @keyframes menu-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-    .app-menu-dropdown a{display:block;padding:10px 14px;border-radius:12px;color:var(--md-on-surface);font-size:14px;font-weight:500;text-decoration:none}
-    .app-menu-dropdown a:hover{background:var(--md-hover);text-decoration:none}
-    .app-menu-dropdown a.active{background:var(--md-primary-container);color:var(--md-on-primary-container)}
-    @media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block;margin-left:0}.app-bar-inner{gap:12px}.theme-btn{margin-left:auto}}
-  </style>
-</head>
-<body>
-<nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><button class="theme-btn" id="theme-btn" type="button" aria-label="切换深色模式">🌙</button><div class="app-menu"><button class="app-menu-btn" id="menu-btn" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="menu-dropdown">☰</button><div class="app-menu-dropdown" id="menu-dropdown" hidden><a href="/">首页</a><a href="/docs" class="active">接口文档</a><a href="/stats">运行状况</a></div></div></div></nav>
-<header>
-  <div class="eyebrow">HITOKOTO · 接口文档</div>
-  <h1>接口文档</h1>
-  <p>一言指一句话，可以是动漫台词或网络小段子。本接口随机返回一句语录，支持按分类和长度筛选，以及 JSON、纯文本、JS 脚本三种返回格式。</p>
-  <a class="button" href="/api" target="_blank" rel="noopener">试试接口 ↗</a>
-</header>
-<main class="docs-layout">
-  <details class="toc" id="toc" open>
-    <summary class="toc-title">目录</summary>
-    <a href="#sec-1">1. 概述</a>
-    <a href="#sec-2">2. 请求地址</a>
-    <a href="#sec-3">3. 请求参数</a>
-    <a href="#sec-4">4. 句子分类</a>
-    <a href="#sec-5">5. 返回编码</a>
-    <a href="#sec-6">6. 回调</a>
-    <a href="#sec-7">7. 返回字段</a>
-    <a href="#sec-8">8. 状态码与错误</a>
-    <a href="#sec-9">9. 示例</a>
-    <a href="#sec-10">10. 注意事项</a>
-  </details>
-  <div class="docs-body">
-  <section id="sec-1">
-    <h2>1. 概述</h2>
-    <p>一言（Hitokoto）指一句语录，内容可为动漫台词、网络段子等。本接口用于随机返回一句语录，支持按分类和长度筛选，并提供 JSON、纯文本、JavaScript 脚本三种返回格式。</p>
-    <p>本服务提供单一随机语录接口。语录数据来自 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer"><code>sentences-bundle</code></a>，当前共收录 11,276 条，分为 12 个分类。接口部署于腾讯云 EdgeOne Pages，域名为 <code>hitokoto.xzccs.top</code>。</p>
-  </section>
-  <section id="sec-2">
-    <h2>2. 请求地址</h2>
-    <pre><code>GET https://hitokoto.xzccs.top/api</code></pre>
-    <p>接口仅接受 <code>GET</code> 与 <code>OPTIONS</code> 请求，其他请求方法返回 <code>405</code>。浏览器预检请求 <code>OPTIONS /api</code> 返回 <code>200</code>。</p>
-  </section>
-  <section id="sec-3">
-    <h2>3. 请求参数</h2>
-    <p>所有查询参数均为可选。参数需置于 URL 查询字符串中。</p>
-    <div class="table-wrap"><table>
-      <thead><tr><th>参数</th><th>说明</th><th>默认值</th><th>示例</th></tr></thead>
-      <tbody>
-        <tr><td><code>c</code></td><td>分类代码，取值为 <code>a</code>–<code>l</code>。不传或为空时从所有分类中筛选；仅读取第一个 <code>c</code>，不支持多分类同时筛选。未知分类通常返回 <code>404</code>。</td><td>—</td><td><code>c=a</code></td></tr>
-        <tr><td><code>mode</code></td><td>抽取模式。<code>weighted</code>：默认模式，全库等概率抽取，大分类更容易被抽中；<code>category</code>（别名 <code>balanced</code>）：先在符合条件的分类中等概率抽取一个分类，再在该分类内等概率抽取一句，使小分类与大分类机会均等。仅指定一个分类时，两种模式结果相同。其他取值返回 <code>400</code>。</td><td><code>weighted</code></td><td><code>mode=category</code></td></tr>
-        <tr><td><code>encode</code></td><td>返回格式，支持 <code>json</code>（默认）、<code>text</code>、<code>js</code>。其他值按 JSON 返回，且不应用 <code>callback</code>。</td><td><code>json</code></td><td><code>encode=text</code></td></tr>
-        <tr><td><code>min_length</code></td><td>最小长度，包含边界。不传时不限制下限。只能使用正整数。</td><td>—</td><td><code>min_length=10</code></td></tr>
-        <tr><td><code>max_length</code></td><td>最大长度，包含边界。不传时不限制上限。只能使用正整数，且不能小于 <code>min_length</code>。</td><td>—</td><td><code>max_length=20</code></td></tr>
-        <tr><td><code>select</code></td><td>仅用于 <code>encode=js</code>，指定页面上的 CSS 选择器。默认值为 <code>.hitokoto</code>。目标元素必须存在。</td><td><code>.hitokoto</code></td><td><code>select=%23hitokoto</code></td></tr>
-        <tr><td><code>callback</code></td><td>非空时，将 <code>json</code>、<code>text</code> 或 <code>js</code> 结果包装为 JavaScript 函数调用。对于 JSON 格式，回调参数为 JSON 字符串，而非对象。仅接受合法函数名，如 <code>show</code>、<code>App.onHitokoto</code>；其他值返回 <code>400</code>。</td><td>—</td><td><code>callback=show</code></td></tr>
-      </tbody>
-    </table></div>
-    <h3>3.1 参数补充规则</h3>
-    <ul>
-      <li>相同参数重复出现时，仅读取第一个值。</li>
-    </ul>
-  </section>
-  <section id="sec-4">
-    <h2>4. 句子分类</h2>
-    <p>通过 <code>c</code> 参数指定一个分类；不传 <code>c</code> 时从全部分类中筛选。</p>
-    <div class="table-wrap"><table>
-      <thead><tr><th>代码</th><th>分类</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><a href="/api?c=a" target="_blank" rel="noopener"><code>a</code></a></td><td>动画</td><td>动画类语录</td></tr>
-        <tr><td><a href="/api?c=b" target="_blank" rel="noopener"><code>b</code></a></td><td>漫画</td><td>漫画类语录</td></tr>
-        <tr><td><a href="/api?c=c" target="_blank" rel="noopener"><code>c</code></a></td><td>游戏</td><td>游戏类语录</td></tr>
-        <tr><td><a href="/api?c=d" target="_blank" rel="noopener"><code>d</code></a></td><td>文学</td><td>主要收录现代文学，如小说、散文、戏剧</td></tr>
-        <tr><td><a href="/api?c=e" target="_blank" rel="noopener"><code>e</code></a></td><td>原创</td><td>原创类语录</td></tr>
-        <tr><td><a href="/api?c=f" target="_blank" rel="noopener"><code>f</code></a></td><td>网络</td><td>来自网络的语录</td></tr>
-        <tr><td><a href="/api?c=g" target="_blank" rel="noopener"><code>g</code></a></td><td>其他</td><td>其他类语录</td></tr>
-        <tr><td><a href="/api?c=h" target="_blank" rel="noopener"><code>h</code></a></td><td>影视</td><td>影视类语录</td></tr>
-        <tr><td><a href="/api?c=i" target="_blank" rel="noopener"><code>i</code></a></td><td>诗词</td><td>主要收录中国古代文学，如诗、歌、词、赋、曲</td></tr>
-        <tr><td><a href="/api?c=j" target="_blank" rel="noopener"><code>j</code></a></td><td>网易云</td><td>主要收录网易云音乐热评</td></tr>
-        <tr><td><a href="/api?c=k" target="_blank" rel="noopener"><code>k</code></a></td><td>哲学</td><td>哲学类语录</td></tr>
-        <tr><td><a href="/api?c=l" target="_blank" rel="noopener"><code>l</code></a></td><td>抖机灵</td><td>抖机灵类语录</td></tr>
-      </tbody>
-    </table></div>
-  </section>
-  <section id="sec-5">
-    <h2>5. 返回编码</h2>
-    <h3>5.1 JSON（默认）</h3>
-    <p>成功时返回一个对象。字段值取决于语录数据，部分字段可能为 <code>null</code>。</p>
-    <p>响应头：</p>
-    <pre><code>Content-Type: application/json; charset=UTF-8</code></pre>
-    <h3>5.2 纯文本</h3>
-    <p>使用 <code>encode=text</code> 时，仅返回语录正文。</p>
-    <p>响应头：</p>
-    <pre><code>Content-Type: text/plain; charset=UTF-8</code></pre>
-    <h3>5.3 JavaScript</h3>
-    <p>使用 <code>encode=js</code> 时，返回一段脚本。脚本执行时将正文写入 <code>select</code> 指定元素的 <code>innerText</code>。</p>
-    <p>响应头：</p>
-    <pre><code>Content-Type: application/javascript; charset=UTF-8</code></pre>
-    <p>页面使用示例：</p>
-    <pre><code>&lt;p id="hitokoto"&gt;&lt;/p&gt;
-&lt;script src="https://hitokoto.xzccs.top/api?encode=js&amp;select=%23hitokoto"&gt;&lt;/script&gt;</code></pre>
-  </section>
-  <section id="sec-6">
-    <h2>6. 回调</h2>
-    <p>使用 <code>callback=show</code> 时，响应形如：</p>
-    <pre><code>;show("内容");</code></pre>
-  </section>
-  <section id="sec-7">
-    <h2>7. 返回字段</h2>
-    <div class="table-wrap"><table>
-      <thead><tr><th>字段</th><th>说明</th></tr></thead><tbody>
-        <tr><td><code>id</code></td><td>语录编号</td></tr>
-        <tr><td><code>hitokoto</code></td><td>语录正文</td></tr>
-        <tr><td><code>type</code></td><td>分类代码</td></tr>
-        <tr><td><code>from</code></td><td>出处</td></tr>
-        <tr><td><code>from_who</code></td><td>作者或来源人物，可能为 <code>null</code></td></tr>
-        <tr><td><code>length</code></td><td>数据记录的语录长度</td></tr>
-        <tr><td><code>timestamp</code></td><td>响应生成时的 Unix 时间戳，单位毫秒</td></tr>
-      </tbody></table></div>
-  </section>
-  <section id="sec-8">
-    <h2>8. 状态码与错误</h2>
-    <div class="table-wrap"><table><thead><tr><th>状态码</th><th>含义</th></tr></thead><tbody>
-      <tr><td><code>200</code></td><td>请求成功；<code>OPTIONS</code> 预检也返回 <code>200</code>。</td></tr>
-      <tr><td><code>400</code></td><td>长度参数解析后不是正整数，或最大长度小于最小长度，或 <code>mode</code> 不是 <code>weighted</code>、<code>category</code>、<code>balanced</code> 之一，或 <code>callback</code> 不是合法函数名，或 <code>select</code> 不是合法选择器。</td></tr>
-      <tr><td><code>404</code></td><td>没有符合筛选条件的语录。</td></tr>
-      <tr><td><code>405</code></td><td>仅支持 <code>GET</code> 与 <code>OPTIONS</code> 请求。</td></tr>
-      <tr><td><code>500</code></td><td>服务处理请求时发生异常。</td></tr>
-    </tbody></table></div>
-    <p>错误以 JSON 返回，包含 <code>code</code>、<code>message</code> 和毫秒级时间戳 <code>timestamp</code>。示例：</p>
-    <pre><code>{"code":400,"message":"min_length 必须是正整数","timestamp":1730000000000}</code></pre>
-  </section>
-  <section id="sec-9">
-    <h2>9. 示例</h2>
-    <h3>9.1 随机 JSON</h3>
-    <p>请求：</p>
-    <pre><code>GET /api</code></pre>
-    <p>响应：</p>
-    <pre><code>{
-  "id": 4529,
-  "hitokoto": "如果争端能够避免，那我们应当沉默——如果战斗是必须的，那就战斗到最后！",
-  "type": "c",
-  "from": "明日方舟",
-  "from_who": null,
-  "length": 35,
-  "timestamp": 1794876477309
-}</code></pre>
-    <h3>9.2 动画分类</h3>
-    <p>请求：</p>
-    <pre><code>GET /api?c=a</code></pre>
-    <p>响应：</p>
-    <pre><code>{
-  "id": 13467,
-  "hitokoto": "我们以后，也要一直在一起。",
-  "type": "a",
-  "from": "擅长捉弄的高木同学",
-  "from_who": "山本崇一朗",
-  "length": 13,
-  "timestamp": 1794876482819
-}</code></pre>
-    <h3>9.3 纯文本</h3>
-    <p>请求：</p>
-    <pre><code>GET /api?encode=text</code></pre>
-    <p>响应：</p>
-    <pre><code>风有约，花不误，岁岁年年不相负。</code></pre>
-    <h3>9.4 更多示例</h3>
-    <div class="table-wrap"><table>
-      <thead><tr><th>功能</th><th>请求示例</th></tr></thead>
-      <tbody>
-        <tr><td>长度筛选</td><td><a href="/api?min_length=10&amp;max_length=20" target="_blank" rel="noopener"><code>/api?min_length=10&amp;max_length=20</code></a></td></tr>
-        <tr><td>分类均衡抽取</td><td><a href="/api?mode=category" target="_blank" rel="noopener"><code>/api?mode=category</code></a></td></tr>
-        <tr><td>生成页面脚本</td><td><a href="/api?encode=js&amp;select=%23hitokoto" target="_blank" rel="noopener"><code>/api?encode=js&amp;select=%23hitokoto</code></a></td></tr>
-        <tr><td>文本回调</td><td><a href="/api?encode=text&amp;callback=show" target="_blank" rel="noopener"><code>/api?encode=text&amp;callback=show</code></a></td></tr>
-        <tr><td>JSON 回调</td><td><a href="/api?callback=show" target="_blank" rel="noopener"><code>/api?callback=show</code></a></td></tr>
-      </tbody>
-    </table></div>
-  </section>
-  <section id="sec-10">
-    <h2>10. 注意事项</h2>
-    <ol>
-      <li>站点流量较大时，建议在程序中使用缓存减轻请求压力，或自行部署接口（项目源码见 <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">GitHub 仓库</a>）。</li>
-    </ol>
-  </section>
-  </div>
-</main>
-<footer>
-  <p class="footer-sources"><a href="/">返回首页</a> · <a href="/stats">运行状况</a> · <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">语句数据</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">项目源码</a></p>
-  <div><a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">本站由 <img src="/edgeone-logo.png" alt="Tencent EdgeOne" width="140" height="20"> 提供加速服务</a></div>
-  <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a>
-</footer>
-<script>
-  (function(){var btn=document.getElementById('menu-btn');var menu=document.getElementById('menu-dropdown');if(!btn||!menu)return;btn.addEventListener('click',function(e){e.stopPropagation();var open=menu.hidden;menu.hidden=!open;btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!menu.hidden&&!menu.contains(e.target)){menu.hidden=true;btn.setAttribute('aria-expanded','false');}});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!menu.hidden){menu.hidden=true;btn.setAttribute('aria-expanded','false');btn.focus();}});})();
-  (function(){var b=document.getElementById('theme-btn');function cur(){return document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';}function sync(){var t=cur();var i=t==='dark'?'☀️':'🌙';var l=t==='dark'?'切换浅色模式':'切换深色模式';if(b){b.textContent=i;b.setAttribute('aria-label',l);}}function apply(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('hitokoto-theme',t);}catch(e){}sync();}function tog(){apply(cur()==='dark'?'light':'dark');}if(b){b.addEventListener('click',tog);}sync();try{if(!localStorage.getItem('hitokoto-theme')&&window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');sync();});}}catch(e){}})();
-  (function(){var toc=document.getElementById('toc');if(toc&&window.matchMedia&&window.matchMedia('(max-width: 900px)').matches){toc.removeAttribute('open');}if(toc){toc.addEventListener('toggle',function(){if(window.matchMedia&&window.matchMedia('(min-width: 901px)').matches&&!toc.open){toc.open=true;}});}var links={};document.querySelectorAll('#toc a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a;});var secs=document.querySelectorAll('.docs-body section[id]');if(!('IntersectionObserver' in window)||!secs.length)return;var obs=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){document.querySelectorAll('#toc a').forEach(function(a){a.classList.remove('active');});var l=links[entry.target.id];if(l){l.classList.add('active');}}});},{rootMargin:'-80px 0px -70% 0px'});secs.forEach(function(s){obs.observe(s);});})();
-  document.querySelectorAll('pre').forEach(function(pre){var btn=document.createElement('button');btn.className='code-copy';btn.type='button';btn.textContent='复制';btn.addEventListener('click',function(){var code=pre.querySelector('code');var text=code?code.textContent:pre.textContent;function done(){btn.textContent='已复制';setTimeout(function(){btn.textContent='复制';},1500);}function fallback(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(ta);}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,fallback);}else{fallback();}});pre.appendChild(btn);});
-  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.08 });
-    document.querySelectorAll('main section').forEach(section => {
-      section.classList.add('reveal');
-      observer.observe(section);
-    });
-  }
-</script>
-</body>
-</html>`;
+// v5.0：接口文档改为 Vue SPA。入口 HTML 由 Vite 构建到 dist/index.html，
+// 本函数同源取回后返回；路由由前端 Vue Router 按 URL 渲染。
+// /api、/stats-data、/stats-daily、/status 仍由各自的边缘函数处理，不会被改写。
+const SPA_ENTRY = "/dist/index.html";
+const FETCH_TIMEOUT_MS = 10000;
 
-export default function onRequest() {
-    return new Response(page, { headers: { "Content-Type": "text/html; charset=UTF-8", "X-Content-Type-Options": "nosniff" } });
+function timeoutSignal(ms) {
+    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+        return AbortSignal.timeout(ms);
+    }
+    if (typeof AbortController !== "undefined") {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), ms);
+        return controller.signal;
+    }
+    return undefined;
+}
+
+export default async function onRequest(context) {
+    const { request } = context;
+    const url = new URL(request.url);
+    const asset = new URL(SPA_ENTRY, url.origin);
+    try {
+        const response = await fetch(asset.toString(), { redirect: "manual", signal: timeoutSignal(FETCH_TIMEOUT_MS) });
+        if (!response.ok) {
+            throw new Error(`SPA 入口不可用: ${response.status}`);
+        }
+        const html = await response.text();
+        return new Response(html, {
+            headers: {
+                "Content-Type": "text/html; charset=UTF-8",
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+            },
+        });
+    } catch {
+        return new Response("页面暂时不可用，请稍后再试。", {
+            status: 503,
+            headers: { "Content-Type": "text/plain; charset=UTF-8" },
+        });
+    }
 }
