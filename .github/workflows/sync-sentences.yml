@@ -1,6 +1,8 @@
 name: 同步一言句子库
 
 on:
+  schedule:
+    - cron: '17 19 * * *' # 北京时间 03:17，每天自动同步上游句子库
   workflow_dispatch:
 
 permissions:
