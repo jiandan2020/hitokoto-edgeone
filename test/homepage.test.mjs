@@ -53,6 +53,18 @@ test("footer shows the EdgeOne acceleration badge", async () => {
     assert.ok(html.includes("https://edgeone.ai/"), "EdgeOne badge link missing");
 });
 
+test("mobile menu button and dropdown exist with current page highlighted", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"menu-btn\""), "menu button missing");
+    assert.ok(html.includes("id=\"menu-dropdown\""), "menu dropdown missing");
+    for (const href of ["href=\"/\"", "href=\"/docs\"", "href=\"/stats\""]) {
+        assert.ok(html.includes(href), `menu link missing: ${href}`);
+    }
+    assert.ok(html.includes("<a href=\"/\" class=\"active\">首页</a>"), "current page must be highlighted");
+    assert.ok(html.includes(".app-menu-dropdown"), "menu dropdown styles missing");
+    assert.ok(html.includes("@media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block}"), "menu must show only on mobile");
+});
+
 test("page uses Material Design styles", async () => {
     const html = await render();
     assert.ok(html.includes("Google Sans"), "Material font missing");

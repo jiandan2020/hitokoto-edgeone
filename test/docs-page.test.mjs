@@ -43,6 +43,16 @@ test("docs page lists return fields and status codes of our API", async () => {
     assert.ok(html.includes("min_length 必须是正整数"), "error example missing");
 });
 
+test("mobile menu button and dropdown exist with current page highlighted", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"menu-btn\""), "menu button missing");
+    assert.ok(html.includes("id=\"menu-dropdown\""), "menu dropdown missing");
+    for (const href of ["href=\"/\"", "href=\"/docs\"", "href=\"/stats\""]) {
+        assert.ok(html.includes(href), `menu link missing: ${href}`);
+    }
+    assert.ok(html.includes("<a href=\"/docs\" class=\"active\">接口文档</a>"), "current page must be highlighted");
+});
+
 test("docs page links back to the homepage and the API", async () => {
     const html = await render();
     assert.ok(html.includes("href=\"/\""), "homepage link missing");

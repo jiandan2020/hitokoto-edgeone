@@ -19,6 +19,16 @@ test("stats page contains panel sections", async () => {
     }
 });
 
+test("mobile menu button and dropdown exist with current page highlighted", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"menu-btn\""), "menu button missing");
+    assert.ok(html.includes("id=\"menu-dropdown\""), "menu dropdown missing");
+    for (const href of ["href=\"/\"", "href=\"/docs\"", "href=\"/stats\""]) {
+        assert.ok(html.includes(href), `menu link missing: ${href}`);
+    }
+    assert.ok(html.includes("<a href=\"/stats\" class=\"active\">运行状况</a>"), "current page must be highlighted");
+});
+
 test("stats page does not link the raw status JSON", async () => {
     const html = await render();
     assert.ok(!html.includes("运行状态数据（JSON）"), "status JSON link must be hidden");

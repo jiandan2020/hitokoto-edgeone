@@ -68,3 +68,33 @@ test("daily section renders with a single day of data", async () => {
     assert.ok(r.historyStatus.includes("已采集 1 天"), "history-status must report 1 collected day: " + r.historyStatus);
     assert.equal(r.cumulative, "369 次");
 });
+
+test("mobile menu toggles open on button click and closes on outside click", async () => {
+    const html = await (await onRequest()).text();
+    const dom = new JSDOM(html, {
+        url: "https://hitokoto.xzccs.top/stats",
+        runScripts: "dangerously",
+        pretendToBeVisual: true,
+        beforeParse(window) {
+            window.fetch = async () => ({ ok: true, status: 200, json: async () => ({}) });
+        },
+    });
+    try {
+        await new Promise((r) => setTimeout(r, 100));
+        const doc = dom.window.document;
+        const btn = doc.getElementById("menu-btn");
+        const menu = doc.getElementById("menu-dropdown");
+        assert.ok(btn, "menu button missing");
+        assert.ok(menu, "menu dropdown missing");
+        assert.equal(menu.hidden, true, "menu must start hidden");
+        assert.equal(btn.getAttribute("aria-expanded"), "false");
+        btn.click();
+        assert.equal(menu.hidden, false, "menu must open on button click");
+        assert.equal(btn.getAttribute("aria-expanded"), "true");
+        doc.body.click();
+        assert.equal(menu.hidden, true, "menu must close on outside click");
+        assert.equal(btn.getAttribute("aria-expanded"), "false");
+    } finally {
+        dom.window.close();
+    }
+});
