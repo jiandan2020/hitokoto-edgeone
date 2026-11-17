@@ -7,6 +7,11 @@ import handler from "../edge-functions/status.js";
 
 const root = new URL("..", import.meta.url);
 const indexData = JSON.parse(readFileSync(new URL("../sentence-index.json", import.meta.url), "utf8"));
+const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const sentenceCount = Object.values(indexData.index).reduce(
+    (total, byLength) => total + Object.values(byLength).reduce((sum, ids) => sum + ids.length, 0),
+    0,
+);
 
 globalThis.fetch = async (input) => {
     const url = new URL(input);
@@ -47,7 +52,7 @@ test("KV unbound reports not bound and ok false", async () => {
     assert.equal(data.kv.bound, false);
     assert.equal(data.kv.writeRead, "skipped");
     assert.equal(data.ok, false);
-    assert.equal(data.version, "4.9.6");
+    assert.equal(data.version, pkg.version);
 });
 
 test("status returns JSON even without format=json", async () => {
@@ -89,7 +94,7 @@ test("KV bound but empty: write probe via ?probe=write ok, nothing cached yet", 
     }
 });
 
-test("KV bound and populated: ok true, 12 categories, 11276 sentences", async () => {
+test(`KV bound and populated: ok true, 12 categories, ${sentenceCount} sentences`, async () => {
     const kv = makeKv();
     populateKv(kv);
     globalThis.hitokoto_kv = kv;
@@ -101,7 +106,7 @@ test("KV bound and populated: ok true, 12 categories, 11276 sentences", async ()
         assert.equal(data.kv.indexCached, true);
         assert.equal(data.kv.categoriesCached, 12);
         assert.equal(data.kv.categoriesTotal, 12);
-        assert.equal(data.kv.sentencesCached, 11276);
+        assert.equal(data.kv.sentencesCached, sentenceCount);
         assert.equal(data.kv.statsCached, true);
         assert.equal(data.kv.dailyStatsCached, true);
     } finally {
