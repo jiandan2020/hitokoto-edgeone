@@ -14,7 +14,7 @@ async function render() {
 
 test("stats page contains panel sections", async () => {
     const html = await render();
-    for (const id of ["health-banner", "health-pill", "health-title", "health-version", "kv-grid", "kv-status", "quote-text", "quote-source", "quote-meta", "quote-chips", "quote-next", "yesterday-requests", "requests", "traffic", "rate", "api-share", "api-requests", "latency", "hourly-chart", "hourly-avg", "cumulative", "week-total", "day-average", "best-day", "chart", "refresh", "updated"]) {
+    for (const id of ["health-banner", "health-pill", "health-title", "health-version", "kv-grid", "kv-status", "yesterday-requests", "requests", "traffic", "rate", "api-share", "api-requests", "latency", "hourly-chart", "hourly-avg", "cumulative", "week-total", "day-average", "best-day", "chart", "refresh", "updated"]) {
         assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
     }
 });
@@ -30,7 +30,7 @@ test("overview cards include yesterday requests and live latency", async () => {
     const html = await render();
     assert.ok(html.includes("id=\"yesterday-requests\""), "yesterday requests card missing");
     assert.ok(html.includes("id=\"latency\""), "latency card missing");
-    assert.ok(html.includes("最近一次换一句的耗时"), "latency sublabel missing");
+    assert.ok(html.includes("最近一次状态探针的往返耗时"), "latency sublabel missing");
 });
 
 test("stats page fetches status with read-only probe only", async () => {
@@ -40,20 +40,12 @@ test("stats page fetches status with read-only probe only", async () => {
     assert.ok(!html.includes("全面检查"), "must not offer a public write-probe button");
 });
 
-test("stats page fetches daily stats and quotes same-origin", async () => {
+test("stats page fetches daily and live stats same-origin", async () => {
     const html = await render();
     assert.ok(html.includes("fetch('/stats-daily'"), "daily stats must come from /stats-daily");
     assert.ok(html.includes("fetch('/stats-data'"), "live stats must come from /stats-data");
-    assert.ok(html.includes("'/api?c='"), "quotes must come from /api");
     assert.ok(!html.includes("cdn.jsdelivr.net"), "must not fetch jsDelivr from the browser");
     assert.ok(!html.includes("检查记录"), "space-only snapshot history must not be ported");
-});
-
-test("stats page shows all twelve category names", async () => {
-    const html = await render();
-    for (const name of ["动画", "漫画", "游戏", "文学", "原创", "网络", "其他", "影视", "诗词", "网易云", "哲学", "抖机灵"]) {
-        assert.ok(html.includes(`"${name}"`), `missing category ${name}`);
-    }
 });
 
 test("stats page keeps hourly average and weekly summaries", async () => {
