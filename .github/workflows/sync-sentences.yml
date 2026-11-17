@@ -43,12 +43,14 @@ jobs:
           node --check edge-functions/api.js
           node --input-type=module -e 'import handler from "./edge-functions/api.js"; import { readFileSync } from "node:fs"; globalThis.fetch = async u => new Response(readFileSync(`.${new URL(u).pathname}`), {headers:{"Content-Type":"application/json"}}); const r = await handler({request: new Request("https://hitokoto.xzccs.top/api")}); if (!r.ok || typeof (await r.json()).hitokoto !== "string") throw new Error("API smoke test failed");'
       - name: 有变化时提交并推送
+        id: push
         working-directory: project
         run: |
           set -euo pipefail
           git add sentences/ categories.json version.json sentence-index.json edge-functions/api.js
           if git diff --cached --quiet; then
             echo '上游数据没有变化，无需提交。'
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name 'github-actions[bot]'
@@ -56,3 +58,12 @@ jobs:
           upstream_sha=$(git -C ../upstream rev-parse HEAD)
           git commit -m "chore: 同步上游句子库 ${upstream_sha}"
           git push origin HEAD:main
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+      - name: 等待新版本上线并预热 KV
+        if: steps.push.outputs.pushed == 'true'
+        working-directory: project
+        run: |
+          set -euo pipefail
+          version=$(node -e 'console.log(JSON.parse(require("node:fs").readFileSync("sentence-index.json", "utf8")).version)')
+          echo "新句子版本：${version}"
+          node scripts/warm-kv.mjs https://hitokoto.xzccs.top "$version"
