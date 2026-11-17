@@ -10,6 +10,8 @@ let pending;
 // KV 键 stats_data_cache，值里带 expires，过期即重新查询；KV 未绑定或
 // 读写失败时退回原有实例内缓存逻辑。绑定变量名与 /api 共用 hitokoto_kv。
 const STATS_KV_KEY = "stats_data_cache";
+// 上游失败时允许返回过期不久的缓存，避免短暂抖动直接 503。
+const STALE_GRACE_MS = 60 * 60 * 1000;
 function resolveStatsKv(env) {
     const fromGlobal = globalThis.hitokoto_kv;
     if (fromGlobal && typeof fromGlobal.get === "function") {return fromGlobal;}
@@ -33,6 +35,21 @@ async function writeStatsKv(kv, entry) {
     } catch (error) {
         console.error("统计 KV 写入失败:", error);
     }
+}
+
+// 返回过期不久的缓存（实例内或 KV），过期太久或没有则返回 null。
+async function readStaleStats(env) {
+    if (cached && cached.data && Number.isFinite(cached.expires) && cached.expires > Date.now() - STALE_GRACE_MS) {
+        return cached.data;
+    }
+    const kv = resolveStatsKv(env);
+    if (kv) {
+        const fromKv = await readStatsKv(kv);
+        if (fromKv && fromKv.data && Number.isFinite(fromKv.expires) && fromKv.expires > Date.now() - STALE_GRACE_MS) {
+            return fromKv.data;
+        }
+    }
+    return null;
 }
 
 function hex(bytes) {
@@ -138,7 +155,12 @@ export default async function onRequest({ request, env }) {
             await pending;
         }
         return new Response(JSON.stringify(cached.data), { headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
-    } catch {
+    } catch (error) {
+        const stale = await readStaleStats(env);
+        if (stale) {
+            console.warn("统计服务失败，返回过期不久的缓存:", error);
+            return new Response(JSON.stringify(stale), { headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
+        }
         return new Response(JSON.stringify({ error: "统计数据暂不可用" }), { status: 503, headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store" } });
     }
 }

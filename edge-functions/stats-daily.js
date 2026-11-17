@@ -7,6 +7,8 @@
 const DAILY_STATS_URL = "https://cdn.jsdelivr.net/gh/jiandan2020/hitokoto-edgeone@stats-data/daily-stats.json";
 const DAILY_KV_KEY = "daily_stats_cache";
 const DAILY_TTL_MS = 60 * 60 * 1000;
+// 上游失败时允许返回过期不久的缓存，避免短暂抖动直接 503。
+const DAILY_STALE_GRACE_MS = 24 * 60 * 60 * 1000;
 let cached;
 let pending;
 
@@ -52,6 +54,22 @@ async function loadDaily() {
     if (!validateDaily(data)) {throw new Error("每日汇总格式错误");}
     return data;
 }
+
+// 返回过期不久的缓存（实例内或 KV），过期太久或没有则返回 null。
+// KV 的旧数据也要过 validateDaily，避免把坏数据当兜底。
+async function readStaleDaily(env) {
+    if (cached && cached.data && validateDaily(cached.data) && Number.isFinite(cached.expires) && cached.expires > Date.now() - DAILY_STALE_GRACE_MS) {
+        return cached.data;
+    }
+    const kv = resolveKv(env);
+    if (kv) {
+        const fromKv = await readDailyKv(kv);
+        if (fromKv && fromKv.data && validateDaily(fromKv.data) && Number.isFinite(fromKv.expires) && fromKv.expires > Date.now() - DAILY_STALE_GRACE_MS) {
+            return fromKv.data;
+        }
+    }
+    return null;
+}
 export default async function onRequest({ request, env }) {
     if (request.method !== "GET") {return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET" } });}
     try {
@@ -69,7 +87,12 @@ export default async function onRequest({ request, env }) {
             await pending;
         }
         return new Response(JSON.stringify(cached.data), { headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
-    } catch {
+    } catch (error) {
+        const stale = await readStaleDaily(env);
+        if (stale) {
+            console.warn("每日汇总失败，返回过期不久的缓存:", error);
+            return new Response(JSON.stringify(stale), { headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
+        }
         return new Response(JSON.stringify({ error: "每日汇总暂不可用" }), { status: 503, headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store" } });
     }
 }

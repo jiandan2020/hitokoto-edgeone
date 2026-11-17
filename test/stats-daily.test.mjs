@@ -24,6 +24,10 @@ function req(handler, path, method = "GET") {
     return handler({ request: new Request(`https://hitokoto.xzccs.top${path}`, { method }) });
 }
 
+const realDateNow = Date.now;
+function setNow(ms) { Date.now = () => ms; }
+function restoreNow() { Date.now = realDateNow; }
+
 test("KV miss fetches jsDelivr, validates and populates KV", async () => {
     const kv = makeKv();
     globalThis.hitokoto_kv = kv;
@@ -118,4 +122,55 @@ test("POST is rejected with 405", async () => {
     const res = await req(handler, "/stats-daily", "POST");
     assert.equal(res.status, 405);
     assert.equal(res.headers.get("Allow"), "GET");
+});
+
+// ---- M4：上游失败时返回过期不久的缓存 ----
+
+test("jsDelivr fails but KV has expired-recent entry: serves stale data", async () => {
+    const kv = makeKv();
+    kv.store.set("daily_stats_cache", JSON.stringify({ data: SAMPLE, expires: Date.now() - 1000 }));
+    globalThis.hitokoto_kv = kv;
+    globalThis.fetch = async () => { throw new Error("network down"); };
+    try {
+        const handler = await importHandler("daily-stale-kv");
+        const res = await req(handler, "/stats-daily");
+        assert.equal(res.status, 200);
+        assert.deepEqual(await res.json(), SAMPLE);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("jsDelivr fails and KV entry expired too long ago: 503", async () => {
+    const kv = makeKv();
+    kv.store.set("daily_stats_cache", JSON.stringify({ data: SAMPLE, expires: Date.now() - 25 * 3600 * 1000 }));
+    globalThis.hitokoto_kv = kv;
+    globalThis.fetch = async () => { throw new Error("network down"); };
+    try {
+        const handler = await importHandler("daily-stale-old");
+        const res = await req(handler, "/stats-daily");
+        assert.equal(res.status, 503);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("in-memory cache expired-recent: serves stale on jsDelivr failure", async () => {
+    const kv = makeKv();
+    globalThis.hitokoto_kv = kv;
+    const t0 = Date.now();
+    globalThis.fetch = async () => new Response(JSON.stringify(SAMPLE), { headers: { "Content-Type": "application/json" } });
+    try {
+        const handler = await importHandler("daily-stale-mem");
+        const first = await req(handler, "/stats-daily");
+        assert.equal(first.status, 200);
+        setNow(t0 + 61 * 60 * 1000);
+        globalThis.fetch = async () => { throw new Error("network down"); };
+        const res = await req(handler, "/stats-daily");
+        assert.equal(res.status, 200);
+        assert.deepEqual(await res.json(), SAMPLE);
+    } finally {
+        restoreNow();
+        delete globalThis.hitokoto_kv;
+    }
 });

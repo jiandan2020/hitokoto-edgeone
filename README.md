@@ -29,6 +29,10 @@
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见 `/docs` 接口文档。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为。
 
+## 优化记录（4.9.7）
+
+- 上游抖动时先返回过期不久的统计缓存，不直接 503：`/stats-data`（24 小时统计，宽限 1 小时）与 `/stats-daily`（每日汇总，宽限 24 小时）在取数失败时，若手头有过期不久的缓存（实例内或 KV）就先返回旧数据并记日志；只有完全没数据时才 503。新增 7 个回归测试（KV 旧数据兜底、过期太久仍 503、无数据仍 503、实例内旧数据兜底）。
+
 ## 优化记录（4.9.6）
 
 - 去掉 `_headers` 里 `immutable` 缓存：`/sentences/*.json` 与 `/sentence-index.json` 不再承诺“内容永远不变”，只保留 `max-age`，浏览器和边缘在需要时可以重新验证。API 靠查询串 `?v=版本号` 区分版本，线上实测查询串是生效的，这次是把“脆弱的假设”改成更稳妥的做法。

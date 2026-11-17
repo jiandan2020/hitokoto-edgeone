@@ -220,3 +220,94 @@ test("load() 未配置凭证时抛错", async () => {
         await assert.rejects(() => load({}), /统计服务未配置/);
     });
 });
+
+// ---- M4：上游失败时返回过期不久的缓存（onRequest 层） ----
+
+function makeStatsKv() {
+    const store = new Map();
+    return {
+        store,
+        async get(key) { return store.has(key) ? store.get(key) : null; },
+        async put(key, value) { store.set(key, value); },
+        async delete(key) { store.delete(key); },
+    };
+}
+
+async function importStatsHandler(tag) {
+    return (await import(`../edge-functions/stats-data.js?${tag}`)).default;
+}
+
+const STALE_STATS = { domain: "hitokoto.xzccs.top", requests: 123, bytes: 456, errorCount: 0, errorRate: 0, apiRequests: 100, hourly: [] };
+
+function statsReq(handler, env) {
+    return handler({ request: new Request("https://hitokoto.xzccs.top/stats-data"), env });
+}
+
+test("stats-data: upstream fails but KV has expired-recent entry: serves stale data", async () => {
+    const kv = makeStatsKv();
+    kv.store.set("stats_data_cache", JSON.stringify({ data: STALE_STATS, expires: Date.now() - 1000 }));
+    globalThis.hitokoto_kv = kv;
+    globalThis.fetch = async () => { throw new Error("tencent down"); };
+    try {
+        const handler = await importStatsHandler("stats-stale-kv");
+        const res = await statsReq(handler, ENV);
+        assert.equal(res.status, 200);
+        assert.deepEqual(await res.json(), STALE_STATS);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("stats-data: upstream fails and KV entry expired too long ago: 503", async () => {
+    const kv = makeStatsKv();
+    kv.store.set("stats_data_cache", JSON.stringify({ data: STALE_STATS, expires: Date.now() - 61 * 60 * 1000 }));
+    globalThis.hitokoto_kv = kv;
+    globalThis.fetch = async () => { throw new Error("tencent down"); };
+    try {
+        const handler = await importStatsHandler("stats-stale-old");
+        const res = await statsReq(handler, ENV);
+        assert.equal(res.status, 503);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("stats-data: upstream fails with no cache: 503", async () => {
+    const kv = makeStatsKv();
+    globalThis.hitokoto_kv = kv;
+    globalThis.fetch = async () => { throw new Error("tencent down"); };
+    try {
+        const handler = await importStatsHandler("stats-no-cache");
+        const res = await statsReq(handler, ENV);
+        assert.equal(res.status, 503);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("stats-data: in-memory cache expired-recent: serves stale on upstream failure", async () => {
+    const kv = makeStatsKv();
+    globalThis.hitokoto_kv = kv;
+    let now = FIXED_NOW;
+    const prevDateNow = Date.now;
+    Date.now = () => now;
+    globalThis.fetch = routeFetch({
+        total: totalData(buckets24(100)),
+        errors: singleData(0),
+        api: singleData(1),
+    });
+    try {
+        const handler = await importStatsHandler("stats-stale-mem");
+        const first = await statsReq(handler, ENV);
+        assert.equal(first.status, 200);
+        assert.equal((await first.json()).requests, 12090);
+        now = FIXED_NOW + 11 * 60 * 1000;
+        globalThis.fetch = async () => { throw new Error("tencent down"); };
+        const res = await statsReq(handler, ENV);
+        assert.equal(res.status, 200);
+        assert.equal((await res.json()).requests, 12090);
+    } finally {
+        Date.now = prevDateNow;
+        delete globalThis.hitokoto_kv;
+    }
+});
