@@ -86,13 +86,13 @@ test("stats page keeps hourly average and weekly summaries", async () => {
     assert.ok(html.includes("最高单日"), "best day missing");
 });
 
-test("stats page uses the homepage palette, not the panel palette", async () => {
+test("stats page uses the Material Design palette", async () => {
     const html = await render();
-    for (const token of ["#fff7e8", "#a83d5c", "#30283f", "HITOKOTO · STATUS", "bubbles"]) {
-        assert.ok(html.includes(token), `homepage style token missing: ${token}`);
+    for (const token of ["--md-primary", "#8e3b52", "#fff8f7", "Roboto Flex", "HITOKOTO · STATUS"]) {
+        assert.ok(html.includes(token), `Material style token missing: ${token}`);
     }
-    for (const token of ["#edf2ee", "#0c8a5f"]) {
-        assert.ok(!html.includes(token), `panel palette token must be gone: ${token}`);
+    for (const token of ["#fff7e8", "#a83d5c", "#30283f", "bubbles", "Songti", "#edf2ee", "#0c8a5f"]) {
+        assert.ok(!html.includes(token), `old palette token must be gone: ${token}`);
     }
 });
 

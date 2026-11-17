@@ -8,22 +8,77 @@ const page = `<!doctype html>
   <meta name="description" content="一言 API 接口文档：随机获取一句话，支持分类、长度筛选和多种返回格式。">
   <title>接口文档 · 一言 API</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&display=swap" rel="stylesheet">
   <style>
-    :root{color-scheme:light;--ink:#30283f;--muted:#6d6279;--line:#ebdfe5;--accent:#a83d5c;--card:rgba(255,255,255,.76)}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;color:var(--ink);background:radial-gradient(ellipse at 10% 0%,#ffe6ed 0,transparent 42%),radial-gradient(ellipse at 90% 20%,#e3f3ff 0,transparent 42%),linear-gradient(155deg,#fff7e8,#fffdf9 55%,#fff0f5);font-family:"Songti SC","Noto Serif SC",Georgia,serif;line-height:1.85}a{color:var(--accent);text-underline-offset:4px}a:focus-visible{outline:3px solid #b74469;outline-offset:4px}header,main,footer{max-width:960px;margin:auto;padding-left:24px;padding-right:24px}header{text-align:center;padding-top:86px;padding-bottom:48px}.eyebrow{font:700 12px/1.5 system-ui,sans-serif;letter-spacing:.32em;color:#806b7d}h1{font-size:clamp(39px,8vw,76px);line-height:1.18;letter-spacing:-.035em;margin:22px 0;background:linear-gradient(100deg,#b97622,#c64e55 40%,#b83f80 70%,#367db3);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#a83d5c}header p{color:var(--muted);max-width:600px;margin:0 auto 25px}.button{display:inline-block;background:linear-gradient(110deg,#cc5a48,#c44d7c);color:#fff;text-decoration:none;padding:12px 28px;border-radius:999px;font:650 15px/1.5 system-ui,sans-serif;box-shadow:0 12px 24px -12px #d16b82;transition:transform .2s,box-shadow .2s}.button:hover{transform:translateY(-2px);box-shadow:0 16px 28px -12px #d16b82}header .note{margin-top:24px;font-family:system-ui,sans-serif;font-size:12px;letter-spacing:.03em}section{background:var(--card);border:1px solid rgba(255,255,255,.95);border-radius:22px;padding:30px 34px;margin-bottom:22px;box-shadow:0 16px 45px -30px rgba(90,55,80,.3)}h2{font-size:23px;margin:0 0 14px}h2:before{content:'✦';font-size:13px;color:#d25a7e;margin-right:12px}h3{font-size:16px;margin:20px 0 6px}p{margin:8px 0}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em}code{background:#f8edf0;padding:2px 5px;border-radius:5px;overflow-wrap:anywhere}pre{background:#fbf2f4;padding:16px;border-radius:12px;overflow:auto;line-height:1.65;margin:10px 0}pre code{background:none;padding:0;overflow-wrap:normal}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}tr:last-child td{border-bottom:0}.table-wrap{overflow-x:auto}.note{color:var(--muted);font-size:14px}.examples{display:grid;gap:9px}.examples a{overflow-wrap:anywhere}footer{text-align:center;font:13px/1.8 system-ui,sans-serif;color:var(--muted);padding-top:24px;padding-bottom:64px}@media(max-width:600px){header{padding-top:60px;padding-bottom:34px}section{padding:22px 20px;border-radius:18px}th,td{min-width:110px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button{transition:none}}
-    .footer-sources{margin-bottom:18px}.footer-sources a{color:var(--muted)}.footer-sources a:hover{color:var(--accent)}.icp-link{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);color:var(--muted);text-decoration:none;transition:color .25s,transform .25s,box-shadow .25s}.edgeone-badge{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);color:var(--muted);text-decoration:none;transition:color .25s,transform .25s,box-shadow .25s}.edgeone-badge:hover{color:var(--accent);transform:translateY(-2px);box-shadow:0 10px 22px -14px rgba(70,50,90,.5)}.edgeone-badge img{height:20px;width:auto;display:block}.icp-link:hover{color:var(--accent);transform:translateY(-2px);box-shadow:0 10px 22px -14px rgba(70,50,90,.5)}.icp-link img{width:16px;height:16px;object-fit:contain}
-    .bubbles{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}.bubble{position:absolute;bottom:-70px;border-radius:50%;opacity:0;animation:rise var(--duration) linear var(--delay) infinite;background:var(--color);width:var(--size);height:var(--size);left:var(--left)}@keyframes rise{0%{transform:translateY(0) scale(.8);opacity:0}10%{opacity:.35}100%{transform:translateY(-115vh) scale(1.15);opacity:0}}header,main,footer{position:relative;z-index:1}h1{background-size:200% 100%;animation:shimmer 8s ease-in-out infinite alternate}@keyframes shimmer{to{background-position:100% 50%}}.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}.reveal.visible{opacity:1;transform:none}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.icp-link,.reveal{transition:none}.reveal{opacity:1;transform:none}.bubble,h1{animation:none}.bubble{display:none}}
+    :root{
+      color-scheme:light;
+      --md-primary:#8e3b52;--md-on-primary:#fff;--md-primary-container:#ffd9e2;--md-on-primary-container:#3a0017;
+      --md-secondary:#73565e;--md-on-secondary:#fff;--md-secondary-container:#ffd9e2;--md-on-secondary-container:#2b151b;
+      --md-tertiary:#7d5700;--md-on-tertiary:#fff;--md-tertiary-container:#ffdea6;--md-on-tertiary-container:#271900;
+      --md-error:#b3261e;--md-on-error:#fff;--md-error-container:#f9dedc;--md-on-error-container:#410e0b;
+      --md-surface:#fff8f7;--md-surface-dim:#e7d6d8;
+      --md-surface-container-lowest:#fff;--md-surface-container-low:#fff0f1;--md-surface-container:#f9e9eb;
+      --md-surface-container-high:#f2e1e4;--md-surface-container-highest:#ebd9dc;
+      --md-on-surface:#211a1c;--md-on-surface-variant:#524347;
+      --md-outline:#857377;--md-outline-variant:#d8c2c7;
+      --md-inverse-surface:#372e31;--md-inverse-on-surface:#ffecee;
+      --md-success-container:#dce9dc;--md-on-success-container:#1b4d1f;
+      --md-elev-1:0 1px 2px rgba(0,0,0,.3),0 1px 3px 1px rgba(0,0,0,.15);
+      --md-elev-2:0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15);
+      --md-elev-3:0 1px 3px rgba(0,0,0,.3),0 4px 8px 3px rgba(0,0,0,.15);
+      --md-ease:cubic-bezier(.2,0,0,1);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;min-height:100vh;color:var(--md-on-surface);background:var(--md-surface);font-family:"Roboto Flex","Roboto","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;font-size:16px;line-height:1.5}
+    a{color:var(--md-primary);text-decoration:none}
+    a:hover{text-decoration:underline}
+    a:focus-visible{outline:2px solid var(--md-primary);outline-offset:3px;border-radius:4px}
+    header,main,footer{max-width:960px;margin:auto;padding-left:24px;padding-right:24px}
+    header{padding-top:64px;padding-bottom:40px;text-align:center}
+    .eyebrow{font-size:12px;font-weight:500;line-height:1.5;letter-spacing:.12em;text-transform:uppercase;color:var(--md-primary)}
+    h1{font-size:clamp(32px,6vw,45px);font-weight:500;line-height:1.2;letter-spacing:0;margin:16px 0 12px;color:var(--md-on-surface)}
+    header p{color:var(--md-on-surface-variant);max-width:600px;margin:0 auto 24px}
+    .button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;line-height:1.5;text-decoration:none;cursor:pointer;transition:box-shadow .2s var(--md-ease),background .2s var(--md-ease)}
+    .button:hover{background:#7d3247;box-shadow:var(--md-elev-1);text-decoration:none}
+    .button:active{transform:scale(.98)}
+    .button.ghost{background:transparent;color:var(--md-primary);border:1px solid var(--md-outline)}
+    .button.ghost:hover{background:rgba(142,59,82,.08);box-shadow:none}
+    header .note{margin-top:20px;font-size:12px;color:var(--md-on-surface-variant)}
+    section{background:var(--md-surface-container);border-radius:28px;padding:32px;margin-bottom:24px}
+    h2{font-size:22px;font-weight:400;line-height:1.27;margin:0 0 16px;color:var(--md-on-surface)}
+    h3{font-size:16px;font-weight:500;line-height:1.5;margin:20px 0 8px}
+    p{margin:8px 0}
+    code,pre{font-family:"Roboto Mono",ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;font-size:.9em}
+    code{background:var(--md-surface-container-high);color:var(--md-on-surface-variant);padding:2px 6px;border-radius:4px;overflow-wrap:anywhere}
+    pre{background:var(--md-surface-container-high);padding:16px;border-radius:16px;overflow:auto;line-height:1.6;margin:12px 0}
+    pre code{background:none;padding:0;overflow-wrap:normal}
+    table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}
+    th,td{padding:12px 10px;border-bottom:1px solid var(--md-outline-variant);vertical-align:top}
+    th{color:var(--md-on-surface-variant);font-weight:500}
+    tr:last-child td{border-bottom:0}
+    .table-wrap{overflow-x:auto}
+    .note{color:var(--md-on-surface-variant);font-size:14px}
+    .examples{display:grid;gap:8px}
+    .examples a{overflow-wrap:anywhere}
+    footer{text-align:center;font-size:13px;line-height:1.6;color:var(--md-on-surface-variant);padding-top:24px;padding-bottom:48px}
+    .footer-sources{margin-bottom:16px}
+    .footer-sources a{color:var(--md-on-surface-variant)}
+    .footer-sources a:hover{color:var(--md-primary)}
+    .icp-link,.edgeone-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:var(--md-surface-container-high);color:var(--md-on-surface-variant);text-decoration:none;transition:background .2s var(--md-ease),color .2s var(--md-ease)}
+    .icp-link:hover,.edgeone-badge:hover{color:var(--md-primary);background:var(--md-surface-container-highest);text-decoration:none}
+    .edgeone-badge{margin-top:12px}
+    .edgeone-badge img{height:20px;width:auto;display:block}
+    .icp-link img{width:16px;height:16px;object-fit:contain}
+    .reveal{opacity:0;transform:translateY(16px);transition:opacity .5s var(--md-ease),transform .5s var(--md-ease)}
+    .reveal.visible{opacity:1;transform:none}
+    @media(max-width:600px){header{padding-top:48px;padding-bottom:32px}section{padding:24px 20px;border-radius:24px}th,td{min-width:110px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.icp-link,.edgeone-badge{transition:none}.reveal{opacity:1;transform:none}}
   </style>
 </head>
 <body>
-<div class="bubbles" aria-hidden="true">
-  <span class="bubble" style="--left:8%;--size:28px;--duration:16s;--delay:-3s;--color:#ffb2c8"></span>
-  <span class="bubble" style="--left:23%;--size:18px;--duration:19s;--delay:-11s;--color:#facf80"></span>
-  <span class="bubble" style="--left:39%;--size:36px;--duration:22s;--delay:-7s;--color:#b8dfff"></span>
-  <span class="bubble" style="--left:58%;--size:22px;--duration:18s;--delay:-14s;--color:#ffb2c8"></span>
-  <span class="bubble" style="--left:77%;--size:30px;--duration:21s;--delay:-5s;--color:#facf80"></span>
-  <span class="bubble" style="--left:93%;--size:19px;--duration:17s;--delay:-12s;--color:#b8dfff"></span>
-</div>
 <header>
   <div class="eyebrow">HITOKOTO · 接口文档</div>
   <h1>接口文档</h1>

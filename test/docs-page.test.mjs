@@ -62,3 +62,11 @@ test("footer shows the EdgeOne acceleration badge", async () => {
     assert.ok(html.includes("本站由 EdgeOne 提供加速服务"), "EdgeOne badge text missing");
     assert.ok(html.includes("https://edgeone.ai/"), "EdgeOne badge link missing");
 });
+
+test("page uses Material Design styles", async () => {
+    const html = await render();
+    assert.ok(html.includes("Roboto Flex"), "Material font missing");
+    assert.ok(html.includes("--md-primary"), "Material tokens missing");
+    assert.ok(!html.includes("Songti"), "old serif font must be gone");
+    assert.ok(!html.includes("bubbles"), "old bubbles must be gone");
+});
