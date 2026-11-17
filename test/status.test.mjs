@@ -163,6 +163,28 @@ test(`KV bound and populated: ok true, 12 categories, ${sentenceCount} sentences
     }
 });
 
+test("ok is true when the index is not in KV but all 12 categories are cached", async () => {
+    // 回归测试：索引自 4.9.5 起嵌在 api.js 里，不再写入 KV，ok 不能
+    // 再要求索引在 KV 中，否则每次同步新版本后 ok 永远是 false。
+    const kv = makeKv();
+    for (const category of Object.keys(indexData.index)) {
+        const records = JSON.parse(readFileSync(new URL(`../sentences/${category}.json`, import.meta.url), "utf8"));
+        kv.store.set(`sentences_${category}_${indexData.version}`, JSON.stringify(records));
+    }
+    globalThis.hitokoto_kv = kv;
+    try {
+        const res = await req("/status?format=json&probe=read");
+        const data = await res.json();
+        assert.equal(data.kv.indexCached, false);
+        assert.equal(data.kv.categoriesCached, 12);
+        assert.equal(data.kv.categoriesTotal, 12);
+        assert.equal(data.kv.sentencesCached, sentenceCount);
+        assert.equal(data.ok, true);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
 test("read-only probe does not write to KV", async () => {
     const kv = makeKv();
     globalThis.hitokoto_kv = kv;

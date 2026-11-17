@@ -134,7 +134,8 @@ export default async function onRequest(context) {
     }
 
     const writeOk = doWrite ? result.writeRead === "ok" : true;
-    const ok = result.bound && writeOk && result.indexCached
+    // 索引自 4.9.5 起嵌在 api.js 里，不再写入 KV，ok 不再要求索引在 KV 中。
+    const ok = result.bound && writeOk
         && result.categoriesTotal > 0 && result.categoriesCached === result.categoriesTotal;
     const status = {
         ok,
