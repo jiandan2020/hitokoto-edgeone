@@ -48,7 +48,8 @@ test("homepage shows all twelve category names", async () => {
 test("footer shows the EdgeOne acceleration badge", async () => {
     const html = await render();
     assert.ok(html.includes("/edgeone-logo.png"), "EdgeOne logo missing");
-    assert.ok(html.includes("本站由 EdgeOne 提供加速服务"), "EdgeOne badge text missing");
+    assert.ok(html.includes("本站由 <img src=\"/edgeone-logo.png\""), "EdgeOne badge logo must sit between 本站由 and 提供加速服务");
+    assert.ok(html.includes("提供加速服务"), "EdgeOne badge text missing");
     assert.ok(html.includes("https://edgeone.ai/"), "EdgeOne badge link missing");
 });
 

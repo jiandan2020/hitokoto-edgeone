@@ -88,7 +88,7 @@ test("stats page keeps hourly average and weekly summaries", async () => {
 
 test("stats page uses the Material Design palette", async () => {
     const html = await render();
-    for (const token of ["--md-primary", "#8e3b52", "#fff8f7", "Roboto Flex", "HITOKOTO · STATUS"]) {
+    for (const token of ["--md-primary", "#c2185b", "#fff0f2", "Roboto Flex", "HITOKOTO · STATUS"]) {
         assert.ok(html.includes(token), `Material style token missing: ${token}`);
     }
     for (const token of ["#fff7e8", "#a83d5c", "#30283f", "bubbles", "Songti", "#edf2ee", "#0c8a5f"]) {
@@ -108,6 +108,7 @@ test("stats page is titled 运行状况", async () => {
 test("footer shows the EdgeOne acceleration badge", async () => {
     const html = await render();
     assert.ok(html.includes("/edgeone-logo.png"), "EdgeOne logo missing");
-    assert.ok(html.includes("本站由 EdgeOne 提供加速服务"), "EdgeOne badge text missing");
+    assert.ok(html.includes("本站由 <img src=\"/edgeone-logo.png\""), "EdgeOne badge logo must sit between 本站由 and 提供加速服务");
+    assert.ok(html.includes("提供加速服务"), "EdgeOne badge text missing");
     assert.ok(html.includes("https://edgeone.ai/"), "EdgeOne badge link missing");
 });
