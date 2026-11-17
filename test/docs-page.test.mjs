@@ -55,3 +55,10 @@ test("docs page links back to the homepage and the API", async () => {
     assert.ok(html.includes("href=\"/api\""), "try-the-API link missing");
     assert.ok(!html.includes("运行状态数据（JSON）"), "status JSON link must be hidden");
 });
+
+test("footer shows the EdgeOne acceleration badge", async () => {
+    const html = await render();
+    assert.ok(html.includes("/edgeone-logo.png"), "EdgeOne logo missing");
+    assert.ok(html.includes("本站由 EdgeOne 提供加速服务"), "EdgeOne badge text missing");
+    assert.ok(html.includes("https://edgeone.ai/"), "EdgeOne badge link missing");
+});

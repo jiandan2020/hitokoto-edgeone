@@ -104,3 +104,10 @@ test("stats page is titled 运行状况", async () => {
     assert.ok(!html.includes("站点访问统计"), "old stats title must be gone");
     assert.ok(!html.includes("HITOKOTO · STATS"), "old stats eyebrow must be gone");
 });
+
+test("footer shows the EdgeOne acceleration badge", async () => {
+    const html = await render();
+    assert.ok(html.includes("/edgeone-logo.png"), "EdgeOne logo missing");
+    assert.ok(html.includes("本站由 EdgeOne 提供加速服务"), "EdgeOne badge text missing");
+    assert.ok(html.includes("https://edgeone.ai/"), "EdgeOne badge link missing");
+});
