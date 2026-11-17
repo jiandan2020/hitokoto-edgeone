@@ -28,6 +28,7 @@ test("homepage no longer explains API usage, links to /docs instead", async () =
     }
     assert.ok(html.includes("href=\"/docs\""), "docs link missing");
     assert.ok(html.includes("查看接口文档"), "docs button missing");
+    assert.ok(!html.includes("运行状态数据（JSON）"), "status JSON link must be hidden");
 });
 
 test("homepage quotes come from /api same-origin", async () => {

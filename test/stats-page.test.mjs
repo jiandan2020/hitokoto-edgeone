@@ -19,6 +19,12 @@ test("stats page contains panel sections", async () => {
     }
 });
 
+test("stats page does not link the raw status JSON", async () => {
+    const html = await render();
+    assert.ok(!html.includes("运行状态数据（JSON）"), "status JSON link must be hidden");
+    assert.ok(html.includes("/status?format=json&probe=read"), "read-only probe fetch must stay");
+});
+
 test("stats page shows KV status as cards, not a table", async () => {
     const html = await render();
     assert.ok(html.includes("id=\"kv-grid\""), "KV cards grid missing");

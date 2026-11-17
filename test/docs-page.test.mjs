@@ -53,4 +53,5 @@ test("docs page links back to the homepage and the API", async () => {
     const html = await render();
     assert.ok(html.includes("href=\"/\""), "homepage link missing");
     assert.ok(html.includes("href=\"/api\""), "try-the-API link missing");
+    assert.ok(!html.includes("运行状态数据（JSON）"), "status JSON link must be hidden");
 });

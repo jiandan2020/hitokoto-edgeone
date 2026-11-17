@@ -198,7 +198,7 @@ const page = `<!doctype html>
   </section>
 </main>
 <footer>
-  <p><a href="/">返回首页</a> · <a href="/stats">运行状况</a> · <a href="/status">运行状态数据（JSON）</a></p>
+  <p><a href="/">返回首页</a> · <a href="/stats">运行状况</a></p>
   <div class="footer-sources"><a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">语录数据来自 sentences-bundle</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">项目源码</a></div>
   <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a>
 </footer>
