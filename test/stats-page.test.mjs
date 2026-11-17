@@ -129,3 +129,12 @@ test("page script parses without a syntax error", async () => {
     assert.ok(match, "page script missing");
     assert.doesNotThrow(() => new Function(match[1]), "page script must parse");
 });
+
+test("stats page supports dark mode", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"theme-btn\""), "desktop theme button missing");
+    assert.ok(html.includes("id=\"theme-btn-menu\""), "menu theme button missing");
+    assert.ok(html.includes("[data-theme=\"dark\"]"), "dark theme variables missing");
+    assert.ok(html.includes("#ffb08a"), "dark primary color missing");
+    assert.ok(html.includes("hitokoto-theme"), "anti-flash theme script missing");
+});

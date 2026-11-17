@@ -14,11 +14,20 @@ async function render() {
 
 test("homepage shows the random quote section", async () => {
     const html = await render();
-    for (const id of ["quote-text", "quote-source", "quote-meta", "quote-chips", "quote-next"]) {
+    for (const id of ["quote-text", "quote-source", "quote-meta", "quote-chips", "quote-next", "quote-body", "quote-copy", "quote-share", "quote-error", "quote-retry"]) {
         assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
     }
     assert.ok(html.includes("<h2>随机一言</h2>"), "quote heading missing");
     assert.ok(html.includes("换一句"), "quote-next button missing");
+    assert.ok(html.includes("复制"), "quote copy button missing");
+    assert.ok(html.includes("分享"), "quote share button missing");
+    assert.ok(html.includes("暂时无法获取一言"), "quote error state missing");
+    assert.ok(html.includes("quote-mark"), "decorative quote mark missing");
+    assert.ok(html.includes("skeleton-pulse"), "skeleton loading styles missing");
+    assert.ok(html.includes("QUICK_CATEGORIES"), "quick category list missing");
+    for (const name of ["全部", "动画", "诗词", "哲学", "网易云"]) {
+        assert.ok(html.includes(`"${name}"`), `missing quick category ${name}`);
+    }
 });
 
 test("homepage no longer explains API usage, links to /docs instead", async () => {
@@ -27,8 +36,18 @@ test("homepage no longer explains API usage, links to /docs instead", async () =
         assert.ok(!html.includes(heading), `usage section must be gone: ${heading}`);
     }
     assert.ok(html.includes("href=\"/docs\""), "docs link missing");
-    assert.ok(html.includes("查看接口文档"), "docs button missing");
+    assert.ok(html.includes(">接口文档</a>"), "docs button missing");
     assert.ok(!html.includes("运行状态数据（JSON）"), "status JSON link must be hidden");
+});
+
+test("hero has a headline, subtitle and two actions", async () => {
+    const html = await render();
+    assert.ok(html.includes("<h1>让每一次请求，都遇见一句好话</h1>"), "hero headline missing");
+    assert.ok(html.includes("稳定、轻量的中文语录开放接口，支持多维度筛选与多种返回格式。"), "hero subtitle missing");
+    assert.ok(html.includes("href=\"#api-grid\""), "quick-access button must scroll to the API grid");
+    assert.ok(html.includes(">快速接入</a>"), "quick-access button missing");
+    assert.ok(html.includes("id=\"api-grid\""), "API grid anchor missing");
+    assert.ok(!html.includes("试试接口"), "old try-the-API button must be gone from the hero");
 });
 
 test("homepage quotes come from /api same-origin", async () => {
@@ -76,9 +95,56 @@ test("page uses Material Design styles", async () => {
     assert.ok(html.includes("接口一览"), "API list heading missing");
 });
 
-test("page script parses without a syntax error", async () => {
+test("API cards use inline SVG icons and offer a copy-URL button", async () => {
     const html = await render();
-    const match = html.match(/<script>([\s\S]*?)<\/script>/);
-    assert.ok(match, "page script missing");
-    assert.doesNotThrow(() => new Function(match[1]), "page script must parse");
+    for (const feature of ["random", "category", "length", "format", "jsonp", "balanced"]) {
+        assert.ok(html.includes(`data-feature="${feature}"`), `missing API card feature ${feature}`);
+    }
+    assert.ok(html.includes("<svg"), "API cards must use inline SVG icons");
+    assert.ok(html.includes("card-copy"), "API cards must have a copy-URL button");
+    for (const url of ["/api", "/api?c=a", "/api?encode=text", "/api?callback=cb", "/api?mode=category"]) {
+        assert.ok(html.includes(`data-url="${url}"`), `missing copy URL ${url}`);
+    }
+    assert.ok(!html.includes("<span class=\"api-icon\">❝</span>"), "old quote-char icon must be gone");
+    assert.ok(!html.includes("<span class=\"api-icon\">类</span>"), "old Chinese-char icons must be gone");
+});
+
+test("playground section exists with parameters, URL preview and send", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"playground\""), "playground section missing");
+    assert.ok(html.includes("API 在线调试"), "playground heading missing");
+    for (const id of ["pg-features", "pg-c", "pg-min", "pg-max", "pg-encode", "pg-callback", "pg-mode", "pg-error", "pg-url", "pg-copy-url", "pg-send", "pg-copy-curl", "pg-result", "pg-status", "pg-response", "pg-copy-resp"]) {
+        assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
+    }
+    assert.ok(html.includes("PG_FEATURES"), "playground feature presets missing");
+    assert.ok(html.includes("只请求本站 /api"), "playground must state it only requests same-origin /api");
+    assert.ok(html.includes("curl"), "playground must offer a curl command");
+});
+
+test("footer version info loads with a placeholder and hides on failure", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"version-info\""), "version info group missing");
+    assert.ok(html.includes("aria-busy"), "version info must expose a loading state");
+    assert.ok(html.includes("加载中…"), "version placeholders must show a loading state");
+    assert.ok(!html.includes("暂不可用"), "footer must not show 暂不可用 placeholders");
+    assert.ok(html.includes("onVersionPart"), "version failure must hide the whole group");
+});
+
+test("theme toggle exists on desktop and in the mobile menu", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"theme-btn\""), "desktop theme button missing");
+    assert.ok(html.includes("id=\"theme-btn-menu\""), "mobile menu theme button missing");
+    assert.ok(html.includes("[data-theme=\"dark\"]"), "dark theme variables missing");
+    assert.ok(html.includes("#ffb08a"), "dark theme primary missing");
+    assert.ok(html.includes("hitokoto-theme"), "theme preference key missing");
+    assert.ok(html.includes("prefers-color-scheme"), "theme must follow the system by default");
+});
+
+test("page scripts parse without a syntax error", async () => {
+    const html = await render();
+    const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+    assert.ok(blocks.length >= 2, "page must have a head theme script and a body script");
+    for (const block of blocks) {
+        assert.doesNotThrow(() => new Function(block), "page script must parse");
+    }
 });

@@ -83,3 +83,44 @@ test("page script parses without a syntax error", async () => {
     assert.ok(match, "page script missing");
     assert.doesNotThrow(() => new Function(match[1]), "page script must parse");
 });
+
+test("docs page has a table of contents linking to all ten sections", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"toc\""), "TOC missing");
+    assert.ok(html.includes("class=\"docs-layout\""), "docs layout missing");
+    for (let i = 1; i <= 10; i++) {
+        assert.ok(html.includes(`id="sec-${i}"`), `section sec-${i} missing`);
+        assert.ok(html.includes(`href="#sec-${i}"`), `TOC link to sec-${i} missing`);
+    }
+    assert.equal((html.match(/href="#sec-/g) || []).length, 10, "TOC must have exactly 10 section links");
+    assert.ok(html.includes(".toc a.active"), "TOC active-link style missing");
+    assert.ok(html.includes("scroll-margin-top:80px"), "section scroll margin missing");
+});
+
+test("code blocks get a copy button", async () => {
+    const html = await render();
+    assert.ok(html.includes("code-copy"), "copy button logic missing");
+    assert.ok(html.includes("navigator.clipboard"), "Clipboard API copy missing");
+    assert.ok(html.includes("execCommand"), "copy fallback missing");
+    assert.ok(html.includes("已复制"), "copied feedback text missing");
+});
+
+test("theme toggle buttons exist on desktop and in the mobile menu", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"theme-btn\""), "desktop theme button missing");
+    assert.ok(html.includes("id=\"theme-btn-menu\""), "menu theme button missing");
+});
+
+test("dark theme variables match the homepage and stats pages", async () => {
+    const html = await render();
+    assert.ok(html.includes("[data-theme=\"dark\"]"), "dark theme block missing");
+    assert.ok(html.includes("#ffb08a"), "dark primary color missing");
+    assert.ok(html.includes("--md-hover"), "hover variable missing");
+    assert.ok(html.includes("var(--md-hover)"), "hover must use the variable");
+});
+
+test("head anti-flash script restores the saved theme before paint", async () => {
+    const html = await render();
+    assert.ok(html.includes("hitokoto-theme"), "anti-flash theme script missing");
+    assert.ok(html.includes("prefers-color-scheme"), "system theme detection missing");
+});

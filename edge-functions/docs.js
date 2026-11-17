@@ -11,6 +11,7 @@ const page = `<!doctype html>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>(function(){try{var t=localStorage.getItem('hitokoto-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
   <style>
     :root{
       color-scheme:light;
@@ -29,6 +30,25 @@ const page = `<!doctype html>
       --md-elev-2:0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15);
       --md-elev-3:0 1px 3px rgba(0,0,0,.3),0 4px 8px 3px rgba(0,0,0,.15);
       --md-ease:cubic-bezier(.2,0,0,1);
+      --md-hover:rgba(178,60,0,.08);--md-primary-hover:#8f2f00;
+    }
+    [data-theme="dark"]{
+      color-scheme:dark;
+      --md-primary:#ffb08a;--md-on-primary:#3a1400;--md-primary-container:#5f2a10;--md-on-primary-container:#ffdcc3;
+      --md-secondary:#d8bfa8;--md-on-secondary:#2d1707;--md-secondary-container:#4a3527;--md-on-secondary-container:#ffdcc3;
+      --md-tertiary:#f0c06a;--md-on-tertiary:#2a1a00;--md-tertiary-container:#4d3a00;--md-on-tertiary-container:#ffdea6;
+      --md-error:#ffb4ab;--md-on-error:#410e0b;--md-error-container:#5c1a15;--md-on-error-container:#f9dedc;
+      --md-surface:#1a1512;--md-surface-dim:#120e0b;
+      --md-surface-container-lowest:#120e0b;--md-surface-container-low:#211a15;--md-surface-container:#2a211b;
+      --md-surface-container-high:#352a22;--md-surface-container-highest:#403329;
+      --md-on-surface:#f5e8dd;--md-on-surface-variant:#cbb9a9;
+      --md-outline:#978578;--md-outline-variant:#4a3f36;
+      --md-inverse-surface:#f5e8dd;--md-inverse-on-surface:#221a14;
+      --md-success-container:#1e3a24;--md-on-success-container:#bfe6c4;
+      --md-hover:rgba(255,176,138,.12);--md-primary-hover:#ffc9a8;
+      --md-elev-1:0 1px 2px rgba(0,0,0,.5),0 1px 3px 1px rgba(0,0,0,.35);
+      --md-elev-2:0 1px 2px rgba(0,0,0,.5),0 2px 6px 2px rgba(0,0,0,.35);
+      --md-elev-3:0 1px 3px rgba(0,0,0,.5),0 4px 8px 3px rgba(0,0,0,.35);
     }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
@@ -42,10 +62,10 @@ const page = `<!doctype html>
     h1{font-size:clamp(32px,6vw,45px);font-weight:500;line-height:1.2;letter-spacing:0;margin:16px 0 12px;color:var(--md-on-surface)}
     header p{color:var(--md-on-surface-variant);max-width:600px;margin:0 auto 24px}
     .button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;line-height:1.5;text-decoration:none;cursor:pointer;transition:box-shadow .2s var(--md-ease),background .2s var(--md-ease)}
-    .button:hover{background:#8f2f00;box-shadow:var(--md-elev-1);text-decoration:none}
+    .button:hover{background:var(--md-primary-hover);box-shadow:var(--md-elev-1);text-decoration:none}
     .button:active{transform:scale(.98)}
     .button.ghost{background:transparent;color:var(--md-primary);border:1px solid var(--md-outline)}
-    .button.ghost:hover{background:rgba(178,60,0,.08);box-shadow:none}
+    .button.ghost:hover{background:var(--md-hover);box-shadow:none}
     header .note{margin-top:20px;font-size:12px;color:var(--md-on-surface-variant)}
     section{background:var(--md-surface-container);border-radius:28px;padding:32px;margin-bottom:24px}
     h2{font-size:22px;font-weight:400;line-height:1.27;margin:0 0 16px;color:var(--md-on-surface)}
@@ -75,6 +95,20 @@ const page = `<!doctype html>
     .icp-link img{width:16px;height:16px;object-fit:contain}
     .reveal{opacity:0;transform:translateY(16px);transition:opacity .5s var(--md-ease),transform .5s var(--md-ease)}
     .reveal.visible{opacity:1;transform:none}
+    .docs-layout{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start;max-width:1100px}
+    .toc{position:sticky;top:84px;background:var(--md-surface-container);border-radius:28px;padding:20px}
+    .toc summary{cursor:pointer;list-style:none}
+    .toc summary::-webkit-details-marker{display:none}
+    .toc-title{font-size:14px;font-weight:500;line-height:1.5;margin-bottom:8px;color:var(--md-on-surface)}
+    .toc a{display:block;padding:8px 12px;border-radius:12px;color:var(--md-on-surface-variant);font-size:14px;text-decoration:none}
+    .toc a:hover{background:var(--md-hover);color:var(--md-on-surface);text-decoration:none}
+    .toc a.active{background:var(--md-primary-container);color:var(--md-on-primary-container)}
+    .docs-body{min-width:0}
+    .docs-body section{scroll-margin-top:80px}
+    pre{position:relative}
+    .code-copy{position:absolute;top:8px;right:8px;padding:4px 10px;border:0;border-radius:999px;background:var(--md-surface-container-highest);color:var(--md-on-surface-variant);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer}
+    .code-copy:hover{background:var(--md-hover);color:var(--md-on-surface)}
+    @media(max-width:900px){.docs-layout{grid-template-columns:1fr}.toc{position:static}}
     @media(max-width:600px){header{padding-top:48px;padding-bottom:32px}section{padding:24px 20px;border-radius:24px}th,td{min-width:110px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.icp-link,.edgeone-badge{transition:none}.reveal{opacity:1;transform:none}}
   
@@ -85,37 +119,55 @@ const page = `<!doctype html>
     .app-logo img{width:28px;height:28px;display:block}
     .app-nav-links{display:flex;align-items:center;gap:4px;margin-left:auto}
     .app-nav-links a{padding:8px 12px;border-radius:999px;color:var(--md-on-surface-variant);font-size:14px;font-weight:500;text-decoration:none}
-    .app-nav-links a:hover{background:rgba(178,60,0,.08);color:var(--md-on-surface);text-decoration:none}
+    .app-nav-links a:hover{background:var(--md-hover);color:var(--md-on-surface);text-decoration:none}
     .app-menu{position:relative;display:none;margin-left:auto}
     .app-menu-btn{width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--md-on-surface);font-size:20px;line-height:1;cursor:pointer}
-    .app-menu-btn:hover{background:rgba(178,60,0,.08)}
+    .app-menu-btn:hover{background:var(--md-hover)}
+    .theme-btn{flex:none;width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--md-on-surface);font-size:18px;line-height:1;cursor:pointer}
+    .theme-btn:hover{background:var(--md-hover)}
+    .app-menu-theme{display:block;width:100%;text-align:left;padding:10px 14px;border:0;border-radius:12px;background:transparent;color:var(--md-on-surface);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer}
+    .app-menu-theme:hover{background:var(--md-hover)}
     .app-menu-dropdown{position:absolute;top:calc(100% + 8px);right:0;min-width:160px;padding:8px;border-radius:16px;background:var(--md-surface-container-high);box-shadow:var(--md-elev-2)}
     .app-menu-dropdown a{display:block;padding:10px 14px;border-radius:12px;color:var(--md-on-surface);font-size:14px;font-weight:500;text-decoration:none}
-    .app-menu-dropdown a:hover{background:rgba(178,60,0,.08);text-decoration:none}
+    .app-menu-dropdown a:hover{background:var(--md-hover);text-decoration:none}
     .app-menu-dropdown a.active{background:var(--md-primary-container);color:var(--md-on-primary-container)}
-    @media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block}.app-bar-inner{gap:12px}}
+    @media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block}.app-bar-inner{gap:12px}.theme-btn{display:none}}
   </style>
 </head>
 <body>
-<nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><div class="app-menu"><button class="app-menu-btn" id="menu-btn" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="menu-dropdown">☰</button><div class="app-menu-dropdown" id="menu-dropdown" hidden><a href="/">首页</a><a href="/docs" class="active">接口文档</a><a href="/stats">运行状况</a></div></div></div></nav>
+<nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><button class="theme-btn" id="theme-btn" type="button" aria-label="切换深色模式">🌙</button><div class="app-menu"><button class="app-menu-btn" id="menu-btn" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="menu-dropdown">☰</button><div class="app-menu-dropdown" id="menu-dropdown" hidden><a href="/">首页</a><a href="/docs" class="active">接口文档</a><a href="/stats">运行状况</a><button class="app-menu-theme" id="theme-btn-menu" type="button">🌙 切换深色模式</button></div></div></div></nav>
 <header>
   <div class="eyebrow">HITOKOTO · 接口文档</div>
   <h1>接口文档</h1>
   <p>一言指一句话，可以是动漫台词或网络小段子。本接口随机返回一句语录，支持按分类和长度筛选，以及 JSON、纯文本、JS 脚本三种返回格式。</p>
   <a class="button" href="/api" target="_blank" rel="noopener">试试接口 ↗</a>
 </header>
-<main>
-  <section>
+<main class="docs-layout">
+  <details class="toc" id="toc" open>
+    <summary class="toc-title">目录</summary>
+    <a href="#sec-1">1. 概述</a>
+    <a href="#sec-2">2. 请求地址</a>
+    <a href="#sec-3">3. 请求参数</a>
+    <a href="#sec-4">4. 句子分类</a>
+    <a href="#sec-5">5. 返回编码</a>
+    <a href="#sec-6">6. 回调</a>
+    <a href="#sec-7">7. 返回字段</a>
+    <a href="#sec-8">8. 状态码与错误</a>
+    <a href="#sec-9">9. 示例</a>
+    <a href="#sec-10">10. 注意事项</a>
+  </details>
+  <div class="docs-body">
+  <section id="sec-1">
     <h2>1. 概述</h2>
     <p>一言（Hitokoto）指一句语录，内容可为动漫台词、网络段子等。本接口用于随机返回一句语录，支持按分类和长度筛选，并提供 JSON、纯文本、JavaScript 脚本三种返回格式。</p>
     <p>本服务提供单一随机语录接口。语录数据来自 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer"><code>sentences-bundle</code></a>，当前共收录 11,276 条，分为 12 个分类。接口部署于腾讯云 EdgeOne Pages，域名为 <code>hitokoto.xzccs.top</code>。</p>
   </section>
-  <section>
+  <section id="sec-2">
     <h2>2. 请求地址</h2>
     <pre><code>GET https://hitokoto.xzccs.top/api</code></pre>
     <p>接口仅接受 <code>GET</code> 与 <code>OPTIONS</code> 请求，其他请求方法返回 <code>405</code>。浏览器预检请求 <code>OPTIONS /api</code> 返回 <code>200</code>。</p>
   </section>
-  <section>
+  <section id="sec-3">
     <h2>3. 请求参数</h2>
     <p>所有查询参数均为可选。参数需置于 URL 查询字符串中。</p>
     <div class="table-wrap"><table>
@@ -135,7 +187,7 @@ const page = `<!doctype html>
       <li>相同参数重复出现时，仅读取第一个值。</li>
     </ul>
   </section>
-  <section>
+  <section id="sec-4">
     <h2>4. 句子分类</h2>
     <p>通过 <code>c</code> 参数指定一个分类；不传 <code>c</code> 时从全部分类中筛选。</p>
     <div class="table-wrap"><table>
@@ -156,7 +208,7 @@ const page = `<!doctype html>
       </tbody>
     </table></div>
   </section>
-  <section>
+  <section id="sec-5">
     <h2>5. 返回编码</h2>
     <h3>5.1 JSON（默认）</h3>
     <p>成功时返回一个对象。字段值取决于语录数据，部分字段可能为 <code>null</code>。</p>
@@ -174,12 +226,12 @@ const page = `<!doctype html>
     <pre><code>&lt;p id="hitokoto"&gt;&lt;/p&gt;
 &lt;script src="https://hitokoto.xzccs.top/api?encode=js&amp;select=%23hitokoto"&gt;&lt;/script&gt;</code></pre>
   </section>
-  <section>
+  <section id="sec-6">
     <h2>6. 回调</h2>
     <p>使用 <code>callback=show</code> 时，响应形如：</p>
     <pre><code>;show("内容");</code></pre>
   </section>
-  <section>
+  <section id="sec-7">
     <h2>7. 返回字段</h2>
     <div class="table-wrap"><table>
       <thead><tr><th>字段</th><th>说明</th></tr></thead><tbody>
@@ -192,7 +244,7 @@ const page = `<!doctype html>
         <tr><td><code>timestamp</code></td><td>响应生成时的 Unix 时间戳，单位毫秒</td></tr>
       </tbody></table></div>
   </section>
-  <section>
+  <section id="sec-8">
     <h2>8. 状态码与错误</h2>
     <div class="table-wrap"><table><thead><tr><th>状态码</th><th>含义</th></tr></thead><tbody>
       <tr><td><code>200</code></td><td>请求成功；<code>OPTIONS</code> 预检也返回 <code>200</code>。</td></tr>
@@ -204,7 +256,7 @@ const page = `<!doctype html>
     <p>错误以 JSON 返回，包含 <code>code</code>、<code>message</code> 和毫秒级时间戳 <code>timestamp</code>。示例：</p>
     <pre><code>{"code":400,"message":"min_length 必须是正整数","timestamp":1730000000000}</code></pre>
   </section>
-  <section>
+  <section id="sec-9">
     <h2>9. 示例</h2>
     <h3>9.1 随机 JSON</h3>
     <p>请求：</p>
@@ -249,12 +301,13 @@ const page = `<!doctype html>
       </tbody>
     </table></div>
   </section>
-  <section>
+  <section id="sec-10">
     <h2>10. 注意事项</h2>
     <ol>
       <li>站点流量较大时，建议在程序中使用缓存减轻请求压力，或自行部署接口（项目源码见 <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">GitHub 仓库</a>）。</li>
     </ol>
   </section>
+  </div>
 </main>
 <footer>
   <p class="footer-sources"><a href="/">返回首页</a> · <a href="/stats">运行状况</a> · <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">语句数据</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">项目源码</a></p>
@@ -263,6 +316,9 @@ const page = `<!doctype html>
 </footer>
 <script>
   (function(){var btn=document.getElementById('menu-btn');var menu=document.getElementById('menu-dropdown');if(!btn||!menu)return;btn.addEventListener('click',function(e){e.stopPropagation();var open=menu.hidden;menu.hidden=!open;btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!menu.hidden&&!menu.contains(e.target)){menu.hidden=true;btn.setAttribute('aria-expanded','false');}});})();
+  (function(){var b=document.getElementById('theme-btn');var m=document.getElementById('theme-btn-menu');function cur(){return document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';}function sync(){var t=cur();var i=t==='dark'?'☀️':'🌙';var l=t==='dark'?'切换浅色模式':'切换深色模式';if(b){b.textContent=i;b.setAttribute('aria-label',l);}if(m){m.textContent=i+' '+l;}}function apply(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('hitokoto-theme',t);}catch(e){}sync();}function tog(){apply(cur()==='dark'?'light':'dark');}if(b){b.addEventListener('click',tog);}if(m){m.addEventListener('click',tog);}sync();try{if(!localStorage.getItem('hitokoto-theme')&&window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');sync();});}}catch(e){}})();
+  (function(){var toc=document.getElementById('toc');if(toc&&window.matchMedia&&window.matchMedia('(max-width: 900px)').matches){toc.removeAttribute('open');}if(toc){toc.addEventListener('toggle',function(){if(window.matchMedia&&window.matchMedia('(min-width: 901px)').matches&&!toc.open){toc.open=true;}});}var links={};document.querySelectorAll('#toc a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a;});var secs=document.querySelectorAll('.docs-body section[id]');if(!('IntersectionObserver' in window)||!secs.length)return;var obs=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){document.querySelectorAll('#toc a').forEach(function(a){a.classList.remove('active');});var l=links[entry.target.id];if(l){l.classList.add('active');}}});},{rootMargin:'-80px 0px -70% 0px'});secs.forEach(function(s){obs.observe(s);});})();
+  document.querySelectorAll('pre').forEach(function(pre){var btn=document.createElement('button');btn.className='code-copy';btn.type='button';btn.textContent='复制';btn.addEventListener('click',function(){var code=pre.querySelector('code');var text=code?code.textContent:pre.textContent;function done(){btn.textContent='已复制';setTimeout(function(){btn.textContent='复制';},1500);}function fallback(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(ta);}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,fallback);}else{fallback();}});pre.appendChild(btn);});
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
