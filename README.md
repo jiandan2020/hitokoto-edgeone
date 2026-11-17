@@ -7,7 +7,7 @@
 在 EdgeOne Pages 从 GitHub 导入此仓库的 `main` 分支：
 
 - 构建命令：`npm run build`（只校验仓库已有的部署文件，不生成索引）
-- 首页说明：`edge-functions/index.js`，路由为 `/`；一言接口：`edge-functions/api.js`，路由为 `/api`（由 Pages 自动识别）
+- 首页：`edge-functions/index.js`，路由为 `/`；接口文档：`edge-functions/docs.js`，路由为 `/docs`；一言接口：`edge-functions/api.js`，路由为 `/api`（由 Pages 自动识别）
 - 一言 API 不需要环境变量或存储服务；可选的站点统计页面需要单独配置环境变量，见下文。想用 KV 做跨实例共享缓存时，在控制台开通 KV、创建命名空间并绑定到项目，变量名必须为 `hitokoto_kv`，部署后跑 `node scripts/warm-kv.mjs` 预热；不绑定也能正常运行，见 `docs/kv-setup.md`。
 
 `npm run generate` 在本地或 GitHub Actions 中从 `sentences/` 生成独立的 `sentence-index.json`，并根据 `functions/index.js` 生成 `edge-functions/api.js`。两者均保存在仓库；更改语录或原始函数后应在提交前运行 `npm run generate` 并提交生成文件。EdgeOne 的 `npm run build` 只校验已提交的索引、语料和函数是否一致，不生成文件；校验失败时部署会停止。运行时先读实例内缓存，再读 KV（若已绑定），最后读同一部署的静态文件并核对版本；索引和句子按语料版本分键写进 KV，缓存未命中时会转发预览凭据；缓存命中时不再检查静态资源授权，因此不要依赖静态资源授权限制 API 访问。函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
@@ -16,7 +16,8 @@
 
 ## 使用
 
-- `/`：接口说明首页
+- `/`：首页（随机一言 + 入口）
+- `/docs`：接口文档（请求参数、返回字段、状态码与示例）
 - `/stats`：运行状况（健康横幅、KV 状态、24 小时与每日访问统计）
 - `/status`：运行状态探针数据，只返回 JSON（绑定、写读、索引与分类缓存）；可视化的运行状况见 `/stats`
 - `/stats-daily`：每日汇总数据（KV 缓存，供统计页使用）
@@ -26,7 +27,11 @@
 - `/api?encode=text`：纯文本
 - `/api?min_length=10&max_length=20`：筛选长度
 
-`GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见部署后的首页。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
+`GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见 `/docs` 接口文档。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
+
+## 优化记录（4.9.0）
+
+- 新增 `/docs` 接口文档页：结构参考一言官方开发者中心的语句接口文档，内容以本项目 `/api` 的实际实现为准（请求地址、7 个参数、12 个分类、返回编码、7 个返回字段、状态码与错误、真实返回示例、注意事项）；首页不再写用法说明，只留随机一言区、试试接口与查看接口文档入口。
 
 ## 优化记录（4.8.0）
 

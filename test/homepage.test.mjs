@@ -21,6 +21,15 @@ test("homepage shows the random quote section", async () => {
     assert.ok(html.includes("换一句"), "quote-next button missing");
 });
 
+test("homepage no longer explains API usage, links to /docs instead", async () => {
+    const html = await render();
+    for (const heading of ["<h2>快速开始</h2>", "<h2>请求参数</h2>", "<h2>分类</h2>", "<h2>返回格式与字段</h2>", "<h2>状态码与错误</h2>", "<h2>请求示例</h2>"]) {
+        assert.ok(!html.includes(heading), `usage section must be gone: ${heading}`);
+    }
+    assert.ok(html.includes("href=\"/docs\""), "docs link missing");
+    assert.ok(html.includes("查看接口文档"), "docs button missing");
+});
+
 test("homepage quotes come from /api same-origin", async () => {
     const html = await render();
     assert.ok(html.includes("'/api?c='"), "quotes must come from /api");
