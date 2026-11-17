@@ -13,13 +13,13 @@ async function render() {
     return res.text();
 }
 
-test("docs page has the API reference sections", async () => {
+test("docs page has the numbered reference sections", async () => {
     const html = await render();
-    for (const heading of ["<h2>简介</h2>", "<h2>请求地址</h2>", "<h2>请求参数</h2>", "<h2>句子类型</h2>", "<h2>返回编码</h2>", "<h2>返回信息</h2>", "<h2>状态码与错误</h2>", "<h2>示例</h2>", "<h2>注意事项</h2>"]) {
+    for (const heading of ["<h2>1. 概述</h2>", "<h2>2. 请求地址</h2>", "<h2>3. 请求参数</h2>", "<h2>4. 句子分类</h2>", "<h2>5. 返回编码</h2>", "<h2>6. 回调</h2>", "<h2>7. 返回字段</h2>", "<h2>8. 状态码与错误</h2>", "<h2>9. 示例</h2>", "<h2>10. 注意事项</h2>"]) {
         assert.ok(html.includes(heading), `missing section ${heading}`);
     }
     assert.ok(html.includes("<title>接口文档"), "title must be 接口文档");
-    assert.ok(html.includes("HITOKOTO · DOCS"), "eyebrow must be DOCS");
+    assert.ok(html.includes("HITOKOTO · 接口文档"), "eyebrow must be 接口文档");
 });
 
 test("docs page documents our /api endpoint and parameters", async () => {
@@ -37,7 +37,7 @@ test("docs page lists return fields and status codes of our API", async () => {
     for (const field of ["<code>id</code>", "<code>hitokoto</code>", "<code>type</code>", "<code>from</code>", "<code>from_who</code>", "<code>length</code>", "<code>timestamp</code>"]) {
         assert.ok(html.includes(field), `missing return field ${field}`);
     }
-    for (const code of ["<code>400</code>", "<code>403</code>", "<code>404</code>", "<code>405</code>", "<code>500</code>"]) {
+    for (const code of ["<code>400</code>", "<code>404</code>", "<code>405</code>", "<code>500</code>"]) {
         assert.ok(html.includes(code), `missing status code ${code}`);
     }
     assert.ok(html.includes("min_length 必须是正整数"), "error example missing");
@@ -46,7 +46,7 @@ test("docs page lists return fields and status codes of our API", async () => {
 test("docs page states official-only parameters and fields are not supported", async () => {
     const html = await render();
     assert.ok(html.includes("没有 <code>charset</code> 参数"), "must state charset is not supported");
-    assert.ok(html.includes("没有 <code>uuid</code>、<code>creator</code> 等字段"), "must state uuid/creator are not fields");
+    assert.ok(html.includes("不包含 <code>uuid</code>、<code>creator</code> 等字段"), "must state uuid/creator are not fields");
 });
 
 test("docs page links back to the homepage and the API", async () => {

@@ -25,42 +25,53 @@ const page = `<!doctype html>
   <span class="bubble" style="--left:93%;--size:19px;--duration:17s;--delay:-12s;--color:#b8dfff"></span>
 </div>
 <header>
-  <div class="eyebrow">HITOKOTO · DOCS</div>
+  <div class="eyebrow">HITOKOTO · 接口文档</div>
   <h1>接口文档</h1>
   <p>一言指一句话，可以是动漫台词或网络小段子。本接口随机返回一句语录，支持按分类和长度筛选，以及 JSON、纯文本、JS 脚本三种返回格式。</p>
   <a class="button" href="/api" target="_blank" rel="noopener">试试接口 ↗</a>
 </header>
 <main>
   <section>
-    <h2>简介</h2>
-    <p>本站提供一个语句接口：每次请求随机返回一句话。句子库来自 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">sentences-bundle</a>，当前共 11,276 条，分为 12 个分类。接口部署在腾讯云 EdgeOne Pages，域名为 <code>hitokoto.xzccs.top</code>。</p>
+    <h2>1. 概述</h2>
+    <p>一言（Hitokoto）指一句语录，内容可为动漫台词、网络段子等。本接口用于随机返回一句语录，支持按分类和长度筛选，并提供 JSON、纯文本、JavaScript 脚本三种返回格式。</p>
+    <p>本服务提供单一随机语录接口。语录数据来自 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer"><code>sentences-bundle</code></a>，当前共收录 11,276 条，分为 12 个分类。接口部署于腾讯云 EdgeOne Pages，域名为 <code>hitokoto.xzccs.top</code>。</p>
   </section>
   <section>
-    <h2>请求地址</h2>
+    <h2>2. 请求地址</h2>
     <pre><code>GET https://hitokoto.xzccs.top/api</code></pre>
-    <p>只接受 <code>GET</code> 与 <code>OPTIONS</code> 请求，其他方法返回 405。浏览器预检 <code>OPTIONS /api</code> 返回 200。接口支持跨域请求（<code>Access-Control-Allow-Origin: *</code>）。随机接口不缓存，每次响应都带 <code>Cache-Control: no-store</code>。</p>
-    <p class="note">本服务只有一个一言接口，以下参数均用于 <code>/api</code>，不是分别独立的接口。</p>
+    <p>接口仅接受 <code>GET</code> 与 <code>OPTIONS</code> 请求，其他请求方法返回 <code>405</code>。浏览器预检请求 <code>OPTIONS /api</code> 返回 <code>200</code>。</p>
+    <p>接口支持跨域请求，响应头包含：</p>
+    <pre><code>Access-Control-Allow-Origin: *</code></pre>
+    <p>随机接口不缓存，每次响应均包含：</p>
+    <pre><code>Cache-Control: no-store</code></pre>
+    <p>本服务仅提供 <code>/api</code> 一个一言接口。下列请求参数均作用于 <code>/api</code>，并非独立接口。</p>
   </section>
   <section>
-    <h2>请求参数</h2>
-    <p>所有查询参数均为可选。只接受 GET 请求，参数放在 URL 查询字符串里。</p>
+    <h2>3. 请求参数</h2>
+    <p>所有查询参数均为可选。参数需置于 URL 查询字符串中。</p>
     <div class="table-wrap"><table>
       <thead><tr><th>参数</th><th>说明</th><th>默认值</th><th>示例</th></tr></thead>
       <tbody>
-        <tr><td><code>c</code></td><td>分类代码，取值 a–l。不传或为空时从所有分类中筛选；只读取第一个 <code>c</code>，不支持多分类同时筛选。未知分类通常返回 404。</td><td>—</td><td><code>c=a</code></td></tr>
-        <tr><td><code>mode</code></td><td>抽取模式：<code>weighted</code>（默认）全库等概率，大分类更容易被抽中；<code>category</code>（别名 <code>balanced</code>）先在符合条件的分类中等概率抽一个分类，再在该分类内等概率抽一句，小分类和大分类机会均等。只指定一个分类时两种模式结果相同，其他值返回 400。</td><td><code>weighted</code></td><td><code>mode=category</code></td></tr>
-        <tr><td><code>encode</code></td><td>返回格式：<code>json</code>（默认）、<code>text</code> 或 <code>js</code>。其他值按 JSON 返回，不应用 callback。</td><td><code>json</code></td><td><code>encode=text</code></td></tr>
-        <tr><td><code>min_length</code></td><td>最小长度，包含边界；不传时不限制下限。建议使用正整数。</td><td>—</td><td><code>min_length=10</code></td></tr>
-        <tr><td><code>max_length</code></td><td>最大长度，包含边界；不传时不限制上限。建议使用正整数，且不能小于最小长度。</td><td>—</td><td><code>max_length=20</code></td></tr>
-        <tr><td><code>select</code></td><td>仅用于 <code>encode=js</code>，指定页面上的 CSS 选择器；默认 <code>.hitokoto</code>。目标元素必须存在。</td><td><code>.hitokoto</code></td><td><code>select=%23hitokoto</code></td></tr>
-        <tr><td><code>callback</code></td><td>非空时将 json、text 或 js 结果包装为 JavaScript 函数调用；json 的参数是 JSON 字符串，而非对象。只接受合法函数名，如 <code>show</code>、<code>App.onHitokoto</code>，其他值返回 400。</td><td>—</td><td><code>callback=show</code></td></tr>
+        <tr><td><code>c</code></td><td>分类代码，取值为 <code>a</code>–<code>l</code>。不传或为空时从所有分类中筛选；仅读取第一个 <code>c</code>，不支持多分类同时筛选。未知分类通常返回 <code>404</code>。</td><td>—</td><td><code>c=a</code></td></tr>
+        <tr><td><code>mode</code></td><td>抽取模式。<code>weighted</code>：默认模式，全库等概率抽取，大分类更容易被抽中；<code>category</code>（别名 <code>balanced</code>）：先在符合条件的分类中等概率抽取一个分类，再在该分类内等概率抽取一句，使小分类与大分类机会均等。仅指定一个分类时，两种模式结果相同。其他取值返回 <code>400</code>。</td><td><code>weighted</code></td><td><code>mode=category</code></td></tr>
+        <tr><td><code>encode</code></td><td>返回格式，支持 <code>json</code>（默认）、<code>text</code>、<code>js</code>。其他值按 JSON 返回，且不应用 <code>callback</code>。</td><td><code>json</code></td><td><code>encode=text</code></td></tr>
+        <tr><td><code>min_length</code></td><td>最小长度，包含边界。不传时不限制下限。只能使用正整数。</td><td>—</td><td><code>min_length=10</code></td></tr>
+        <tr><td><code>max_length</code></td><td>最大长度，包含边界。不传时不限制上限。只能使用正整数，且不能小于 <code>min_length</code>。</td><td>—</td><td><code>max_length=20</code></td></tr>
+        <tr><td><code>select</code></td><td>仅用于 <code>encode=js</code>，指定页面上的 CSS 选择器。默认值为 <code>.hitokoto</code>。目标元素必须存在。</td><td><code>.hitokoto</code></td><td><code>select=%23hitokoto</code></td></tr>
+        <tr><td><code>callback</code></td><td>非空时，将 <code>json</code>、<code>text</code> 或 <code>js</code> 结果包装为 JavaScript 函数调用。对于 JSON 格式，回调参数为 JSON 字符串，而非对象。仅接受合法函数名，如 <code>show</code>、<code>App.onHitokoto</code>；其他值返回 <code>400</code>。</td><td>—</td><td><code>callback=show</code></td></tr>
       </tbody>
     </table></div>
-    <p class="note">长度依据数据中的 <code>length</code> 字段，只接受纯正整数，<code>12abc</code>、<code>0x10</code>、<code>1.5</code> 会返回 400。相同参数重复出现时只读取第一个值。本接口不设 <code>charset</code> 参数，始终返回 UTF-8。</p>
+    <h3>3.1 参数补充规则</h3>
+    <ul>
+      <li>长度依据数据中的 <code>length</code> 字段计算。</li>
+      <li>长度参数仅接受纯正整数；<code>12abc</code>、<code>0x10</code>、<code>1.5</code> 等值返回 <code>400</code>。</li>
+      <li>相同参数重复出现时，仅读取第一个值。</li>
+      <li>本接口不设 <code>charset</code> 参数，始终返回 UTF-8 编码。</li>
+    </ul>
   </section>
   <section>
-    <h2>句子类型</h2>
-    <p>通过 <code>c</code> 参数指定一个分类；点击分类代码可直接试用。不传 <code>c</code> 时从全部分类中筛选。</p>
+    <h2>4. 句子分类</h2>
+    <p>通过 <code>c</code> 参数指定一个分类；不传 <code>c</code> 时从全部分类中筛选。</p>
     <div class="table-wrap"><table>
       <thead><tr><th>代码</th><th>分类</th><th>说明</th></tr></thead>
       <tbody>
@@ -78,51 +89,64 @@ const page = `<!doctype html>
         <tr><td><a href="/api?c=l" target="_blank" rel="noopener"><code>l</code></a></td><td>抖机灵</td><td>抖机灵类语录</td></tr>
       </tbody>
     </table></div>
-    <p class="note">分类名称和范围参考句子库的 <code>categories.json</code>。</p>
+    <p class="note">分类名称与范围参考句子库中的 <code>categories.json</code>。</p>
   </section>
   <section>
-    <h2>返回编码</h2>
-    <h3>JSON（默认）</h3>
-    <p>成功时返回一个对象（字段值取决于语录数据，部分字段可能为 <code>null</code>）。响应头 <code>Content-Type: application/json; charset=UTF-8</code>。</p>
-    <h3>纯文本</h3>
-    <p><code>encode=text</code> 只返回语录正文。响应头 <code>Content-Type: text/plain; charset=UTF-8</code>。</p>
-    <h3>JavaScript</h3>
-    <p><code>encode=js</code> 返回一段脚本，执行时将正文写入 <code>select</code> 指定元素的 <code>innerText</code>。响应头 <code>Content-Type: application/javascript; charset=UTF-8</code>。在页面里这样用：</p>
+    <h2>5. 返回编码</h2>
+    <h3>5.1 JSON（默认）</h3>
+    <p>成功时返回一个对象。字段值取决于语录数据，部分字段可能为 <code>null</code>。</p>
+    <p>响应头：</p>
+    <pre><code>Content-Type: application/json; charset=UTF-8</code></pre>
+    <h3>5.2 纯文本</h3>
+    <p>使用 <code>encode=text</code> 时，仅返回语录正文。</p>
+    <p>响应头：</p>
+    <pre><code>Content-Type: text/plain; charset=UTF-8</code></pre>
+    <h3>5.3 JavaScript</h3>
+    <p>使用 <code>encode=js</code> 时，返回一段脚本。脚本执行时将正文写入 <code>select</code> 指定元素的 <code>innerText</code>。</p>
+    <p>响应头：</p>
+    <pre><code>Content-Type: application/javascript; charset=UTF-8</code></pre>
+    <p>页面使用示例：</p>
     <pre><code>&lt;p id="hitokoto"&gt;&lt;/p&gt;
 &lt;script src="https://hitokoto.xzccs.top/api?encode=js&amp;select=%23hitokoto"&gt;&lt;/script&gt;</code></pre>
-    <h3>回调</h3>
-    <p>使用 <code>callback=show</code> 时，响应形如 <code>;show("内容");</code>；默认 JSON 格式传给回调的是序列化后的 JSON 字符串，需要自行解析。返回 JavaScript 的参数只应使用可信内容，不要拼入未经信任的输入。</p>
   </section>
   <section>
-    <h2>返回信息</h2>
+    <h2>6. 回调</h2>
+    <p>使用 <code>callback=show</code> 时，响应形如：</p>
+    <pre><code>;show("内容");</code></pre>
+    <p>默认 JSON 格式传给回调的是序列化后的 JSON 字符串，调用方需自行解析。</p>
+    <p>回调返回的 JavaScript 参数仅应使用可信内容，不得拼入未经信任的输入。</p>
+  </section>
+  <section>
+    <h2>7. 返回字段</h2>
     <div class="table-wrap"><table>
       <thead><tr><th>字段</th><th>说明</th></tr></thead><tbody>
         <tr><td><code>id</code></td><td>语录编号</td></tr>
         <tr><td><code>hitokoto</code></td><td>语录正文</td></tr>
         <tr><td><code>type</code></td><td>分类代码</td></tr>
         <tr><td><code>from</code></td><td>出处</td></tr>
-        <tr><td><code>from_who</code></td><td>作者或来源人物，可能为 null</td></tr>
+        <tr><td><code>from_who</code></td><td>作者或来源人物，可能为 <code>null</code></td></tr>
         <tr><td><code>length</code></td><td>数据记录的语录长度</td></tr>
         <tr><td><code>timestamp</code></td><td>响应生成时的 Unix 时间戳，单位毫秒</td></tr>
       </tbody></table></div>
   </section>
   <section>
-    <h2>状态码与错误</h2>
+    <h2>8. 状态码与错误</h2>
     <div class="table-wrap"><table><thead><tr><th>状态码</th><th>含义</th></tr></thead><tbody>
-      <tr><td><code>200</code></td><td>请求成功；OPTIONS 预检也返回 200。</td></tr>
+      <tr><td><code>200</code></td><td>请求成功；<code>OPTIONS</code> 预检也返回 <code>200</code>。</td></tr>
       <tr><td><code>400</code></td><td>长度参数解析后不是正整数，或最大长度小于最小长度，或 <code>mode</code> 不是 <code>weighted</code>、<code>category</code>、<code>balanced</code> 之一，或 <code>callback</code> 不是合法函数名，或 <code>select</code> 不是合法选择器。</td></tr>
-      <tr><td><code>403</code></td><td>不支持的部署域名。</td></tr>
       <tr><td><code>404</code></td><td>没有符合筛选条件的语录。</td></tr>
-      <tr><td><code>405</code></td><td>仅支持 GET / OPTIONS 请求。</td></tr>
+      <tr><td><code>405</code></td><td>仅支持 <code>GET</code> 与 <code>OPTIONS</code> 请求。</td></tr>
       <tr><td><code>500</code></td><td>服务处理请求时发生异常。</td></tr>
     </tbody></table></div>
-    <p>错误以 JSON 返回，包含 <code>code</code>、<code>message</code> 和毫秒时间戳 <code>timestamp</code>，例如：</p>
+    <p>错误以 JSON 返回，包含 <code>code</code>、<code>message</code> 和毫秒级时间戳 <code>timestamp</code>。示例：</p>
     <pre><code>{"code":400,"message":"min_length 必须是正整数","timestamp":1730000000000}</code></pre>
   </section>
   <section>
-    <h2>示例</h2>
-    <h3>随机 JSON</h3>
-    <p><a href="/api" target="_blank" rel="noopener">GET /api</a></p>
+    <h2>9. 示例</h2>
+    <h3>9.1 随机 JSON</h3>
+    <p>请求：</p>
+    <pre><code>GET /api</code></pre>
+    <p>响应：</p>
     <pre><code>{
   "id": 4529,
   "hitokoto": "如果争端能够避免，那我们应当沉默——如果战斗是必须的，那就战斗到最后！",
@@ -132,8 +156,10 @@ const page = `<!doctype html>
   "length": 35,
   "timestamp": 1794876477309
 }</code></pre>
-    <h3>动画分类</h3>
-    <p><a href="/api?c=a" target="_blank" rel="noopener">GET /api?c=a</a></p>
+    <h3>9.2 动画分类</h3>
+    <p>请求：</p>
+    <pre><code>GET /api?c=a</code></pre>
+    <p>响应：</p>
     <pre><code>{
   "id": 13467,
   "hitokoto": "我们以后，也要一直在一起。",
@@ -143,22 +169,32 @@ const page = `<!doctype html>
   "length": 13,
   "timestamp": 1794876482819
 }</code></pre>
-    <h3>纯文本</h3>
-    <p><a href="/api?encode=text" target="_blank" rel="noopener">GET /api?encode=text</a></p>
+    <h3>9.3 纯文本</h3>
+    <p>请求：</p>
+    <pre><code>GET /api?encode=text</code></pre>
+    <p>响应：</p>
     <pre><code>风有约，花不误，岁岁年年不相负。</code></pre>
-    <h3>更多示例</h3>
-    <div class="examples">
-      <div>长度筛选：<a href="/api?min_length=10&amp;max_length=20" target="_blank" rel="noopener">/api?min_length=10&amp;max_length=20</a></div>
-      <div>分类均衡抽取：<a href="/api?mode=category" target="_blank" rel="noopener">/api?mode=category</a></div>
-      <div>生成页面脚本：<a href="/api?encode=js&amp;select=%23hitokoto" target="_blank" rel="noopener">/api?encode=js&amp;select=%23hitokoto</a></div>
-      <div>文本回调：<a href="/api?encode=text&amp;callback=show" target="_blank" rel="noopener">/api?encode=text&amp;callback=show</a></div>
-      <div>JSON 回调：<a href="/api?callback=show" target="_blank" rel="noopener">/api?callback=show</a></div>
-    </div>
+    <h3>9.4 更多示例</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>功能</th><th>请求示例</th></tr></thead>
+      <tbody>
+        <tr><td>长度筛选</td><td><a href="/api?min_length=10&amp;max_length=20" target="_blank" rel="noopener"><code>/api?min_length=10&amp;max_length=20</code></a></td></tr>
+        <tr><td>分类均衡抽取</td><td><a href="/api?mode=category" target="_blank" rel="noopener"><code>/api?mode=category</code></a></td></tr>
+        <tr><td>生成页面脚本</td><td><a href="/api?encode=js&amp;select=%23hitokoto" target="_blank" rel="noopener"><code>/api?encode=js&amp;select=%23hitokoto</code></a></td></tr>
+        <tr><td>文本回调</td><td><a href="/api?encode=text&amp;callback=show" target="_blank" rel="noopener"><code>/api?encode=text&amp;callback=show</code></a></td></tr>
+        <tr><td>JSON 回调</td><td><a href="/api?callback=show" target="_blank" rel="noopener"><code>/api?callback=show</code></a></td></tr>
+      </tbody>
+    </table></div>
   </section>
   <section>
-    <h2>注意事项</h2>
-    <p>请勿通过不断刷新接口爬取句子数据库：句子库已全部公开，见 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">sentences-bundle</a>。站点流量较大时，建议在程序中使用缓存减轻请求压力，或自行部署接口（项目源码见 <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">GitHub 仓库</a>）。</p>
-    <p>本接口没有 <code>charset</code> 参数，始终返回 UTF-8；返回字段中没有 <code>uuid</code>、<code>creator</code> 等字段，<code>timestamp</code> 是响应生成时的毫秒时间戳；另有 <code>mode</code> 抽取模式参数，用于在全库等概率与分类均衡抽取之间切换。</p>
+    <h2>10. 注意事项</h2>
+    <ol>
+      <li>请勿通过不断刷新接口爬取句子数据库。句子库已全部公开，见 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer"><code>sentences-bundle</code></a>。</li>
+      <li>站点流量较大时，建议在程序中使用缓存减轻请求压力，或自行部署接口（项目源码见 <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">GitHub 仓库</a>）。</li>
+      <li>本接口没有 <code>charset</code> 参数，始终返回 UTF-8。</li>
+      <li>返回字段中不包含 <code>uuid</code>、<code>creator</code> 等字段；<code>timestamp</code> 为响应生成时的毫秒级时间戳。</li>
+      <li>本接口提供 <code>mode</code> 抽取模式参数，用于在全库等概率抽取与分类均衡抽取之间切换。</li>
+    </ol>
   </section>
 </main>
 <footer>
