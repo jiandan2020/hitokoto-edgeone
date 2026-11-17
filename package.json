@@ -6,12 +6,20 @@
   "type": "module",
   "scripts": {
     "build": "node check-deployment.js",
+    "build:web": "vite build",
+    "dev": "vite",
     "generate": "node build.js",
     "lint": "eslint .",
     "test": "node --test"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
     "eslint": "^9.18.0",
-    "jsdom": "^31.0.1"
+    "jsdom": "^31.0.1",
+    "vite": "^6.4.6",
+    "vue-router": "^4.6.5"
+  },
+  "dependencies": {
+    "vue": "^3.5.45"
   }
 }

@@ -1,6 +1,7 @@
 export default [
     {
-        ignores: ["node_modules", ".git"],
+        // dist 是 Vite 构建产物；src 是 Vue 代码，待接入 eslint-plugin-vue 后再纳入 lint。
+        ignores: ["node_modules", ".git", "dist", "src"],
     },
     {
         languageOptions: {
