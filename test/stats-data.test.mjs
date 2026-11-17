@@ -322,3 +322,127 @@ test("stats-data: in-memory cache expired-recent: serves stale on upstream failu
         delete globalThis.hitokoto_kv;
     }
 });
+
+// ---- SWR：过期不久立即返回旧数据并后台刷新 ----
+
+function statsReqWithWaitUntil(handler, env, background) {
+    return handler({
+        request: new Request("https://hitokoto.xzccs.top/stats-data"),
+        env,
+        waitUntil(promise) { background.push(promise); },
+    });
+}
+
+function routeTotal(total) {
+    return routeFetch({
+        total: totalData(buckets24(100), total),
+        errors: singleData(0),
+        api: singleData(1),
+    });
+}
+
+test("stats-data SWR: L1 stale within 30 min returns stale immediately and refreshes in background", async () => {
+    const kv = makeStatsKv();
+    globalThis.hitokoto_kv = kv;
+    let now = FIXED_NOW;
+    const prevDateNow = Date.now;
+    Date.now = () => now;
+    globalThis.fetch = routeTotal(12090);
+    const background = [];
+    try {
+        const handler = await importStatsHandler("stats-swr-l1");
+        const first = await statsReq(handler, ENV);
+        assert.equal(first.status, 200);
+        assert.equal((await first.json()).requests, 12090);
+        now = FIXED_NOW + 11 * 60 * 1000;
+        globalThis.fetch = routeTotal(20000);
+        const res = await statsReqWithWaitUntil(handler, ENV, background);
+        assert.equal(res.status, 200);
+        assert.equal((await res.json()).requests, 12090);
+        assert.equal(background.length, 1);
+        await background[0];
+        const after = await statsReq(handler, ENV);
+        assert.equal(after.status, 200);
+        assert.equal((await after.json()).requests, 20000);
+    } finally {
+        Date.now = prevDateNow;
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("stats-data SWR: L1 stale beyond 30 min blocks on load", async () => {
+    const kv = makeStatsKv();
+    globalThis.hitokoto_kv = kv;
+    let now = FIXED_NOW;
+    const prevDateNow = Date.now;
+    Date.now = () => now;
+    globalThis.fetch = routeTotal(12090);
+    const background = [];
+    try {
+        const handler = await importStatsHandler("stats-swr-old");
+        const first = await statsReq(handler, ENV);
+        assert.equal(first.status, 200);
+        assert.equal((await first.json()).requests, 12090);
+        now = FIXED_NOW + 41 * 60 * 1000;
+        globalThis.fetch = routeTotal(20000);
+        const res = await statsReqWithWaitUntil(handler, ENV, background);
+        assert.equal(res.status, 200);
+        assert.equal((await res.json()).requests, 20000);
+        assert.equal(background.length, 0);
+    } finally {
+        Date.now = prevDateNow;
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("stats-data SWR: background refresh failure still returns stale 200", async () => {
+    const kv = makeStatsKv();
+    globalThis.hitokoto_kv = kv;
+    let now = FIXED_NOW;
+    const prevDateNow = Date.now;
+    Date.now = () => now;
+    globalThis.fetch = routeTotal(12090);
+    const background = [];
+    try {
+        const handler = await importStatsHandler("stats-swr-fail");
+        const first = await statsReq(handler, ENV);
+        assert.equal(first.status, 200);
+        assert.equal((await first.json()).requests, 12090);
+        now = FIXED_NOW + 11 * 60 * 1000;
+        globalThis.fetch = async () => { throw new Error("tencent down"); };
+        const res = await statsReqWithWaitUntil(handler, ENV, background);
+        assert.equal(res.status, 200);
+        assert.equal((await res.json()).requests, 12090);
+        assert.equal(background.length, 1);
+        await background[0];
+        const after = await statsReq(handler, ENV);
+        assert.equal(after.status, 200);
+        assert.equal((await after.json()).requests, 12090);
+    } finally {
+        Date.now = prevDateNow;
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("stats-data SWR: without waitUntil falls back to blocking load", async () => {
+    const kv = makeStatsKv();
+    globalThis.hitokoto_kv = kv;
+    let now = FIXED_NOW;
+    const prevDateNow = Date.now;
+    Date.now = () => now;
+    globalThis.fetch = routeTotal(12090);
+    try {
+        const handler = await importStatsHandler("stats-swr-no-waituntil");
+        const first = await statsReq(handler, ENV);
+        assert.equal(first.status, 200);
+        assert.equal((await first.json()).requests, 12090);
+        now = FIXED_NOW + 11 * 60 * 1000;
+        globalThis.fetch = routeTotal(20000);
+        const res = await statsReq(handler, ENV);
+        assert.equal(res.status, 200);
+        assert.equal((await res.json()).requests, 20000);
+    } finally {
+        Date.now = prevDateNow;
+        delete globalThis.hitokoto_kv;
+    }
+});
