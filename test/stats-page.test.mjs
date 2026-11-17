@@ -31,6 +31,14 @@ test("stats page does not link the raw status JSON", async () => {
     assert.ok(!html.includes("数据来源：腾讯云 EdgeOne 流量分析"), "data source note must be gone");
 });
 
+test("hourly data list renders as a compact grid", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"hourly-list\" class=\"data-grid\""), "hourly list must use the data grid");
+    assert.ok(html.includes(".data-grid"), "data grid styles missing");
+    assert.ok(html.includes("data-item"), "hourly list must use compact data cards");
+    assert.ok(html.includes("data-time"), "data cards must show the hour");
+});
+
 test("stats page shows KV status as cards, not a table", async () => {
     const html = await render();
     assert.ok(html.includes("id=\"kv-grid\""), "KV cards grid missing");
