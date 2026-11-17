@@ -5,7 +5,7 @@
   "description": "Hitokoto API for Tencent EdgeOne",
   "type": "module",
   "scripts": {
-    "build": "npm run build:web && node check-deployment.js",
+    "build": "npm run build:web && node scripts/copy-static-to-dist.mjs && node check-deployment.js",
     "build:web": "vite build",
     "dev": "vite",
     "generate": "node build.js",
