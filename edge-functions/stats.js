@@ -334,6 +334,7 @@ function loadDaily() {
       const viewX = (event.clientX - rect.left) * 680 / rect.width;
       const index = Math.max(0, Math.min(29, Math.round((viewX - 50) * 29 / 605)));
       const e = recent[index], value = values[index];
+      if (!e) return;
       tooltip.textContent = e.key + '（北京时间）：' + (value === null ? '未采集' : value.toLocaleString('zh-CN') + ' 次');
       tooltip.hidden = false;
       const x = 50 + index * 605 / 29;
@@ -346,7 +347,7 @@ function loadDaily() {
     hit.addEventListener('pointerdown', show);
     hit.addEventListener('pointerleave', hide);
     hit.addEventListener('pointercancel', hide);
-    for (const i of [0, 6, 12, 18, 24, 29]) shape('text', {x:50+i*605/29,y:188,'text-anchor':i===0?'start':i===29?'end':'middle',class:'axis-label'}, recent[i].key.slice(5));
+    for (const i of [0, 6, 12, 18, 24, 29]) { if (!recent[i]) continue; shape('text', {x:50+i*605/29,y:188,'text-anchor':i===0?'start':i===29?'end':'middle',class:'axis-label'}, recent[i].key.slice(5)); }
   }).catch(() => { document.getElementById('history-status').textContent = '每日汇总暂不可用，请稍后再试。'; document.getElementById('yesterday-requests').textContent = '暂无数据'; document.getElementById('yesterday-date').textContent = ''; }).finally(() => { setLoading('cumulative', false); setLoading('yesterday-requests', false); });
 }
 function loadAll() {
