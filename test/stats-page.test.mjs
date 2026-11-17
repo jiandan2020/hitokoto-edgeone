@@ -14,7 +14,7 @@ async function render() {
 
 test("stats page contains panel sections", async () => {
     const html = await render();
-    for (const id of ["health-banner", "health-pill", "health-title", "health-version", "kv-grid", "kv-status", "yesterday-requests", "requests", "traffic", "rate", "api-share", "api-requests", "latency", "hourly-chart", "hourly-avg", "cumulative", "week-total", "day-average", "best-day", "chart", "refresh", "updated"]) {
+    for (const id of ["health-banner", "health-pill", "health-title", "health-version", "kv-grid", "kv-status", "yesterday-requests", "requests", "traffic", "rate", "api-share", "api-requests", "latency", "hourly-chart", "hourly-avg", "cumulative", "week-total", "day-average", "best-day", "daily-chart", "refresh", "updated"]) {
         assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
     }
 });
@@ -29,6 +29,17 @@ test("stats page does not link the raw status JSON", async () => {
     assert.ok(!html.includes("完整写读检测"), "write-read probe link must be gone");
     assert.ok(!html.includes("统计包含该域名的首页"), "stats scope note must be gone");
     assert.ok(!html.includes("数据来源：腾讯云 EdgeOne 流量分析"), "data source note must be gone");
+});
+
+test("daily trend renders as a line chart like the hourly one", async () => {
+    const html = await render();
+    assert.ok(html.includes("id=\"daily-chart\""), "daily line chart missing");
+    assert.ok(html.includes("id=\"daily-tooltip\""), "daily tooltip missing");
+    assert.ok(html.includes("daily-gradient"), "daily gradient missing");
+    assert.ok(html.includes("每日请求数折线图"), "daily chart label must say line chart");
+    assert.ok(!html.includes("柱状图"), "bar chart must be gone");
+    assert.ok(!html.includes("bar-wrap"), "bar chart code must be gone");
+    assert.ok(html.includes("id=\"history-list\" class=\"data-grid\""), "daily list must use the data grid");
 });
 
 test("hourly data list renders as a compact grid", async () => {
