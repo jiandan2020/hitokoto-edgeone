@@ -47,7 +47,7 @@ test("KV unbound reports not bound and ok false", async () => {
     assert.equal(data.kv.bound, false);
     assert.equal(data.kv.writeRead, "skipped");
     assert.equal(data.ok, false);
-    assert.equal(data.version, "4.9.2");
+    assert.equal(data.version, "4.9.3");
 });
 
 test("status returns JSON even without format=json", async () => {

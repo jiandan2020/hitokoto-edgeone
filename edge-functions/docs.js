@@ -85,13 +85,11 @@ const page = `<!doctype html>
     .app-nav-links{display:flex;align-items:center;gap:4px;margin-left:auto}
     .app-nav-links a{padding:8px 12px;border-radius:999px;color:var(--md-on-surface-variant);font-size:14px;font-weight:500;text-decoration:none}
     .app-nav-links a:hover{background:rgba(178,60,0,.08);color:var(--md-on-surface);text-decoration:none}
-    .app-cta{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 20px;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;text-decoration:none}
-    .app-cta:hover{background:#8f2f00;text-decoration:none}
     @media(max-width:600px){.app-nav-links{display:none}.app-bar-inner{gap:12px}}
   </style>
 </head>
 <body>
-<nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><a class="app-cta" href="/api" target="_blank" rel="noopener">试试接口</a></div></nav>
+<nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div></div></nav>
 <header>
   <div class="eyebrow">HITOKOTO · 接口文档</div>
   <h1>接口文档</h1>

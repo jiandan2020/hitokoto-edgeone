@@ -72,3 +72,10 @@ test("page uses Material Design styles", async () => {
     assert.ok(!html.includes("bubbles"), "old bubbles must be gone");
     assert.ok(html.includes("app-bar"), "app bar missing");
 });
+
+test("page script parses without a syntax error", async () => {
+    const html = await render();
+    const match = html.match(/<script>([\s\S]*?)<\/script>/);
+    assert.ok(match, "page script missing");
+    assert.doesNotThrow(() => new Function(match[1]), "page script must parse");
+});

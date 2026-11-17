@@ -63,3 +63,10 @@ test("page uses Material Design styles", async () => {
     assert.ok(html.includes("api-grid"), "API card grid missing");
     assert.ok(html.includes("接口一览"), "API list heading missing");
 });
+
+test("page script parses without a syntax error", async () => {
+    const html = await render();
+    const match = html.match(/<script>([\s\S]*?)<\/script>/);
+    assert.ok(match, "page script missing");
+    assert.doesNotThrow(() => new Function(match[1]), "page script must parse");
+});
