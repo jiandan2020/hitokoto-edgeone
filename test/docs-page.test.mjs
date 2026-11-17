@@ -43,12 +43,6 @@ test("docs page lists return fields and status codes of our API", async () => {
     assert.ok(html.includes("min_length 必须是正整数"), "error example missing");
 });
 
-test("docs page states official-only parameters and fields are not supported", async () => {
-    const html = await render();
-    assert.ok(html.includes("没有 <code>charset</code> 参数"), "must state charset is not supported");
-    assert.ok(html.includes("不包含 <code>uuid</code>、<code>creator</code> 等字段"), "must state uuid/creator are not fields");
-});
-
 test("docs page links back to the homepage and the API", async () => {
     const html = await render();
     assert.ok(html.includes("href=\"/\""), "homepage link missing");

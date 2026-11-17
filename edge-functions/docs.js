@@ -107,11 +107,6 @@ const page = `<!doctype html>
     <h2>2. 请求地址</h2>
     <pre><code>GET https://hitokoto.xzccs.top/api</code></pre>
     <p>接口仅接受 <code>GET</code> 与 <code>OPTIONS</code> 请求，其他请求方法返回 <code>405</code>。浏览器预检请求 <code>OPTIONS /api</code> 返回 <code>200</code>。</p>
-    <p>接口支持跨域请求，响应头包含：</p>
-    <pre><code>Access-Control-Allow-Origin: *</code></pre>
-    <p>随机接口不缓存，每次响应均包含：</p>
-    <pre><code>Cache-Control: no-store</code></pre>
-    <p>本服务仅提供 <code>/api</code> 一个一言接口。下列请求参数均作用于 <code>/api</code>，并非独立接口。</p>
   </section>
   <section>
     <h2>3. 请求参数</h2>
@@ -130,10 +125,7 @@ const page = `<!doctype html>
     </table></div>
     <h3>3.1 参数补充规则</h3>
     <ul>
-      <li>长度依据数据中的 <code>length</code> 字段计算。</li>
-      <li>长度参数仅接受纯正整数；<code>12abc</code>、<code>0x10</code>、<code>1.5</code> 等值返回 <code>400</code>。</li>
       <li>相同参数重复出现时，仅读取第一个值。</li>
-      <li>本接口不设 <code>charset</code> 参数，始终返回 UTF-8 编码。</li>
     </ul>
   </section>
   <section>
@@ -156,7 +148,6 @@ const page = `<!doctype html>
         <tr><td><a href="/api?c=l" target="_blank" rel="noopener"><code>l</code></a></td><td>抖机灵</td><td>抖机灵类语录</td></tr>
       </tbody>
     </table></div>
-    <p class="note">分类名称与范围参考句子库中的 <code>categories.json</code>。</p>
   </section>
   <section>
     <h2>5. 返回编码</h2>
@@ -180,8 +171,6 @@ const page = `<!doctype html>
     <h2>6. 回调</h2>
     <p>使用 <code>callback=show</code> 时，响应形如：</p>
     <pre><code>;show("内容");</code></pre>
-    <p>默认 JSON 格式传给回调的是序列化后的 JSON 字符串，调用方需自行解析。</p>
-    <p>回调返回的 JavaScript 参数仅应使用可信内容，不得拼入未经信任的输入。</p>
   </section>
   <section>
     <h2>7. 返回字段</h2>
@@ -256,11 +245,7 @@ const page = `<!doctype html>
   <section>
     <h2>10. 注意事项</h2>
     <ol>
-      <li>请勿通过不断刷新接口爬取句子数据库。句子库已全部公开，见 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer"><code>sentences-bundle</code></a>。</li>
       <li>站点流量较大时，建议在程序中使用缓存减轻请求压力，或自行部署接口（项目源码见 <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">GitHub 仓库</a>）。</li>
-      <li>本接口没有 <code>charset</code> 参数，始终返回 UTF-8。</li>
-      <li>返回字段中不包含 <code>uuid</code>、<code>creator</code> 等字段；<code>timestamp</code> 为响应生成时的毫秒级时间戳。</li>
-      <li>本接口提供 <code>mode</code> 抽取模式参数，用于在全库等概率抽取与分类均衡抽取之间切换。</li>
     </ol>
   </section>
 </main>
