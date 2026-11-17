@@ -44,7 +44,13 @@ function loadStatus() {
       const sub = document.createElement('div'); sub.className = 'kv-sub'; sub.textContent = c.sub;
       card.append(head, value, sub); grid.append(card);
     }
-    document.getElementById('kv-status').textContent = data.error ? '注意：' + data.error : 'KV 状态由运行状态探针提供。';
+    const kvStatus = document.getElementById('kv-status');
+    if (data.error) {
+      kvStatus.textContent = '注意：' + data.error;
+      kvStatus.hidden = false;
+    } else {
+      kvStatus.hidden = true;
+    }
     const ms = Math.round(performance.now() - start);
     document.getElementById('latency').textContent = ms + ' ms';
     setLoading('latency', false);
@@ -56,6 +62,7 @@ function loadStatus() {
     document.getElementById('health-time').textContent = '';
     document.getElementById('kv-grid').innerHTML = '';
     document.getElementById('kv-status').textContent = '运行状态暂不可用，请稍后再试。';
+    document.getElementById('kv-status').hidden = false;
     document.getElementById('latency').textContent = '暂无数据';
     setLoading('latency', false);
   });
