@@ -23,6 +23,8 @@ test("stats page does not link the raw status JSON", async () => {
     const html = await render();
     assert.ok(!html.includes("运行状态数据（JSON）"), "status JSON link must be hidden");
     assert.ok(html.includes("/status?format=json&probe=read"), "read-only probe fetch must stay");
+    assert.ok(html.includes("KV 状态由运行状态探针提供。"), "KV note must state the probe provides the status");
+    assert.ok(!html.includes("完整写读检测"), "write-read probe link must be gone");
 });
 
 test("stats page shows KV status as cards, not a table", async () => {
