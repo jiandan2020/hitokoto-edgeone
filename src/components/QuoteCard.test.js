@@ -50,10 +50,19 @@ describe("QuoteCard", () => {
     it("复制后按钮显示已复制", () => {
         const quote = { hitokoto: "测试句子", from: "测试", from_who: null, type: "a" };
         const wrapper = mount(QuoteCard, {
-            props: { quote, loading: false, error: null, copied: true },
+            props: { quote, loading: false, error: null, copied: true, copyFailed: false },
         });
         const buttons = wrapper.findAll(".quote-actions .btn");
         expect(buttons[1].text()).toBe("已复制");
+    });
+
+    it("复制失败时按钮显示复制失败", () => {
+        const quote = { hitokoto: "测试句子", from: "测试", from_who: null, type: "a" };
+        const wrapper = mount(QuoteCard, {
+            props: { quote, loading: false, error: null, copied: false, copyFailed: true },
+        });
+        const buttons = wrapper.findAll(".quote-actions .btn");
+        expect(buttons[1].text()).toBe("复制失败");
     });
 
     it("加载中换一句按钮禁用", () => {

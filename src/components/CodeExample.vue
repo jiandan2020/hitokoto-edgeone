@@ -12,6 +12,7 @@
 
 <script setup>
 import { ref } from "vue";
+import { copyText } from "../utils/copy.js";
 
 const props = defineProps({
     code: { type: String, required: true },
@@ -22,25 +23,11 @@ const props = defineProps({
 const copied = ref(false);
 let timer = null;
 
-async function copyText(text) {
-    try {
-        await navigator.clipboard.writeText(text);
-        return true;
-    } catch {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-        return true;
-    }
-}
-
 async function copy() {
-    await copyText(props.code);
+    const ok = await copyText(props.code);
+    if (!ok) {
+        return;
+    }
     copied.value = true;
     if (timer) {
         clearTimeout(timer);

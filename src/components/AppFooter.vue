@@ -13,8 +13,11 @@
             <a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener">
                 本站由 <img src="/edgeone-logo.png" alt="EdgeOne" class="edgeone-logo" /> 提供加速服务
             </a>
-            <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><img src="/icp-beian.png" alt="备案" class="icp-icon" />赣ICP备2025074916号-1</a>
-            <span class="footer-version" v-if="version">v{{ version }}</span>
+            <div class="footer-meta">
+                <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><img src="/icp-beian.png" alt="备案" class="icp-icon" />赣ICP备2025074916号-1</a>
+                <span class="sep" v-if="version">·</span>
+                <span class="footer-version" v-if="version">v{{ version }}</span>
+            </div>
         </div>
     </footer>
 </template>
@@ -91,6 +94,14 @@ onMounted(async () => {
 .edgeone-logo {
     height: 20px;
     width: auto;
+}
+
+.footer-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .icp-link {

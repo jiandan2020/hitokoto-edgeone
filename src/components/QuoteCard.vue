@@ -33,7 +33,7 @@
                 :disabled="!quote"
                 @click="$emit('copy')"
             >
-                {{ copied ? "已复制" : "复制" }}
+                {{ copyFailed ? "复制失败" : copied ? "已复制" : "复制" }}
             </button>
             <button
                 type="button"
@@ -53,6 +53,7 @@ defineProps({
     loading: { type: Boolean, default: false },
     error: { type: String, default: null },
     copied: { type: Boolean, default: false },
+    copyFailed: { type: Boolean, default: false },
 });
 
 defineEmits(["refresh", "copy", "share", "retry"]);

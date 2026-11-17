@@ -19,6 +19,7 @@
                     :loading="loading"
                     :error="error"
                     :copied="copied"
+                    :copy-failed="copyFailed"
                     @refresh="refresh"
                     @copy="copyQuote"
                     @share="shareQuote"
@@ -37,6 +38,7 @@
                     当前请求：<code>{{ buildUrl() }}</code>
                     <button type="button" class="url-copy" @click="copyUrl">复制</button>
                     <span v-if="urlCopied" class="url-copied">已复制</span>
+                    <span v-if="urlCopyFailed" class="url-copy-failed">复制失败</span>
                 </p>
             </div>
         </section>
@@ -70,6 +72,7 @@ import QuoteCard from "../components/QuoteCard.vue";
 import QuoteFilters from "../components/QuoteFilters.vue";
 import ApiExamples from "../components/ApiExamples.vue";
 import { useHitokoto } from "../composables/useHitokoto.js";
+import { copyText } from "../utils/copy.js";
 
 const {
     quote,
@@ -79,14 +82,17 @@ const {
     minLength,
     maxLength,
     copied,
+    copyFailed,
     buildUrl,
     fetchQuote,
     refresh,
     copyQuote,
     shareQuote,
+    dispose,
 } = useHitokoto();
 
 const urlCopied = ref(false);
+const urlCopyFailed = ref(false);
 let urlTimer = null;
 
 function scrollToQuote() {
@@ -98,24 +104,20 @@ function scrollToQuote() {
 
 async function copyUrl() {
     const url = `${window.location.origin}${buildUrl()}`;
-    try {
-        await navigator.clipboard.writeText(url);
-    } catch {
-        const textarea = document.createElement("textarea");
-        textarea.value = url;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
+    const ok = await copyText(url);
+    if (!ok) {
+        urlCopyFailed.value = true;
+        urlCopied.value = false;
+    } else {
+        urlCopyFailed.value = false;
+        urlCopied.value = true;
     }
-    urlCopied.value = true;
     if (urlTimer) {
         clearTimeout(urlTimer);
     }
     urlTimer = setTimeout(() => {
         urlCopied.value = false;
+        urlCopyFailed.value = false;
     }, 2000);
 }
 
@@ -124,6 +126,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+    dispose();
     if (urlTimer) {
         clearTimeout(urlTimer);
     }
@@ -245,6 +248,12 @@ onUnmounted(() => {
 .url-copied {
     margin-left: 6px;
     color: var(--color-success);
+    font-size: 12.5px;
+}
+
+.url-copy-failed {
+    margin-left: 6px;
+    color: var(--color-error);
     font-size: 12.5px;
 }
 

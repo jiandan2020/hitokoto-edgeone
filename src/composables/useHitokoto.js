@@ -1,4 +1,5 @@
 import { ref } from "vue";
+import { copyText } from "../utils/copy.js";
 
 const FETCH_TIMEOUT_MS = 10000;
 
@@ -10,7 +11,9 @@ export function useHitokoto() {
     const minLength = ref("");
     const maxLength = ref("");
     const copied = ref(false);
+    const copyFailed = ref(false);
     let controller = null;
+    let requestId = 0;
     let copyTimer = null;
 
     function buildUrl() {
@@ -32,13 +35,18 @@ export function useHitokoto() {
         if (controller) {
             controller.abort();
         }
-        controller = new AbortController();
-        const signal = controller.signal;
-        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+        const currentId = ++requestId;
+        const currentController = new AbortController();
+        controller = currentController;
+        let timedOut = false;
+        const timeoutId = setTimeout(() => {
+            timedOut = true;
+            currentController.abort();
+        }, FETCH_TIMEOUT_MS);
         loading.value = true;
         error.value = null;
         try {
-            const response = await fetch(buildUrl(), { signal });
+            const response = await fetch(buildUrl(), { signal: currentController.signal });
             if (!response.ok) {
                 throw new Error(`请求失败：${response.status}`);
             }
@@ -46,16 +54,25 @@ export function useHitokoto() {
             if (!data || typeof data.hitokoto !== "string") {
                 throw new Error("返回数据格式错误");
             }
-            quote.value = data;
+            if (currentId === requestId) {
+                quote.value = data;
+            }
         } catch (err) {
-            if (err && err.name === "AbortError") {
+            if (currentId !== requestId) {
                 return;
             }
-            error.value = "暂时无法获取一言";
-            console.error("获取一言失败:", err);
+            if (timedOut) {
+                error.value = "请求超时，请重试";
+            } else if (err && err.name !== "AbortError") {
+                error.value = "暂时无法获取一言";
+                console.error("获取一言失败:", err);
+            }
         } finally {
             clearTimeout(timeoutId);
-            loading.value = false;
+            if (currentId === requestId) {
+                loading.value = false;
+                controller = null;
+            }
         }
     }
 
@@ -89,18 +106,18 @@ export function useHitokoto() {
         if (!text) {
             return false;
         }
-        try {
-            await navigator.clipboard.writeText(text);
-        } catch {
-            const textarea = document.createElement("textarea");
-            textarea.value = text;
-            textarea.style.position = "fixed";
-            textarea.style.opacity = "0";
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textarea);
+        const ok = await copyText(text);
+        if (!ok) {
+            copyFailed.value = true;
+            if (copyTimer) {
+                clearTimeout(copyTimer);
+            }
+            copyTimer = setTimeout(() => {
+                copyFailed.value = false;
+            }, 2000);
+            return false;
         }
+        copyFailed.value = false;
         copied.value = true;
         if (copyTimer) {
             clearTimeout(copyTimer);
@@ -127,6 +144,19 @@ export function useHitokoto() {
         return copyQuote();
     }
 
+    function dispose() {
+        requestId++;
+        if (controller) {
+            controller.abort();
+            controller = null;
+        }
+        if (copyTimer) {
+            clearTimeout(copyTimer);
+            copyTimer = null;
+        }
+        loading.value = false;
+    }
+
     return {
         quote,
         loading,
@@ -135,6 +165,7 @@ export function useHitokoto() {
         minLength,
         maxLength,
         copied,
+        copyFailed,
         buildUrl,
         fetchQuote,
         refresh,
@@ -142,5 +173,6 @@ export function useHitokoto() {
         setLength,
         copyQuote,
         shareQuote,
+        dispose,
     };
 }

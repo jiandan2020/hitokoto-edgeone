@@ -352,6 +352,10 @@ onUnmounted(() => {
     align-items: start;
 }
 
+.docs-layout > * {
+    min-width: 0;
+}
+
 .toc {
     position: sticky;
     top: calc(var(--header-height) + 16px);

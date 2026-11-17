@@ -79,6 +79,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { CATEGORIES } from "../constants/index.js";
+import { copyText } from "../utils/copy.js";
 
 const categories = CATEGORIES;
 const origin = typeof window !== "undefined" ? window.location.origin : "https://hitokoto.xzccs.top";
@@ -161,23 +162,6 @@ function validateParams() {
     return true;
 }
 
-async function copyText(text) {
-    try {
-        await navigator.clipboard.writeText(text);
-        return true;
-    } catch {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-        return true;
-    }
-}
-
 function flash(refValue, setter) {
     setter(true);
     if (timer) {
@@ -187,21 +171,27 @@ function flash(refValue, setter) {
 }
 
 async function copyUrl() {
-    await copyText(`${origin}${previewUrl.value}`);
-    flash(urlCopied, (v) => { urlCopied.value = v; });
+    const ok = await copyText(`${origin}${previewUrl.value}`);
+    if (ok) {
+        flash(urlCopied, (v) => { urlCopied.value = v; });
+    }
 }
 
 async function copyResult() {
     if (!result.value) {
         return;
     }
-    await copyText(result.value.body);
-    flash(resultCopied, (v) => { resultCopied.value = v; });
+    const ok = await copyText(result.value.body);
+    if (ok) {
+        flash(resultCopied, (v) => { resultCopied.value = v; });
+    }
 }
 
 async function copyCurl() {
-    await copyText(curlCommand.value);
-    flash(curlCopied, (v) => { curlCopied.value = v; });
+    const ok = await copyText(curlCommand.value);
+    if (ok) {
+        flash(curlCopied, (v) => { curlCopied.value = v; });
+    }
 }
 
 async function sendRequest() {
@@ -270,6 +260,10 @@ async function sendRequest() {
     grid-template-columns: 320px 1fr;
     gap: 20px;
     align-items: start;
+}
+
+.pg-grid > * {
+    min-width: 0;
 }
 
 .pg-controls,
