@@ -27,6 +27,8 @@ test("stats page does not link the raw status JSON", async () => {
     assert.equal((html.match(/KV 状态由运行状态探针提供。/g) || []).length, 1, "KV note must appear exactly once");
     assert.ok(html.includes("kvStatus.hidden = true"), "status line must hide on success instead of repeating the note");
     assert.ok(!html.includes("完整写读检测"), "write-read probe link must be gone");
+    assert.ok(!html.includes("统计包含该域名的首页"), "stats scope note must be gone");
+    assert.ok(!html.includes("数据来源：腾讯云 EdgeOne 流量分析"), "data source note must be gone");
 });
 
 test("stats page shows KV status as cards, not a table", async () => {
