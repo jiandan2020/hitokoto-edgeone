@@ -1,5 +1,4 @@
-// 接口文档页：语句接口（/api）的使用说明，结构参考一言官方开发者中心
-// （https://developer.hitokoto.cn/sentence/），内容以本项目实际实现为准。
+// 接口文档页：语句接口（/api）的使用说明，内容以本项目实际实现为准。
 // 本页为纯静态文档，不发任何请求。
 const page = `<!doctype html>
 <html lang="zh-CN">
@@ -35,7 +34,6 @@ const page = `<!doctype html>
   <section>
     <h2>简介</h2>
     <p>本站提供一个语句接口：每次请求随机返回一句话。句子库来自 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">sentences-bundle</a>，当前共 11,276 条，分为 12 个分类。接口部署在腾讯云 EdgeOne Pages，域名为 <code>hitokoto.xzccs.top</code>。</p>
-    <p class="note">接口结构参考一言官方开发者中心的<a href="https://developer.hitokoto.cn/sentence/" target="_blank" rel="noopener noreferrer">语句接口</a>文档；参数与返回字段以本页为准，与官方 v1 接口不完全相同。</p>
   </section>
   <section>
     <h2>请求地址</h2>
@@ -160,7 +158,7 @@ const page = `<!doctype html>
   <section>
     <h2>注意事项</h2>
     <p>请勿通过不断刷新接口爬取句子数据库：句子库已全部公开，见 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">sentences-bundle</a>。站点流量较大时，建议在程序中使用缓存减轻请求压力，或自行部署接口（项目源码见 <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">GitHub 仓库</a>）。</p>
-    <p>接口与 <a href="https://developer.hitokoto.cn/sentence/" target="_blank" rel="noopener noreferrer">一言官方语句接口</a>不完全相同：本接口没有 <code>charset</code> 参数（始终返回 UTF-8），没有 <code>uuid</code>、<code>creator</code> 等字段，返回的 <code>timestamp</code> 是响应生成时的毫秒时间戳；同时多了 <code>mode</code> 抽取模式参数。</p>
+    <p>本接口没有 <code>charset</code> 参数，始终返回 UTF-8；返回字段中没有 <code>uuid</code>、<code>creator</code> 等字段，<code>timestamp</code> 是响应生成时的毫秒时间戳；另有 <code>mode</code> 抽取模式参数，用于在全库等概率与分类均衡抽取之间切换。</p>
   </section>
 </main>
 <footer>
