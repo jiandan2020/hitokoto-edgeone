@@ -7,7 +7,7 @@
     Content-Type: text/plain
 
 /sentences/*.json
-    Cache-Control: public, max-age=31536000, immutable
+    Cache-Control: public, max-age=31536000
 
 /sentence-index.json
-    Cache-Control: public, max-age=3600, immutable
+    Cache-Control: public, max-age=3600

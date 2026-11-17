@@ -29,6 +29,10 @@
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见 `/docs` 接口文档。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为。
 
+## 优化记录（4.9.6）
+
+- 去掉 `_headers` 里 `immutable` 缓存：`/sentences/*.json` 与 `/sentence-index.json` 不再承诺“内容永远不变”，只保留 `max-age`，浏览器和边缘在需要时可以重新验证。API 靠查询串 `?v=版本号` 区分版本，线上实测查询串是生效的，这次是把“脆弱的假设”改成更稳妥的做法。
+
 ## 优化记录（4.9.5）
 
 - /api 冷启动只剩一次取数：生成时把完整索引（约 53KB）内联进 `api.js`，冷启动直接用内嵌索引，不用再取一次 `sentence-index.json`；索引不再经过 KV，句子仍按分类写回 KV。新增回归测试（拦截索引请求也能正常返回、生成产物内嵌索引与 `sentence-index.json` 一致）。
