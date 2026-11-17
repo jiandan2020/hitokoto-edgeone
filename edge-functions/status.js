@@ -10,6 +10,7 @@
 const STATUS_PROBE_KEY = "status_probe";
 const STATS_KV_KEY = "stats_data_cache";
 const DAILY_KV_KEY = "daily_stats_cache";
+const FETCH_TIMEOUT_MS = 10000;
 
 function resolveKv(env) {
     const fromGlobal = globalThis.hitokoto_kv;
@@ -32,7 +33,7 @@ async function kvGetJson(kv, key) {
 
 async function fetchJson(url, cookie) {
     try {
-        const result = await fetch(url, { headers: cookie ? { cookie } : {}, redirect: "manual" });
+        const result = await fetch(url, { headers: cookie ? { cookie } : {}, redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
         if (!result.ok) {return null;}
         return await result.json();
     } catch {
@@ -56,8 +57,10 @@ export default async function onRequest(context) {
     const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim())
         .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
 
-    const packageData = await fetchJson(new URL("/package.json", url.origin).toString(), cookie);
-    const indexData = await fetchJson(new URL("/sentence-index.json", url.origin).toString(), cookie);
+    const [packageData, indexData] = await Promise.all([
+        fetchJson(new URL("/package.json", url.origin).toString(), cookie),
+        fetchJson(new URL("/sentence-index.json", url.origin).toString(), cookie),
+    ]);
     const version = typeof packageData?.version === "string" ? packageData.version : null;
     const sentenceVersion = typeof indexData?.version === "string" ? indexData.version : null;
     const index = indexData?.index && typeof indexData.index === "object" ? indexData.index : null;

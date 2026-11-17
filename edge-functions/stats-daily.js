@@ -7,6 +7,7 @@
 const DAILY_STATS_URL = "https://cdn.jsdelivr.net/gh/jiandan2020/hitokoto-edgeone@stats-data/daily-stats.json";
 const DAILY_KV_KEY = "daily_stats_cache";
 const DAILY_TTL_MS = 60 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 10000;
 // 上游失败时允许返回过期不久的缓存，避免短暂抖动直接 503。
 const DAILY_STALE_GRACE_MS = 24 * 60 * 60 * 1000;
 let cached;
@@ -48,7 +49,7 @@ function validateDaily(data) {
     return true;
 }
 async function loadDaily() {
-    const response = await fetch(DAILY_STATS_URL, { redirect: "manual" });
+    const response = await fetch(DAILY_STATS_URL, { redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     if (!response.ok) {throw new Error("每日汇总请求失败");}
     const data = await response.json();
     if (!validateDaily(data)) {throw new Error("每日汇总格式错误");}

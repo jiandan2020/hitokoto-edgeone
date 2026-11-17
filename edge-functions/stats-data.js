@@ -2,6 +2,7 @@
 const host = "teo.tencentcloudapi.com";
 const zone = "zone-3ry57u0agvak";
 const domain = "hitokoto.xzccs.top";
+const FETCH_TIMEOUT_MS = 10000;
 const encoder = new TextEncoder();
 let cached;
 let pending;
@@ -89,6 +90,7 @@ async function query(secretId, secretKey, start, end, kind) {
             "X-TC-Timestamp": String(timestamp),
         },
         body,
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!response.ok) {throw new Error("统计服务请求失败");}
     const result = (await response.json()).Response;

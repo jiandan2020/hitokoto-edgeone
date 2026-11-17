@@ -117,6 +117,24 @@ test("unbound KV still serves from jsDelivr", async () => {
     assert.deepEqual(await res.json(), SAMPLE);
 });
 
+test("jsDelivr fetch carries a timeout signal", async () => {
+    const kv = makeKv();
+    globalThis.hitokoto_kv = kv;
+    let captured;
+    globalThis.fetch = async (input, init) => {
+        captured = init;
+        return new Response(JSON.stringify(SAMPLE), { headers: { "Content-Type": "application/json" } });
+    };
+    try {
+        const handler = await importHandler("daily-signal");
+        const res = await req(handler, "/stats-daily");
+        assert.equal(res.status, 200);
+        assert.ok(captured.signal instanceof AbortSignal, "fetch must carry a timeout signal");
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
 test("POST is rejected with 405", async () => {
     const handler = await importHandler("daily-post");
     const res = await req(handler, "/stats-daily", "POST");

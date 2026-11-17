@@ -10,7 +10,7 @@ paths.push("/api?mode=category", "/stats-data", "/stats-daily");
 let failed = 0;
 for (const path of paths) {
     try {
-        const response = await fetch(`${base}${path}`);
+        const response = await fetch(`${base}${path}`, { signal: AbortSignal.timeout(10000) });
         console.log(`${response.status} ${path}`);
         if (!response.ok) {failed += 1;}
     } catch (error) {

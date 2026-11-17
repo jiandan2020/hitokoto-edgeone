@@ -128,7 +128,7 @@ function setLoading(id, on) { const el = document.getElementById(id); if (el) el
 function pill(ok, goodText, badText) { return ok ? '✓ ' + goodText : '✗ ' + badText; }
 function loadStatus() {
   const start = performance.now();
-  return fetch('/status?format=json&probe=read', {cache:'no-store'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
+  return fetch('/status?format=json&probe=read', {cache:'no-store', signal: AbortSignal.timeout(10000)}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
     const kv = data.kv || {};
     const pillEl = document.getElementById('health-pill');
     pillEl.textContent = data.ok ? '● 运行正常' : '● 运行异常';
@@ -252,7 +252,7 @@ function renderHourly(hourly) {
 }
 function loadLive() {
   ['requests','rate'].forEach(id => setLoading(id, true));
-  return fetch('/stats-data', {cache:'no-store'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
+  return fetch('/stats-data', {cache:'no-store', signal: AbortSignal.timeout(10000)}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
     document.getElementById('requests').textContent = data.requests.toLocaleString('zh-CN') + ' 次';
     document.getElementById('requests-sub').textContent = '最近 24 个完整小时';
     document.getElementById('api-requests').textContent = Number.isSafeInteger(data.apiRequests) && data.apiRequests >= 0 ? data.apiRequests.toLocaleString('zh-CN') + ' 次' : '暂无数据';
@@ -269,7 +269,7 @@ function loadLive() {
 function loadDaily() {
   setLoading('cumulative', true);
   setLoading('yesterday-requests', true);
-  return fetch('/stats-daily', {cache:'no-store'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
+  return fetch('/stats-daily', {cache:'no-store', signal: AbortSignal.timeout(10000)}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
     const start = Date.parse(data.startDate + 'T00:00:00+08:00');
     const today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0,10);
     const end = Date.parse(today + 'T00:00:00+08:00');

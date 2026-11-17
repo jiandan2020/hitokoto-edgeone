@@ -29,6 +29,11 @@
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见 `/docs` 接口文档。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为。
 
+## 优化记录（4.9.8）
+
+- `/status` 两次静态取数改并行：`/package.json` 与 `/sentence-index.json` 改用 `Promise.all` 一起取，省一次往返。
+- 全仓库 fetch 加 10 秒超时：腾讯云接口、jsDelivr、同源静态文件、页面内取数、预热脚本全部加上 `AbortSignal.timeout(10000)`，上游挂住时快速失败并走现有失败路径（统计接口会触发 4.9.7 的旧数据兜底）。新增 4 个回归测试（并行取数、超时信号）。
+
 ## 优化记录（4.9.7）
 
 - 上游抖动时先返回过期不久的统计缓存，不直接 503：`/stats-data`（24 小时统计，宽限 1 小时）与 `/stats-daily`（每日汇总，宽限 24 小时）在取数失败时，若手头有过期不久的缓存（实例内或 KV）就先返回旧数据并记日志；只有完全没数据时才 503。新增 7 个回归测试（KV 旧数据兜底、过期太久仍 503、无数据仍 503、实例内旧数据兜底）。

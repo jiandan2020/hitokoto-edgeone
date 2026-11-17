@@ -193,7 +193,7 @@ const page = `<!doctype html>
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     }).format(date) + '（北京时间）';
   }
-  fetch('/package.json', { cache: 'no-store' })
+  fetch('/package.json', { cache: 'no-store', signal: AbortSignal.timeout(10000) })
     .then(response => {
       if (!response.ok) throw new Error('API 版本信息不可用');
       return response.json();
@@ -205,7 +205,7 @@ const page = `<!doctype html>
       if (data) displayTime(data.apiUpdatedAt, 'api-updated');
     })
     .catch(() => {});
-  fetch('/version.json', { cache: 'no-store' })
+  fetch('/version.json', { cache: 'no-store', signal: AbortSignal.timeout(10000) })
     .then(response => {
       if (!response.ok) throw new Error('版本信息不可用');
       return response.json();
@@ -240,7 +240,7 @@ const page = `<!doctype html>
     document.getElementById('quote-meta').textContent = '';
     const start = performance.now();
     const url = quoteCategory ? '/api?c=' + quoteCategory : '/api';
-    return fetch(url, {cache:'no-store'}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
+    return fetch(url, {cache:'no-store', signal: AbortSignal.timeout(10000)}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
       const ms = Math.round(performance.now() - start);
       text.textContent = data.hitokoto || '暂无句子';
       document.getElementById('quote-source').textContent = data.from ? '—— ' + data.from + (data.from_who ? ' · ' + data.from_who : '') : '';

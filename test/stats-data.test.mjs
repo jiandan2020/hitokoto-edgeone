@@ -142,6 +142,17 @@ test("query() 非 200 / 返回 Error / 重复指标都抛错", async () => {
     });
 });
 
+test("query() passes a timeout signal to fetch", async () => {
+    let captured;
+    await withStubs(async (url, init) => {
+        captured = init;
+        return okResponse(singleData(100));
+    }, async () => {
+        await query(SECRET_ID, SECRET_KEY, START, END, "total");
+    });
+    assert.ok(captured.signal instanceof AbortSignal, "fetch must carry a timeout signal");
+});
+
 test("load() 24 桶齐全时聚合正确", async () => {
     const result = await withStubs(routeFetch({
         total: totalData(buckets24(100)),

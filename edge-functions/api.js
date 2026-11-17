@@ -11,6 +11,7 @@ const responseHeaders = {
     "X-Content-Type-Options": "nosniff",
     "X-Source-Code": "https://github.com/molikai-work/hitokoto-cloudflare",
 };
+const FETCH_TIMEOUT_MS = 10000;
 
 // 回调名只允许合法的 JS 标识符路径，如 show / App.onHitokoto；其余一律拒绝，
 // 防止 callback 被拼成任意 JS 代码执行。
@@ -142,7 +143,7 @@ async function loadIndex(asset, cookie, kv) {
                 return fromKv.index;
             }
         }
-        const result = await fetch(key, { headers: cookie ? { cookie } : {}, redirect: "manual" });
+        const result = await fetch(key, { headers: cookie ? { cookie } : {}, redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
         if (!result.ok) {throw new Error(`索引读取失败: ${result.status}`);}
         const data = await result.json();
         if (data.version !== sentenceVersion || !data.index || typeof data.index !== "object") {
@@ -161,7 +162,7 @@ async function loadIndex(asset, cookie, kv) {
 }
 
 async function fetchSentences(asset, cookie) {
-    const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual" });
+    const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     if (!result.ok) {throw new Error(`句子库读取失败: ${result.status}`);}
     const records = await result.json();
     if (!Array.isArray(records)) {throw new Error("句子库格式错误");}

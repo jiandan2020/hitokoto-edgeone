@@ -186,6 +186,23 @@ test("embedded index serves without fetching sentence-index.json", async () => {
     }
 });
 
+test("sentences fetch carries a timeout signal", async () => {
+    const fresh = (await import("../edge-functions/api.js?sentences-signal")).default;
+    let captured;
+    const capturingFetch = async (input, init) => {
+        captured = init;
+        return staticFetch(input);
+    };
+    globalThis.fetch = capturingFetch;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=a") });
+        assert.equal(res.status, 200);
+        assert.ok(captured.signal instanceof AbortSignal, "fetch must carry a timeout signal");
+    } finally {
+        globalThis.fetch = staticFetch;
+    }
+});
+
 test("generated api.js embeds the sentence index", async () => {
     const source = readFileSync(new URL("../edge-functions/api.js", import.meta.url), "utf8");
     const prefix = "const embeddedSentenceIndex = ";

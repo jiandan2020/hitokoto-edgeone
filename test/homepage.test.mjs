@@ -34,7 +34,7 @@ test("homepage no longer explains API usage, links to /docs instead", async () =
 test("homepage quotes come from /api same-origin", async () => {
     const html = await render();
     assert.ok(html.includes("'/api?c='"), "quotes must come from /api");
-    assert.ok(html.includes("fetch(url, {cache:'no-store'})"), "quotes must bypass cache");
+    assert.ok(html.includes("fetch(url, {cache:'no-store', signal: AbortSignal.timeout(10000)})"), "quotes must bypass cache");
     assert.ok(!html.includes("status_probe"), "must not write the probe key from the homepage");
 });
 

@@ -94,6 +94,41 @@ test("KV bound but empty: write probe via ?probe=write ok, nothing cached yet", 
     }
 });
 
+test("status fetches package.json and sentence-index.json in parallel, both with a timeout signal", async () => {
+    const calls = [];
+    const deferreds = [];
+    const prevFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init) => {
+        calls.push(String(input));
+        assert.ok(init.signal instanceof AbortSignal, "fetch must carry a timeout signal");
+        const deferred = {};
+        deferred.promise = new Promise((resolve) => { deferred.resolve = resolve; });
+        deferreds.push(deferred);
+        return deferred.promise;
+    };
+    try {
+        const promise = req("/status?format=json&probe=read");
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        assert.equal(calls.length, 2, "both static fetches must start before either resolves");
+        assert.ok(calls.some((u) => u.endsWith("/package.json")));
+        assert.ok(calls.some((u) => u.endsWith("/sentence-index.json")));
+        const pkgBody = readFileSync(new URL("../package.json", import.meta.url), "utf8");
+        const idxBody = readFileSync(new URL("../sentence-index.json", import.meta.url), "utf8");
+        deferreds.forEach((deferred, i) => {
+            const body = calls[i].endsWith("/package.json") ? pkgBody : idxBody;
+            deferred.resolve(new Response(body, { headers: { "Content-Type": "application/json" } }));
+        });
+        const res = await promise;
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.version, pkg.version);
+        assert.equal(data.sentenceVersion, indexData.version);
+    } finally {
+        globalThis.fetch = prevFetch;
+    }
+});
+
 test(`KV bound and populated: ok true, 12 categories, ${sentenceCount} sentences`, async () => {
     const kv = makeKv();
     populateKv(kv);
