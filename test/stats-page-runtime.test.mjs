@@ -98,3 +98,49 @@ test("mobile menu toggles open on button click and closes on outside click", asy
         dom.window.close();
     }
 });
+
+test("refresh button is disabled while loading and a second click is ignored", async () => {
+    const html = await (await onRequest()).text();
+    const hourly = Array.from({ length: 24 }, (_, i) => ({
+        time: new Date(Date.UTC(2026, 10, 16, i)).toISOString(),
+        requests: 100 + i,
+    }));
+    let statusCalls = 0;
+    const dom = new JSDOM(html, {
+        url: "https://hitokoto.xzccs.top/stats",
+        runScripts: "dangerously",
+        pretendToBeVisual: true,
+        beforeParse(window) {
+            window.fetch = async (url) => {
+                const u = String(url);
+                if (u.includes("/status")) { statusCalls += 1; }
+                // Delay so the second refresh click lands while the first load is still in flight.
+                await new Promise((r) => setTimeout(r, 100));
+                let body;
+                if (u.includes("/stats-daily")) {
+                    body = { domain: "hitokoto.xzccs.top", startDate: "2026-11-15", days: { "2026-11-15": 369, "2026-11-16": 11311 } };
+                } else if (u.includes("/stats-data")) {
+                    body = { requests: 12090, apiRequests: 11000, bytes: 50000000, errorRate: 0, start: Date.UTC(2026, 10, 15), end: Date.UTC(2026, 10, 16), fetchedAt: Date.UTC(2026, 10, 16, 1), hourly };
+                } else {
+                    body = { ok: true, version: "4.9.11", sentenceVersion: "abc123456789", timestamp: Date.UTC(2026, 10, 16, 1), kv: { bound: true, indexCached: true, categoriesCached: 12, categoriesTotal: 12, sentencesCached: 11277, statsCached: true, dailyStatsCached: true } };
+                }
+                return { ok: true, status: 200, json: async () => body };
+            };
+        },
+    });
+    try {
+        await new Promise((r) => setTimeout(r, 500));
+        const doc = dom.window.document;
+        const refresh = doc.getElementById("refresh");
+        assert.equal(refresh.disabled, false, "refresh must be enabled after the initial load");
+        const before = statusCalls;
+        refresh.click();
+        assert.equal(refresh.disabled, true, "refresh must be disabled while loading");
+        refresh.click();
+        await new Promise((r) => setTimeout(r, 400));
+        assert.equal(refresh.disabled, false, "refresh must be enabled again after loading");
+        assert.equal(statusCalls, before + 1, "a second refresh while loading must not fetch /status again");
+    } finally {
+        dom.window.close();
+    }
+});

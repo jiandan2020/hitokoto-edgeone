@@ -164,6 +164,32 @@ test("KV miss populates KV from static files", async () => {
     }
 });
 
+test("corrupted KV sentences fall back to static files and repair KV", async () => {
+    // 回归测试：KV 里的句子结构损坏（缺字段、类型不对）时不能直接用，
+    // 要回退到静态文件，读到正确数据后顺手写回 KV 修好它。
+    const kv = makeKv();
+    const badRecords = [
+        { id: 1, type: "b", from: "x", from_who: null, length: 5 },
+        { id: 2, hitokoto: "正常句子", type: "a", from: "x", from_who: null, length: 4 },
+    ];
+    kv.store.set(`sentences_b_${indexData.version}`, JSON.stringify(badRecords));
+    globalThis.hitokoto_kv = kv;
+    const fresh = (await import("../edge-functions/api.js?kv-corrupt")).default;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=b") });
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.type, "b");
+        assert.equal(typeof data.hitokoto, "string");
+        assert.ok(data.hitokoto.length > 0);
+        const repaired = JSON.parse(kv.store.get(`sentences_b_${indexData.version}`));
+        assert.ok(Array.isArray(repaired) && repaired.length > 0);
+        assert.ok(repaired.every((r) => r.type === "b" && typeof r.hitokoto === "string" && r.hitokoto));
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
 test("embedded index serves without fetching sentence-index.json", async () => {
     // 新模块实例 + 只拦截索引文件请求：证明冷启动不再取 sentence-index.json。
     const fresh = (await import("../edge-functions/api.js?embedded-index")).default;

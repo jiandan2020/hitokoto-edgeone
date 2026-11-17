@@ -56,6 +56,7 @@ const page = `<!doctype html>
     a{color:var(--md-primary);text-decoration:none}
     a:hover{text-decoration:underline}
     a:focus-visible{outline:2px solid var(--md-primary);outline-offset:3px;border-radius:4px}
+    button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px;border-radius:4px}
     header,main,footer{max-width:960px;margin:auto;padding-left:24px;padding-right:24px}
     header{padding-top:64px;padding-bottom:40px;text-align:center}
     .eyebrow{font-size:12px;font-weight:500;line-height:1.5;letter-spacing:.12em;text-transform:uppercase;color:var(--md-primary)}
@@ -110,7 +111,7 @@ const page = `<!doctype html>
     .code-copy:hover{background:var(--md-hover);color:var(--md-on-surface)}
     @media(max-width:900px){.docs-layout{grid-template-columns:1fr}.toc{position:static}}
     @media(max-width:600px){header{padding-top:48px;padding-bottom:32px}section{padding:24px 20px;border-radius:24px}th,td{min-width:110px}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.icp-link,.edgeone-badge{transition:none}.reveal{opacity:1;transform:none}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.icp-link,.edgeone-badge{transition:none}.reveal{opacity:1;transform:none}.app-menu-dropdown{animation:none}}
   
     .app-bar{position:sticky;top:0;z-index:10;background:var(--md-surface-container-low);box-shadow:var(--md-elev-1)}
     .app-bar-inner{max-width:960px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px}
@@ -125,17 +126,16 @@ const page = `<!doctype html>
     .app-menu-btn:hover{background:var(--md-hover)}
     .theme-btn{flex:none;width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--md-on-surface);font-size:18px;line-height:1;cursor:pointer}
     .theme-btn:hover{background:var(--md-hover)}
-    .app-menu-theme{display:block;width:100%;text-align:left;padding:10px 14px;border:0;border-radius:12px;background:transparent;color:var(--md-on-surface);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer}
-    .app-menu-theme:hover{background:var(--md-hover)}
-    .app-menu-dropdown{position:absolute;top:calc(100% + 8px);right:0;min-width:160px;padding:8px;border-radius:16px;background:var(--md-surface-container-high);box-shadow:var(--md-elev-2)}
+    .app-menu-dropdown{position:absolute;top:calc(100% + 8px);right:0;min-width:160px;padding:8px;border-radius:16px;background:var(--md-surface-container-high);box-shadow:var(--md-elev-2);animation:menu-in .2s var(--md-ease)}
+    @keyframes menu-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
     .app-menu-dropdown a{display:block;padding:10px 14px;border-radius:12px;color:var(--md-on-surface);font-size:14px;font-weight:500;text-decoration:none}
     .app-menu-dropdown a:hover{background:var(--md-hover);text-decoration:none}
     .app-menu-dropdown a.active{background:var(--md-primary-container);color:var(--md-on-primary-container)}
-    @media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block}.app-bar-inner{gap:12px}.theme-btn{display:none}}
+    @media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block;margin-left:0}.app-bar-inner{gap:12px}.theme-btn{margin-left:auto}}
   </style>
 </head>
 <body>
-<nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><button class="theme-btn" id="theme-btn" type="button" aria-label="切换深色模式">🌙</button><div class="app-menu"><button class="app-menu-btn" id="menu-btn" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="menu-dropdown">☰</button><div class="app-menu-dropdown" id="menu-dropdown" hidden><a href="/">首页</a><a href="/docs" class="active">接口文档</a><a href="/stats">运行状况</a><button class="app-menu-theme" id="theme-btn-menu" type="button">🌙 切换深色模式</button></div></div></div></nav>
+<nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><button class="theme-btn" id="theme-btn" type="button" aria-label="切换深色模式">🌙</button><div class="app-menu"><button class="app-menu-btn" id="menu-btn" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="menu-dropdown">☰</button><div class="app-menu-dropdown" id="menu-dropdown" hidden><a href="/">首页</a><a href="/docs" class="active">接口文档</a><a href="/stats">运行状况</a></div></div></div></nav>
 <header>
   <div class="eyebrow">HITOKOTO · 接口文档</div>
   <h1>接口文档</h1>
@@ -315,8 +315,8 @@ const page = `<!doctype html>
   <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a>
 </footer>
 <script>
-  (function(){var btn=document.getElementById('menu-btn');var menu=document.getElementById('menu-dropdown');if(!btn||!menu)return;btn.addEventListener('click',function(e){e.stopPropagation();var open=menu.hidden;menu.hidden=!open;btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!menu.hidden&&!menu.contains(e.target)){menu.hidden=true;btn.setAttribute('aria-expanded','false');}});})();
-  (function(){var b=document.getElementById('theme-btn');var m=document.getElementById('theme-btn-menu');function cur(){return document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';}function sync(){var t=cur();var i=t==='dark'?'☀️':'🌙';var l=t==='dark'?'切换浅色模式':'切换深色模式';if(b){b.textContent=i;b.setAttribute('aria-label',l);}if(m){m.textContent=i+' '+l;}}function apply(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('hitokoto-theme',t);}catch(e){}sync();}function tog(){apply(cur()==='dark'?'light':'dark');}if(b){b.addEventListener('click',tog);}if(m){m.addEventListener('click',tog);}sync();try{if(!localStorage.getItem('hitokoto-theme')&&window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');sync();});}}catch(e){}})();
+  (function(){var btn=document.getElementById('menu-btn');var menu=document.getElementById('menu-dropdown');if(!btn||!menu)return;btn.addEventListener('click',function(e){e.stopPropagation();var open=menu.hidden;menu.hidden=!open;btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!menu.hidden&&!menu.contains(e.target)){menu.hidden=true;btn.setAttribute('aria-expanded','false');}});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!menu.hidden){menu.hidden=true;btn.setAttribute('aria-expanded','false');btn.focus();}});})();
+  (function(){var b=document.getElementById('theme-btn');function cur(){return document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';}function sync(){var t=cur();var i=t==='dark'?'☀️':'🌙';var l=t==='dark'?'切换浅色模式':'切换深色模式';if(b){b.textContent=i;b.setAttribute('aria-label',l);}}function apply(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('hitokoto-theme',t);}catch(e){}sync();}function tog(){apply(cur()==='dark'?'light':'dark');}if(b){b.addEventListener('click',tog);}sync();try{if(!localStorage.getItem('hitokoto-theme')&&window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');sync();});}}catch(e){}})();
   (function(){var toc=document.getElementById('toc');if(toc&&window.matchMedia&&window.matchMedia('(max-width: 900px)').matches){toc.removeAttribute('open');}if(toc){toc.addEventListener('toggle',function(){if(window.matchMedia&&window.matchMedia('(min-width: 901px)').matches&&!toc.open){toc.open=true;}});}var links={};document.querySelectorAll('#toc a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a;});var secs=document.querySelectorAll('.docs-body section[id]');if(!('IntersectionObserver' in window)||!secs.length)return;var obs=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){document.querySelectorAll('#toc a').forEach(function(a){a.classList.remove('active');});var l=links[entry.target.id];if(l){l.classList.add('active');}}});},{rootMargin:'-80px 0px -70% 0px'});secs.forEach(function(s){obs.observe(s);});})();
   document.querySelectorAll('pre').forEach(function(pre){var btn=document.createElement('button');btn.className='code-copy';btn.type='button';btn.textContent='复制';btn.addEventListener('click',function(){var code=pre.querySelector('code');var text=code?code.textContent:pre.textContent;function done(){btn.textContent='已复制';setTimeout(function(){btn.textContent='复制';},1500);}function fallback(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(ta);}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,fallback);}else{fallback();}});pre.appendChild(btn);});
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

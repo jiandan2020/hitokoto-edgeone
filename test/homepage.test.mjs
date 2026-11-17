@@ -81,7 +81,7 @@ test("mobile menu button and dropdown exist with current page highlighted", asyn
     }
     assert.ok(html.includes("<a href=\"/\" class=\"active\">首页</a>"), "current page must be highlighted");
     assert.ok(html.includes(".app-menu-dropdown"), "menu dropdown styles missing");
-    assert.ok(html.includes("@media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block}"), "menu must show only on mobile");
+    assert.ok(html.includes("@media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block;margin-left:0}.app-bar-inner{gap:12px}.theme-btn{margin-left:auto}}"), "menu must show only on mobile and the theme button must sit next to it");
 });
 
 test("page uses Material Design styles", async () => {
@@ -130,14 +130,17 @@ test("footer version info loads with a placeholder and hides on failure", async 
     assert.ok(html.includes("onVersionPart"), "version failure must hide the whole group");
 });
 
-test("theme toggle exists on desktop and in the mobile menu", async () => {
+test("theme toggle is a single standalone button next to the nav bar", async () => {
     const html = await render();
-    assert.ok(html.includes("id=\"theme-btn\""), "desktop theme button missing");
-    assert.ok(html.includes("id=\"theme-btn-menu\""), "mobile menu theme button missing");
+    assert.equal((html.match(/id="theme-btn"/g) || []).length, 1, "exactly one theme button");
+    assert.ok(!html.includes("theme-btn-menu"), "menu theme button must be gone");
+    assert.ok(!html.includes(".theme-btn{display:none}"), "theme button must not be hidden on mobile");
     assert.ok(html.includes("[data-theme=\"dark\"]"), "dark theme variables missing");
     assert.ok(html.includes("#ffb08a"), "dark theme primary missing");
     assert.ok(html.includes("hitokoto-theme"), "theme preference key missing");
     assert.ok(html.includes("prefers-color-scheme"), "theme must follow the system by default");
+    const dropdown = html.match(/id="menu-dropdown"[^>]*>([\s\S]*?)<\/div>/);
+    assert.ok(dropdown && !dropdown[1].includes("theme-btn"), "theme button must not be inside the menu dropdown");
 });
 
 test("page scripts parse without a syntax error", async () => {

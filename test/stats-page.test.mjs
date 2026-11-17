@@ -132,9 +132,25 @@ test("page script parses without a syntax error", async () => {
 
 test("stats page supports dark mode", async () => {
     const html = await render();
-    assert.ok(html.includes("id=\"theme-btn\""), "desktop theme button missing");
-    assert.ok(html.includes("id=\"theme-btn-menu\""), "menu theme button missing");
+    assert.equal((html.match(/id="theme-btn"/g) || []).length, 1, "exactly one theme button");
+    assert.ok(!html.includes("theme-btn-menu"), "menu theme button must be gone");
+    assert.ok(!html.includes(".theme-btn{display:none}"), "theme button must not be hidden on mobile");
     assert.ok(html.includes("[data-theme=\"dark\"]"), "dark theme variables missing");
     assert.ok(html.includes("#ffb08a"), "dark primary color missing");
     assert.ok(html.includes("hitokoto-theme"), "anti-flash theme script missing");
+});
+
+test("stats cards use larger numbers and a single column on mobile", async () => {
+    const html = await render();
+    assert.ok(html.includes(".value{font-size:40px"), "overview numbers must be larger");
+    assert.ok(html.includes(".kv-value{font-size:22px"), "KV numbers must be larger");
+    assert.ok(html.includes(".mini .num{font-size:22px"), "mini numbers must be larger");
+    assert.ok(html.includes(".axis-label{font-size:12px"), "chart axis labels must be larger");
+    assert.ok(html.includes(".hourly-container{position:relative;min-height:180px"), "chart container must keep a stable height");
+    assert.ok(html.includes(".kv-grid{grid-template-columns:1fr}"), "KV cards must be a single column on mobile");
+});
+
+test("stats page has a global focus-visible style for controls", async () => {
+    const html = await render();
+    assert.ok(html.includes("button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible"), "focus-visible must cover buttons, inputs, selects and summaries");
 });

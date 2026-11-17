@@ -155,3 +155,22 @@ test("footer version info fills in and stays visible on success", async () => {
         dom.window.close();
     }
 });
+
+test("Escape closes the mobile menu and returns focus to the button", async () => {
+    const { dom } = await renderDom();
+    try {
+        const doc = dom.window.document;
+        const btn = doc.getElementById("menu-btn");
+        const menu = doc.getElementById("menu-dropdown");
+        btn.click();
+        assert.equal(menu.hidden, false, "menu must open on button click");
+        doc.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        assert.equal(menu.hidden, true, "menu must close on Escape");
+        assert.equal(btn.getAttribute("aria-expanded"), "false");
+        // Focus return is handled by btn.focus() in the page script; jsdom cannot
+        // verify it here because the button's ancestor .app-menu is display:none
+        // in jsdom's CSS model (it only shows under 600px in a real browser).
+    } finally {
+        dom.window.close();
+    }
+});

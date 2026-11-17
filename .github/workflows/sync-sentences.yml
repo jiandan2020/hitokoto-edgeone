@@ -39,6 +39,9 @@ jobs:
           node sync-sentences.js ../upstream
           npm run generate
           npm run build
+          npm ci
+          npm run lint
+          npm test
           node -e 'const size = require("node:fs").statSync("edge-functions/api.js").size; console.log(`Generated function: ${size} bytes`); if (size > 5_000_000) throw new Error("Function exceeds conservative 5 MB source size limit");'
           node --check edge-functions/api.js
           node --input-type=module -e 'import handler from "./edge-functions/api.js"; import { readFileSync } from "node:fs"; globalThis.fetch = async u => new Response(readFileSync(`.${new URL(u).pathname}`), {headers:{"Content-Type":"application/json"}}); const r = await handler({request: new Request("https://hitokoto.xzccs.top/api")}); if (!r.ok || typeof (await r.json()).hitokoto !== "string") throw new Error("API smoke test failed");'

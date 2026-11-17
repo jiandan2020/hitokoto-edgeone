@@ -54,6 +54,7 @@ main{max-width:960px;margin:auto;padding:56px 24px;position:relative;z-index:1}
 a{color:var(--md-primary);text-decoration:none}
 a:hover{text-decoration:underline}
 a:focus-visible{outline:2px solid var(--md-primary);outline-offset:3px;border-radius:4px}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px;border-radius:4px}
 main>a:first-child{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;margin-bottom:8px;border-radius:999px;color:var(--md-primary);font-size:14px;font-weight:500}
 main>a:first-child:hover{background:var(--md-hover);text-decoration:none}
 .eyebrow{font-size:12px;font-weight:500;line-height:1.5;letter-spacing:.12em;text-transform:uppercase;color:var(--md-primary)}
@@ -65,7 +66,7 @@ p.note{font-size:14px}
 .card{padding:24px 28px;border-radius:28px;background:var(--md-surface-container);margin-bottom:24px}
 .cards .card{margin-bottom:0;background:var(--md-surface-container-low);box-shadow:var(--md-elev-1);border-radius:24px}
 .label{font-size:14px;color:var(--md-on-surface-variant)}
-.value{font-size:36px;font-weight:500;line-height:1.2;margin:12px 0 0;overflow-wrap:anywhere;color:var(--md-primary);font-variant-numeric:tabular-nums}
+.value{font-size:40px;font-weight:500;line-height:1.2;margin:12px 0 0;overflow-wrap:anywhere;color:var(--md-primary);font-variant-numeric:tabular-nums}
 .value.loading{color:transparent;background:linear-gradient(90deg,var(--md-surface-container-high),var(--md-surface-container-highest),var(--md-surface-container-high));background-size:200% 100%;animation:shimmer 1.4s linear infinite;border-radius:8px;min-height:44px}
 @keyframes shimmer{to{background-position:-200% 0}}
 .sub{font-size:13px;color:var(--md-on-surface-variant);margin-top:6px;min-height:20px}
@@ -80,7 +81,7 @@ p.note{font-size:14px}
 .hero-title{font-size:22px;font-weight:500;line-height:1.3;color:var(--md-on-surface)}
 .hero-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .hero-side .meta{font-size:13px;color:var(--md-on-surface-variant);text-align:right}
-.kv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px}
+.kv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-top:16px}
 .kv-card{padding:16px 18px;border-radius:16px;background:var(--md-surface-container-highest)}
 .kv-head{display:flex;align-items:center;gap:8px}
 .kv-dot{flex:none;width:10px;height:10px;border-radius:50%}
@@ -88,18 +89,19 @@ p.note{font-size:14px}
 .kv-dot.bad{background:#c62828}
 .kv-dot.idle{background:#9c8a8f}
 .kv-label{font-size:13px;color:var(--md-on-surface-variant)}
-.kv-value{font-size:20px;font-weight:500;line-height:1.4;margin-top:8px;font-variant-numeric:tabular-nums;color:var(--md-on-surface)}
+.kv-value{font-size:22px;font-weight:500;line-height:1.4;margin-top:8px;font-variant-numeric:tabular-nums;color:var(--md-on-surface)}
 .kv-sub{font-size:12px;color:var(--md-on-surface-variant);margin-top:2px}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin-top:8px;padding:0 24px;border:0;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;line-height:1.5;font-family:inherit;cursor:pointer;transition:box-shadow .2s var(--md-ease),background .2s var(--md-ease)}
 .btn:hover{background:var(--md-primary-hover);box-shadow:var(--md-elev-1)}
 .btn:active{transform:scale(.98)}
 .btn.ghost{background:transparent;color:var(--md-primary);border:1px solid var(--md-outline)}
 .btn.ghost:hover{background:var(--md-hover);box-shadow:none}
+.btn:disabled{opacity:.55;cursor:not-allowed}
 .mini-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0 4px}
 .mini{padding:16px;border-radius:16px;background:var(--md-surface-container-highest)}
 .mini .label{font-size:13px}
-.mini .num{font-size:20px;font-weight:500;line-height:1.5;color:var(--md-on-surface);margin-top:4px;font-variant-numeric:tabular-nums}
-.hourly-container{position:relative}
+.mini .num{font-size:22px;font-weight:500;line-height:1.5;color:var(--md-on-surface);margin-top:4px;font-variant-numeric:tabular-nums}
+.hourly-container{position:relative;min-height:180px}
 .hourly-svg{width:100%;height:auto;display:block;overflow:visible;touch-action:pan-y}
 .hourly-tooltip{position:absolute;top:0;left:0;z-index:2;max-width:85%;padding:8px 12px;border-radius:8px;background:var(--md-inverse-surface);color:var(--md-inverse-on-surface);font-size:13px;line-height:1.5;pointer-events:none;box-shadow:var(--md-elev-2)}
 .hourly-crosshair{stroke:var(--md-primary);stroke-width:1;stroke-dasharray:4 4;pointer-events:none}
@@ -109,7 +111,7 @@ p.note{font-size:14px}
 .hourly-line{fill:none;stroke:var(--md-primary);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
 .hourly-dot{fill:var(--md-primary)}
 .hourly-peak{fill:var(--md-tertiary);stroke:#fff;stroke-width:1.5}
-.axis-label{font-size:11px;fill:var(--md-on-surface-variant)}
+.axis-label{font-size:12px;fill:var(--md-on-surface-variant)}
 details summary{cursor:pointer;color:var(--md-primary);font-size:14px;font-weight:500}
 details{margin-top:16px}
 .data-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;margin-top:14px}
@@ -129,8 +131,8 @@ footer{max-width:960px;margin:auto;padding:24px 24px 64px;text-align:center;font
 .edgeone-badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;color:var(--md-on-surface-variant);text-decoration:none;transition:color .2s var(--md-ease)}
 .edgeone-badge:hover{color:var(--md-primary);text-decoration:none}
 .edgeone-badge img{height:20px;width:auto;display:block}
-@media(max-width:600px){main{padding:40px 18px}.card{padding:20px}.hero-side{align-items:flex-start}.hero-side .meta{text-align:left}.kv-grid{grid-template-columns:repeat(2,1fr)}.theme-btn{display:none}}
-@media(prefers-reduced-motion:reduce){.value.loading{animation:none}.btn,.edgeone-badge{transition:none}}
+@media(max-width:600px){main{padding:40px 18px}.card{padding:20px}.hero-side{align-items:flex-start}.hero-side .meta{text-align:left}.kv-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.value.loading{animation:none}.btn,.edgeone-badge{transition:none}.app-menu-dropdown{animation:none}}
 
 .app-bar{position:sticky;top:0;z-index:10;background:var(--md-surface-container-low);box-shadow:var(--md-elev-1)}
 .app-bar-inner{max-width:960px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px}
@@ -143,22 +145,24 @@ footer{max-width:960px;margin:auto;padding:24px 24px 64px;text-align:center;font
 .app-menu{position:relative;display:none;margin-left:auto}
 .app-menu-btn{width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--md-on-surface);font-size:20px;line-height:1;cursor:pointer}
 .app-menu-btn:hover{background:var(--md-hover)}
-.app-menu-dropdown{position:absolute;top:calc(100% + 8px);right:0;min-width:160px;padding:8px;border-radius:16px;background:var(--md-surface-container-high);box-shadow:var(--md-elev-2)}
+.app-menu-dropdown{position:absolute;top:calc(100% + 8px);right:0;min-width:160px;padding:8px;border-radius:16px;background:var(--md-surface-container-high);box-shadow:var(--md-elev-2);animation:menu-in .2s var(--md-ease)}
+@keyframes menu-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .app-menu-dropdown a{display:block;padding:10px 14px;border-radius:12px;color:var(--md-on-surface);font-size:14px;font-weight:500;text-decoration:none}
 .app-menu-dropdown a:hover{background:var(--md-hover);text-decoration:none}
 .app-menu-dropdown a.active{background:var(--md-primary-container);color:var(--md-on-primary-container)}
 .theme-btn{flex:none;width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--md-on-surface);font-size:18px;line-height:1;cursor:pointer}
 .theme-btn:hover{background:var(--md-hover)}
-.app-menu-theme{display:block;width:100%;text-align:left;padding:10px 14px;border:0;border-radius:12px;background:transparent;color:var(--md-on-surface);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer}
-.app-menu-theme:hover{background:var(--md-hover)}
-@media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block}.app-bar-inner{gap:12px}}
-</style></head><body><nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><button class="theme-btn" id="theme-btn" type="button" aria-label="切换深色模式">🌙</button><div class="app-menu"><button class="app-menu-btn" id="menu-btn" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="menu-dropdown">☰</button><div class="app-menu-dropdown" id="menu-dropdown" hidden><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats" class="active">运行状况</a><button class="app-menu-theme" id="theme-btn-menu" type="button">🌙 切换深色模式</button></div></div></div></nav><main><div class="eyebrow">HITOKOTO · STATUS</div><h1>运行状况</h1><p>hitokoto.xzccs.top · 运行状态、一言与访问统计</p><section class="card hero" id="health-banner"><div class="hero-main"><span class="pill idle" id="health-pill">检查中…</span><div class="hero-title" id="health-title">正在检查运行状态…</div><div class="meta" id="health-version" style="font-size:14px;color:var(--muted)"></div><div class="meta" id="health-time" style="font-size:14px;color:var(--muted)"></div></div><div class="hero-side"><button class="btn ghost" id="refresh" type="button">刷新数据</button><div class="meta" id="updated">统计每 10 分钟自动刷新一次，运行状态每分钟刷新一次。</div></div></section><div class="cards"><div class="card"><div class="label">昨日请求</div><div class="value loading" id="yesterday-requests">—</div><div class="sub" id="yesterday-date"></div></div><div class="card"><div class="label">24 小时请求</div><div class="value loading" id="requests">—</div><div class="sub" id="requests-sub"></div></div><div class="card"><div class="label">5xx 错误率</div><div class="value loading" id="rate">—</div><div class="sub" id="rate-sub"></div></div><div class="card"><div class="label">接口往返</div><div class="value loading" id="latency">—</div><div class="sub">最近一次状态探针的往返耗时</div></div></div><p id="status" role="status">正在加载统计数据…</p><section class="card"><h2>KV 缓存状态</h2><p class="note">KV 状态由运行状态探针提供。</p><p id="kv-status" class="note" role="status">正在加载 KV 状态…</p><div class="kv-grid" id="kv-grid"></div></section><section class="card"><h2>每小时访问量</h2><p class="note">域名请求数 · 最近 24 个完整小时 · 北京时间；缺失数据处折线断开，金色点为峰值小时。</p><div class="mini-row"><div class="mini"><div class="label">EdgeOne 响应流量</div><div class="num" id="traffic">—</div></div><div class="mini"><div class="label">/api 请求数</div><div class="num" id="api-requests">—</div></div><div class="mini"><div class="label">/api 请求占比</div><div class="num" id="api-share">—</div></div><div class="mini"><div class="label">小时均值</div><div class="num" id="hourly-avg">—</div></div></div><p id="hourly-status" class="note" role="status">正在加载每小时数据…</p><div class="hourly-container"><svg id="hourly-chart" class="hourly-svg" viewBox="0 0 680 220" role="img" aria-label="每小时域名请求数折线图，鼠标移动或触摸查看详情"></svg><div id="hourly-tooltip" class="hourly-tooltip" role="tooltip" hidden></div></div><p class="note" id="hourly-summary"></p><details><summary>查看每小时数据</summary><div id="hourly-list" class="data-grid"></div></details></section><section class="card"><div class="label">自 2026-11-15 起累计请求数</div><div class="value loading" id="cumulative">—</div><p class="note" id="history-status" role="status">正在加载每日汇总…</p><h2>每日请求趋势</h2><p class="note">最近 30 个北京时间自然日；缺失数据处折线断开，不代表零，金色点为最高单日。</p><div class="mini-row"><div class="mini"><div class="label">近 7 日合计</div><div class="num" id="week-total">—</div></div><div class="mini"><div class="label">已采集日均</div><div class="num" id="day-average">—</div></div><div class="mini"><div class="label">最高单日</div><div class="num" id="best-day">—</div></div></div><div class="hourly-container"><svg id="daily-chart" class="hourly-svg" viewBox="0 0 680 220" role="img" aria-label="每日请求数折线图，鼠标移动或触摸查看详情"></svg><div id="daily-tooltip" class="hourly-tooltip" role="tooltip" hidden></div></div><details><summary>查看每日数据</summary><div id="history-list" class="data-grid"></div></details></section></main><footer><p class="footer-sources"><a href="/">返回首页</a> · <a href="/docs">接口文档</a> · <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">语句数据</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">项目源码</a></p><div><a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">本站由 <img src="/edgeone-logo.png" alt="Tencent EdgeOne" width="140" height="20"> 提供加速服务</a></div><a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a></footer><script>
-(function(){var btn=document.getElementById('menu-btn');var menu=document.getElementById('menu-dropdown');if(!btn||!menu)return;btn.addEventListener('click',function(e){e.stopPropagation();var open=menu.hidden;menu.hidden=!open;btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!menu.hidden&&!menu.contains(e.target)){menu.hidden=true;btn.setAttribute('aria-expanded','false');}});})();
-(function(){var b=document.getElementById('theme-btn');var m=document.getElementById('theme-btn-menu');function cur(){return document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';}function sync(){var t=cur();var i=t==='dark'?'☀️':'🌙';var l=t==='dark'?'切换浅色模式':'切换深色模式';if(b){b.textContent=i;b.setAttribute('aria-label',l);}if(m){m.textContent=i+' '+l;}}function apply(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('hitokoto-theme',t);}catch(e){}sync();}function tog(){apply(cur()==='dark'?'light':'dark');}if(b){b.addEventListener('click',tog);}if(m){m.addEventListener('click',tog);}sync();try{if(!localStorage.getItem('hitokoto-theme')&&window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');sync();});}}catch(e){}})();
+@media(max-width:600px){.app-nav-links{display:none}.app-menu{display:block;margin-left:0}.app-bar-inner{gap:12px}.theme-btn{margin-left:auto}}
+</style></head><body><nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><button class="theme-btn" id="theme-btn" type="button" aria-label="切换深色模式">🌙</button><div class="app-menu"><button class="app-menu-btn" id="menu-btn" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="menu-dropdown">☰</button><div class="app-menu-dropdown" id="menu-dropdown" hidden><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats" class="active">运行状况</a></div></div></div></nav><main><div class="eyebrow">HITOKOTO · STATUS</div><h1>运行状况</h1><p>hitokoto.xzccs.top · 运行状态、一言与访问统计</p><section class="card hero" id="health-banner"><div class="hero-main"><span class="pill idle" id="health-pill">检查中…</span><div class="hero-title" id="health-title">正在检查运行状态…</div><div class="meta" id="health-version" style="font-size:14px;color:var(--muted)"></div><div class="meta" id="health-time" style="font-size:14px;color:var(--muted)"></div></div><div class="hero-side"><button class="btn ghost" id="refresh" type="button">刷新数据</button><div class="meta" id="updated">统计每 10 分钟自动刷新一次，运行状态每分钟刷新一次。</div></div></section><div class="cards"><div class="card"><div class="label">昨日请求</div><div class="value loading" id="yesterday-requests">—</div><div class="sub" id="yesterday-date"></div></div><div class="card"><div class="label">24 小时请求</div><div class="value loading" id="requests">—</div><div class="sub" id="requests-sub"></div></div><div class="card"><div class="label">5xx 错误率</div><div class="value loading" id="rate">—</div><div class="sub" id="rate-sub"></div></div><div class="card"><div class="label">接口往返</div><div class="value loading" id="latency">—</div><div class="sub">最近一次状态探针的往返耗时</div></div></div><p id="status" role="status">正在加载统计数据…</p><section class="card"><h2>KV 缓存状态</h2><p class="note">KV 状态由运行状态探针提供。</p><p id="kv-status" class="note" role="status">正在加载 KV 状态…</p><div class="kv-grid" id="kv-grid"></div></section><section class="card"><h2>每小时访问量</h2><p class="note">域名请求数 · 最近 24 个完整小时 · 北京时间；缺失数据处折线断开，金色点为峰值小时。</p><div class="mini-row"><div class="mini"><div class="label">EdgeOne 响应流量</div><div class="num" id="traffic">—</div></div><div class="mini"><div class="label">/api 请求数</div><div class="num" id="api-requests">—</div></div><div class="mini"><div class="label">/api 请求占比</div><div class="num" id="api-share">—</div></div><div class="mini"><div class="label">小时均值</div><div class="num" id="hourly-avg">—</div></div></div><p id="hourly-status" class="note" role="status">正在加载每小时数据…</p><div class="hourly-container"><svg id="hourly-chart" class="hourly-svg" viewBox="0 0 680 220" role="img" aria-label="每小时域名请求数折线图，鼠标移动或触摸查看详情"></svg><div id="hourly-tooltip" class="hourly-tooltip" role="tooltip" hidden></div></div><p class="note" id="hourly-summary"></p><details><summary>查看每小时数据</summary><div id="hourly-list" class="data-grid"></div></details></section><section class="card"><div class="label">自 2026-11-15 起累计请求数</div><div class="value loading" id="cumulative">—</div><p class="note" id="history-status" role="status">正在加载每日汇总…</p><h2>每日请求趋势</h2><p class="note">最近 30 个北京时间自然日；缺失数据处折线断开，不代表零，金色点为最高单日。</p><div class="mini-row"><div class="mini"><div class="label">近 7 日合计</div><div class="num" id="week-total">—</div></div><div class="mini"><div class="label">已采集日均</div><div class="num" id="day-average">—</div></div><div class="mini"><div class="label">最高单日</div><div class="num" id="best-day">—</div></div></div><div class="hourly-container"><svg id="daily-chart" class="hourly-svg" viewBox="0 0 680 220" role="img" aria-label="每日请求数折线图，鼠标移动或触摸查看详情"></svg><div id="daily-tooltip" class="hourly-tooltip" role="tooltip" hidden></div></div><details><summary>查看每日数据</summary><div id="history-list" class="data-grid"></div></details></section></main><footer><p class="footer-sources"><a href="/">返回首页</a> · <a href="/docs">接口文档</a> · <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">语句数据</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">项目源码</a></p><div><a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">本站由 <img src="/edgeone-logo.png" alt="Tencent EdgeOne" width="140" height="20"> 提供加速服务</a></div><a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a></footer><script>
+(function(){var btn=document.getElementById('menu-btn');var menu=document.getElementById('menu-dropdown');if(!btn||!menu)return;btn.addEventListener('click',function(e){e.stopPropagation();var open=menu.hidden;menu.hidden=!open;btn.setAttribute('aria-expanded',String(open));});document.addEventListener('click',function(e){if(!menu.hidden&&!menu.contains(e.target)){menu.hidden=true;btn.setAttribute('aria-expanded','false');}});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!menu.hidden){menu.hidden=true;btn.setAttribute('aria-expanded','false');btn.focus();}});})();
+(function(){var b=document.getElementById('theme-btn');function cur(){return document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';}function sync(){var t=cur();var i=t==='dark'?'☀️':'🌙';var l=t==='dark'?'切换浅色模式':'切换深色模式';if(b){b.textContent=i;b.setAttribute('aria-label',l);}}function apply(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('hitokoto-theme',t);}catch(e){}sync();}function tog(){apply(cur()==='dark'?'light':'dark');}if(b){b.addEventListener('click',tog);}sync();try{if(!localStorage.getItem('hitokoto-theme')&&window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){document.documentElement.setAttribute('data-theme',e.matches?'dark':'light');sync();});}}catch(e){}})();
 const dateFormat = new Intl.DateTimeFormat('zh-CN', { timeZone:'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
 function setLoading(id, on) { const el = document.getElementById(id); if (el) el.classList.toggle('loading', on); }
 function pill(ok, goodText, badText) { return ok ? '✓ ' + goodText : '✗ ' + badText; }
+let statusBusy = false;
 function loadStatus() {
+  if (statusBusy) return Promise.resolve();
+  statusBusy = true;
   const start = performance.now();
   return fetch('/status?format=json&probe=read', {cache:'no-store', signal: AbortSignal.timeout(10000)}).then(r => { if (!r.ok) throw new Error('unavailable'); return r.json(); }).then(data => {
     const kv = data.kv || {};
@@ -209,7 +213,7 @@ function loadStatus() {
     document.getElementById('kv-status').hidden = false;
     document.getElementById('latency').textContent = '暂无数据';
     setLoading('latency', false);
-  });
+  }).finally(() => { statusBusy = false; });
 }
 function renderHourly(hourly) {
   const status = document.getElementById('hourly-status');
@@ -388,11 +392,16 @@ function loadDaily() {
     for (const i of [0, 6, 12, 18, 24, 29]) { if (!recent[i]) continue; shape('text', {x:50+i*605/29,y:188,'text-anchor':i===0?'start':i===29?'end':'middle',class:'axis-label'}, recent[i].key.slice(5)); }
   }).catch(() => { document.getElementById('history-status').textContent = '每日汇总暂不可用，请稍后再试。'; document.getElementById('yesterday-requests').textContent = '暂无数据'; document.getElementById('yesterday-date').textContent = ''; }).finally(() => { setLoading('cumulative', false); setLoading('yesterday-requests', false); });
 }
+let allBusy = false;
 function loadAll() {
+  if (allBusy) return Promise.resolve();
+  allBusy = true;
+  const refreshBtn = document.getElementById('refresh');
+  if (refreshBtn) refreshBtn.disabled = true;
   document.getElementById('updated').textContent = '正在刷新…';
   return Promise.all([loadStatus(), loadLive(), loadDaily()]).then(() => {
     document.getElementById('updated').textContent = '更新于 ' + dateFormat.format(new Date()) + '（北京时间）· 统计每 10 分钟、运行状态每分钟自动刷新一次。';
-  });
+  }).finally(() => { allBusy = false; if (refreshBtn) refreshBtn.disabled = false; });
 }
 document.getElementById('refresh').addEventListener('click', loadAll);
 loadAll();

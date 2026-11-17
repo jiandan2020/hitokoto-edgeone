@@ -105,10 +105,11 @@ test("code blocks get a copy button", async () => {
     assert.ok(html.includes("已复制"), "copied feedback text missing");
 });
 
-test("theme toggle buttons exist on desktop and in the mobile menu", async () => {
+test("theme toggle is a single standalone button next to the nav bar", async () => {
     const html = await render();
-    assert.ok(html.includes("id=\"theme-btn\""), "desktop theme button missing");
-    assert.ok(html.includes("id=\"theme-btn-menu\""), "menu theme button missing");
+    assert.equal((html.match(/id="theme-btn"/g) || []).length, 1, "exactly one theme button");
+    assert.ok(!html.includes("theme-btn-menu"), "menu theme button must be gone");
+    assert.ok(!html.includes(".theme-btn{display:none}"), "theme button must not be hidden on mobile");
 });
 
 test("dark theme variables match the homepage and stats pages", async () => {
