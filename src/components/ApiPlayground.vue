@@ -287,6 +287,9 @@ async function sendRequest() {
 
 .field select,
 .field input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 9px 12px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -307,6 +310,10 @@ async function sendRequest() {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+}
+
+.field-row .field {
+    min-width: 0;
 }
 
 .param-error {

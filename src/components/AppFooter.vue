@@ -13,11 +13,15 @@
             <a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener">
                 本站由 <img src="/edgeone-logo.png" alt="EdgeOne" class="edgeone-logo" /> 提供加速服务
             </a>
-            <div class="footer-meta">
-                <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><img src="/icp-beian.png" alt="备案" class="icp-icon" />赣ICP备2025074916号-1</a>
-                <span class="sep" v-if="version">·</span>
-                <span class="footer-version" v-if="version">v{{ version }}</span>
-            </div>
+            <p v-if="apiVersion || bundleVersion" class="version-info" aria-busy="false">
+                <template v-if="apiVersion">
+                    当前 API 版本：v{{ apiVersion }}<template v-if="apiUpdated"> · 更新时间：{{ apiUpdated }}</template><br />
+                </template>
+                <template v-if="bundleVersion">
+                    当前句子库版本：{{ bundleVersion }}<template v-if="bundleUpdated"> · 上游更新时间：{{ bundleUpdated }}</template>
+                </template>
+            </p>
+            <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><img src="/icp-beian.png" alt="备案" class="icp-icon" />赣ICP备2025074916号-1</a>
         </div>
     </footer>
 </template>
@@ -25,9 +29,32 @@
 <script setup>
 import { ref, onMounted } from "vue";
 
-const version = ref("");
+const apiVersion = ref("");
+const apiUpdated = ref("");
+const bundleVersion = ref("");
+const bundleUpdated = ref("");
 
-onMounted(async () => {
+function formatTime(value) {
+    if ((typeof value !== "number" && typeof value !== "string") || value === "") {
+        return "";
+    }
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) {
+        return "";
+    }
+    return new Intl.DateTimeFormat("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    }).format(date) + "（北京时间）";
+}
+
+async function loadApiVersion() {
     try {
         const response = await fetch("/package.json");
         if (!response.ok) {
@@ -35,11 +62,33 @@ onMounted(async () => {
         }
         const data = await response.json();
         if (data && typeof data.version === "string" && data.version) {
-            version.value = data.version;
+            apiVersion.value = data.version;
         }
+        apiUpdated.value = formatTime(data && data.apiUpdatedAt);
     } catch {
-        // 拉不到版本号时不显示，不影响页脚其他内容
+        // 拉不到时不显示，不影响页脚其他内容
     }
+}
+
+async function loadBundleVersion() {
+    try {
+        const response = await fetch("/version.json");
+        if (!response.ok) {
+            return;
+        }
+        const data = await response.json();
+        if (data && typeof data.bundle_version === "string" && data.bundle_version) {
+            bundleVersion.value = data.bundle_version;
+        }
+        bundleUpdated.value = formatTime(data && data.updated_at);
+    } catch {
+        // 拉不到时不显示，不影响页脚其他内容
+    }
+}
+
+onMounted(() => {
+    loadApiVersion();
+    loadBundleVersion();
 });
 </script>
 
@@ -96,12 +145,11 @@ onMounted(async () => {
     width: auto;
 }
 
-.footer-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
+.version-info {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--color-text-muted);
 }
 
 .icp-link {
@@ -123,10 +171,5 @@ onMounted(async () => {
 .icp-icon {
     height: 15px;
     width: auto;
-}
-
-.footer-version {
-    font-size: 12px;
-    color: var(--color-text-muted);
 }
 </style>

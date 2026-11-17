@@ -14,6 +14,18 @@ function makeRouter() {
     });
 }
 
+function mockVersionFetches(pkg, bundle) {
+    globalThis.fetch = vi.fn().mockImplementation((url) => {
+        if (url === "/package.json") {
+            return Promise.resolve({ ok: true, json: async () => pkg });
+        }
+        if (url === "/version.json") {
+            return Promise.resolve({ ok: true, json: async () => bundle });
+        }
+        return Promise.resolve({ ok: false, status: 404 });
+    });
+}
+
 describe("AppFooter", () => {
     let originalFetch;
 
@@ -27,7 +39,7 @@ describe("AppFooter", () => {
     });
 
     it("备案链接带备案图标", async () => {
-        globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ version: "5.0.0" }) });
+        mockVersionFetches({ version: "5.0.0" }, { bundle_version: "1.0.1382" });
         const wrapper = mount(AppFooter, { global: { plugins: [makeRouter()] } });
         await flushPromises();
         const icpLink = wrapper.find(".icp-link");
@@ -38,20 +50,44 @@ describe("AppFooter", () => {
         expect(icon.attributes("src")).toBe("/icp-beian.png");
     });
 
-    it("拉到 package.json 后显示版本号", async () => {
-        globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ version: "5.0.0" }) });
+    it("显示 API 版本与更新时间、句子库版本与上游更新时间", async () => {
+        mockVersionFetches(
+            { version: "5.0.0", apiUpdatedAt: "2026-11-18T02:39:23+08:00" },
+            { bundle_version: "1.0.1382", updated_at: 1794917954795 },
+        );
         const wrapper = mount(AppFooter, { global: { plugins: [makeRouter()] } });
         await flushPromises();
         expect(globalThis.fetch).toHaveBeenCalledWith("/package.json");
-        const version = wrapper.find(".footer-version");
-        expect(version.exists()).toBe(true);
-        expect(version.text()).toBe("v5.0.0");
+        expect(globalThis.fetch).toHaveBeenCalledWith("/version.json");
+        const info = wrapper.find(".version-info");
+        expect(info.exists()).toBe(true);
+        const text = info.text();
+        expect(text).toContain("当前 API 版本：v5.0.0");
+        expect(text).toContain("更新时间：");
+        expect(text).toContain("（北京时间）");
+        expect(text).toContain("当前句子库版本：1.0.1382");
+        expect(text).toContain("上游更新时间：");
     });
 
-    it("拉不到版本号时不显示版本号", async () => {
+    it("只拉到 API 版本时只显示 API 那行", async () => {
+        globalThis.fetch = vi.fn().mockImplementation((url) => {
+            if (url === "/package.json") {
+                return Promise.resolve({ ok: true, json: async () => ({ version: "5.0.0", apiUpdatedAt: "2026-11-18T02:39:23+08:00" }) });
+            }
+            return Promise.resolve({ ok: false, status: 404 });
+        });
+        const wrapper = mount(AppFooter, { global: { plugins: [makeRouter()] } });
+        await flushPromises();
+        const info = wrapper.find(".version-info");
+        expect(info.exists()).toBe(true);
+        expect(info.text()).toContain("当前 API 版本：v5.0.0");
+        expect(info.text()).not.toContain("句子库");
+    });
+
+    it("两处都拉不到时不显示版本信息", async () => {
         globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
         const wrapper = mount(AppFooter, { global: { plugins: [makeRouter()] } });
         await flushPromises();
-        expect(wrapper.find(".footer-version").exists()).toBe(false);
+        expect(wrapper.find(".version-info").exists()).toBe(false);
     });
 });
