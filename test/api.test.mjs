@@ -260,3 +260,76 @@ test("KV hit serves without fetching static files", async () => {
         delete globalThis.hitokoto_kv;
     }
 });
+
+test("KV backfill runs in background via waitUntil: response does not wait for KV put", async () => {
+    // KV 的 put 故意卡住不返回，证明响应不等它。
+    const store = new Map();
+    let resolvePut;
+    const kv = {
+        store,
+        async get(key) { return store.has(key) ? store.get(key) : null; },
+        put(key, value) {
+            store.set(key, value);
+            return new Promise((resolve) => { resolvePut = resolve; });
+        },
+        async delete(key) { store.delete(key); },
+    };
+    globalThis.hitokoto_kv = kv;
+    const fresh = (await import("../edge-functions/api.js?kv-async-backfill")).default;
+    const background = [];
+    try {
+        const res = await fresh({
+            request: new Request("https://hitokoto.xzccs.top/api?c=b"),
+            waitUntil(promise) { background.push(promise); },
+        });
+        // put 还没放行，响应已经回来了：证明回填没堵住响应。
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.type, "b");
+        assert.equal(background.length, 1);
+        assert.ok(typeof resolvePut === "function");
+        resolvePut();
+        await background[0];
+        assert.ok(store.has(`sentences_b_${indexData.version}`));
+        const cached = JSON.parse(store.get(`sentences_b_${indexData.version}`));
+        assert.ok(Array.isArray(cached) && cached.length > 0);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("concurrent requests for the same cold category fetch the static file once", async () => {
+    // 异步回填下，同一实例内的请求合并不能丢：两个并发请求只读一次静态文件。
+    const kv = makeKv();
+    globalThis.hitokoto_kv = kv;
+    let sentenceFetchCount = 0;
+    const countingFetch = async (input) => {
+        const url = new URL(input);
+        if (url.pathname === "/sentences/b.json") { sentenceFetchCount++; }
+        return staticFetch(input);
+    };
+    globalThis.fetch = countingFetch;
+    const fresh = (await import("../edge-functions/api.js?kv-coalesce")).default;
+    const background = [];
+    const context = (request) => ({
+        request,
+        waitUntil(promise) { background.push(promise); },
+    });
+    try {
+        const [resA, resB] = await Promise.all([
+            fresh(context(new Request("https://hitokoto.xzccs.top/api?c=b"))),
+            fresh(context(new Request("https://hitokoto.xzccs.top/api?c=b"))),
+        ]);
+        assert.equal(resA.status, 200);
+        assert.equal(resB.status, 200);
+        assert.equal((await resA.json()).type, "b");
+        assert.equal((await resB.json()).type, "b");
+        assert.equal(sentenceFetchCount, 1);
+        assert.equal(background.length, 1);
+        await background[0];
+        assert.ok(kv.store.has(`sentences_b_${indexData.version}`));
+    } finally {
+        globalThis.fetch = staticFetch;
+        delete globalThis.hitokoto_kv;
+    }
+});

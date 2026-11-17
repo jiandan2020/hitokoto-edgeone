@@ -29,6 +29,10 @@
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见 `/docs` 接口文档。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为。
 
+## 优化记录（4.10.3）
+
+- KV 回填异步化：`/api` 冷缓存未命中读完静态文件后，写回 KV 不再堵响应，改用 `context.waitUntil` 放后台跑；没有 `waitUntil` 时回落到同步写。`loadSentences` 与 `loadIndex` 的后备路径同改，`onRequest` 传入绑定好的 `waitUntil`。请求合并（`sentencePending`）与 KV 写失败不影响响应这两点都不变。测试 128/128（新增 2 个：后台回填不等 KV 写完、并发请求只读一次静态文件）。
+
 ## 优化记录（4.10.2）
 
 - 统计接口 SWR：缓存过期 30 分钟内，立即返回旧数据并用 `context.waitUntil` 在后台刷新（查腾讯云、更新内存缓存与 KV），不再让请求同步等 1-3 秒；过期更久或无缓存时仍同步加载；上游失败的 M4 兜底（1 小时内旧数据返回 200）不变。`waitUntil` 已在线上验证支持（临时探针实测后台 KV 写入完成）。入口改为接收完整 context 以取 `waitUntil`，无 `waitUntil` 时回落到同步加载；后台刷新复用 `pending` 合并，失败只记日志不影响本次响应。测试 126/126（新增 4 个 SWR 测试）。

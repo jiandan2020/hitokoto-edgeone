@@ -120,7 +120,7 @@ function isValidSentenceRecords(records, category) {
     return true;
 }
 
-async function loadSentences(asset, cookie, kv, category) {
+async function loadSentences(asset, cookie, kv, category, waitUntil) {
     const key = asset.toString();
     const cached = sentenceCache.get(key);
     if (cached && cached.expires > Date.now()) {
@@ -142,9 +142,13 @@ async function loadSentences(asset, cookie, kv, category) {
             }
         }
         // L3：静态文件是数据源；读到后顺手写回 KV，下一实例就不用再取了。
+        // 回填放后台跑（waitUntil 已验证支持），响应不等它；没有 waitUntil 时同步写。
         const records = await fetchSentences(asset, cookie);
         cacheSentences(key, records);
-        if (kv && category) {await kvPutJson(kv, sentencesKvKey(category), records);}
+        if (kv && category) {
+            if (waitUntil) { waitUntil(kvPutJson(kv, sentencesKvKey(category), records)); }
+            else { await kvPutJson(kv, sentencesKvKey(category), records); }
+        }
         return records;
     })();
     sentencePending.set(key, task);
@@ -158,7 +162,7 @@ async function loadSentences(asset, cookie, kv, category) {
 // 索引独立保存，按部署域名缓存；缓存中不保存预览凭据。
 const indexCache = new Map();
 const indexPending = new Map();
-async function loadIndex(asset, cookie, kv) {
+async function loadIndex(asset, cookie, kv, waitUntil) {
     // 生成时已把完整索引内联进 api.js，冷启动直接用内嵌索引，不用再取一次
     // sentence-index.json；内嵌索引缺失时才走下面的 KV / 静态文件后备。
     if (typeof embeddedSentenceIndex !== "undefined" && embeddedSentenceIndex && typeof embeddedSentenceIndex === "object") {
@@ -184,7 +188,10 @@ async function loadIndex(asset, cookie, kv) {
             throw new Error("句子索引版本不一致或格式错误");
         }
         indexCache.set(key, { index: data.index, expires: Date.now() + CACHE_TTL_MS });
-        if (kv) {await kvPutJson(kv, indexKvKey(), data);}
+        if (kv) {
+            if (waitUntil) { waitUntil(kvPutJson(kv, indexKvKey(), data)); }
+            else { await kvPutJson(kv, indexKvKey(), data); }
+        }
         return data.index;
     })();
     indexPending.set(key, task);
@@ -230,6 +237,8 @@ function handleError(code, error, devEnv, customMessage = "服务器内部错误
 
 export async function onRequest(context) {
     const { request, env } = context;
+    // KV 回填放后台跑（waitUntil 已验证支持）；没有时回落到同步写。
+    const waitUntil = typeof context.waitUntil === "function" ? context.waitUntil.bind(context) : null;
 
     try {
         // 处理 OPTIONS 请求；除 GET / OPTIONS 外一律 405。
@@ -299,7 +308,7 @@ export async function onRequest(context) {
             .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
         const kv = resolveKv(env);
         const indexAsset = new URL(`/sentence-index.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
-        const sentenceIndex = await loadIndex(indexAsset, cookie, kv);
+        const sentenceIndex = await loadIndex(indexAsset, cookie, kv, waitUntil);
 
         // 使用构建时生成的长度索引，等概率选出匹配的句子，再读取所在分类。
         // 先按分类汇总候选，两种模式共用同一份候选表，只是抽取方式不同。
@@ -342,7 +351,7 @@ export async function onRequest(context) {
             }
         }
         const asset = new URL(`/sentences/${chosen.key}.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
-        const records = await loadSentences(asset, cookie, kv, chosen.key);
+        const records = await loadSentences(asset, cookie, kv, chosen.key, waitUntil);
         const randomSentence = records[chosen.indexes[selected]];
         if (!randomSentence || randomSentence.type !== chosen.key) {
             sentenceCache.delete(asset.toString());
