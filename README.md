@@ -28,6 +28,10 @@
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见部署后的首页。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为，不保证与 [一言开发者中心](https://developer.hitokoto.cn/sentence/) 的全部功能一致。
 
+## 优化记录（4.7.2）
+
+- `/stats` 运行状况页去掉 KV 状态里的“写入读取”卡片（原来固定显示只读模式），现在只剩五张状态卡；页面的完整写读检测入口仍指向 `/status?probe=write`。
+
 ## 优化记录（4.7.1）
 
 - `/status` 默认只读：不再每次打开都写一次 KV 探针键，任意访客、爬虫都不会再触发 KV 写入；完整写读探针改成加 `?probe=write` 才触发，`?probe=read` 与默认相同（只读），未知 `probe` 值也按只读处理。JSON 字段不变，只读时 `writeRead` 为 `skipped`；`/stats` 的只读探针与健康判定不受影响。
