@@ -79,9 +79,10 @@ const page = `<!doctype html>
     .footer-sources{margin-bottom:16px}
     .footer-sources a{color:var(--md-on-surface-variant)}
     .footer-sources a:hover{color:var(--md-primary)}
-    .icp-link,.edgeone-badge{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:999px;background:var(--md-surface-container-high);color:var(--md-on-surface-variant);text-decoration:none;transition:background .2s var(--md-ease),color .2s var(--md-ease)}
-    .icp-link:hover,.edgeone-badge:hover{color:var(--md-primary);background:var(--md-surface-container-highest);text-decoration:none}
-    .edgeone-badge{margin-top:12px}
+    .icp-link{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:999px;background:var(--md-surface-container-high);color:var(--md-on-surface-variant);text-decoration:none;transition:background .2s var(--md-ease),color .2s var(--md-ease)}
+    .icp-link:hover{color:var(--md-primary);background:var(--md-surface-container-highest);text-decoration:none}
+    .edgeone-badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;color:var(--md-on-surface-variant);text-decoration:none;transition:color .2s var(--md-ease)}
+    .edgeone-badge:hover{color:var(--md-primary);text-decoration:none}
     .edgeone-badge img{height:20px;width:auto;display:block}
     .icp-link img{width:16px;height:16px;object-fit:contain}
     .reveal{opacity:0;transform:translateY(16px);transition:opacity .5s var(--md-ease),transform .5s var(--md-ease)}
@@ -165,8 +166,8 @@ const page = `<!doctype html>
 <footer>
   <p class="note" style="overflow-wrap:anywhere">当前 API 版本：<span id="api-version">暂不可用</span> · 更新时间：<span id="api-updated">暂不可用</span><br>当前句子库版本：<span id="bundle-version">暂不可用</span> · 上游更新时间：<span id="bundle-updated">暂不可用</span></p>
   <p class="footer-sources"><a href="/docs">接口文档</a> · <a href="/stats">运行状况</a> · <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">语句数据</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">项目源码</a></p>
-  <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a>
   <div><a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">本站由 <img src="/edgeone-logo.png" alt="Tencent EdgeOne" width="140" height="20"> 提供加速服务</a></div>
+  <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a>
 </footer>
 <script>
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

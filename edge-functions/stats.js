@@ -101,8 +101,8 @@ details{margin-top:16px}
 .data-item.peak .data-value{color:var(--md-on-tertiary-container)}
 .data-item.empty .data-value{color:var(--md-on-surface-variant);font-weight:400}
 footer{max-width:960px;margin:auto;padding:24px 24px 64px;text-align:center;font-size:13px;line-height:1.6;color:var(--md-on-surface-variant);position:relative;z-index:1}
-.edgeone-badge{display:inline-flex;align-items:center;gap:8px;margin-top:16px;height:36px;padding:0 16px;border-radius:999px;background:var(--md-surface-container-high);color:var(--md-on-surface-variant);text-decoration:none;transition:background .2s var(--md-ease),color .2s var(--md-ease)}
-.edgeone-badge:hover{color:var(--md-primary);background:var(--md-surface-container-highest);text-decoration:none}
+.edgeone-badge{display:inline-flex;align-items:center;gap:8px;margin-top:16px;color:var(--md-on-surface-variant);text-decoration:none;transition:color .2s var(--md-ease)}
+.edgeone-badge:hover{color:var(--md-primary);text-decoration:none}
 .edgeone-badge img{height:20px;width:auto;display:block}
 @media(max-width:600px){main{padding:40px 18px}.card{padding:20px}.hero-side{align-items:flex-start}.hero-side .meta{text-align:left}.kv-grid{grid-template-columns:repeat(2,1fr)}}
 @media(prefers-reduced-motion:reduce){.value.loading{animation:none}.btn,.edgeone-badge{transition:none}}
