@@ -12,6 +12,25 @@ const STATS_KV_KEY = "stats_data_cache";
 const DAILY_KV_KEY = "daily_stats_cache";
 const FETCH_TIMEOUT_MS = 10000;
 
+// EdgeOne 运行时可能没有 AbortSignal.timeout（较新的静态方法），
+// 用 AbortController + setTimeout 兜底；两者都没有时返回 undefined（不设超时）。
+// 整个函数绝不抛错，最坏情况就是退回 4.9.8 之前的无超时行为。
+function timeoutSignal(ms) {
+    try {
+        if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+            return AbortSignal.timeout(ms);
+        }
+        if (typeof AbortController === "function") {
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), ms);
+            return controller.signal;
+        }
+    } catch {
+        // 超时机制不可用时不设超时，请求照常发出。
+    }
+    return undefined;
+}
+
 function resolveKv(env) {
     const fromGlobal = globalThis.hitokoto_kv;
     if (fromGlobal && typeof fromGlobal.get === "function") {return fromGlobal;}
@@ -33,7 +52,7 @@ async function kvGetJson(kv, key) {
 
 async function fetchJson(url, cookie) {
     try {
-        const result = await fetch(url, { headers: cookie ? { cookie } : {}, redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+        const result = await fetch(url, { headers: cookie ? { cookie } : {}, redirect: "manual", signal: timeoutSignal(FETCH_TIMEOUT_MS) });
         if (!result.ok) {return null;}
         return await result.json();
     } catch {

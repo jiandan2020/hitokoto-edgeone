@@ -13,6 +13,25 @@ const responseHeaders = {
 };
 const FETCH_TIMEOUT_MS = 10000;
 
+// EdgeOne 运行时可能没有 AbortSignal.timeout（较新的静态方法），
+// 用 AbortController + setTimeout 兜底；两者都没有时返回 undefined（不设超时）。
+// 整个函数绝不抛错，最坏情况就是退回 4.9.8 之前的无超时行为。
+function timeoutSignal(ms) {
+    try {
+        if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+            return AbortSignal.timeout(ms);
+        }
+        if (typeof AbortController === "function") {
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), ms);
+            return controller.signal;
+        }
+    } catch {
+        // 超时机制不可用时不设超时，请求照常发出。
+    }
+    return undefined;
+}
+
 // 回调名只允许合法的 JS 标识符路径，如 show / App.onHitokoto；其余一律拒绝，
 // 防止 callback 被拼成任意 JS 代码执行。
 const CALLBACK_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*$/;
@@ -143,7 +162,7 @@ async function loadIndex(asset, cookie, kv) {
                 return fromKv.index;
             }
         }
-        const result = await fetch(key, { headers: cookie ? { cookie } : {}, redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+        const result = await fetch(key, { headers: cookie ? { cookie } : {}, redirect: "manual", signal: timeoutSignal(FETCH_TIMEOUT_MS) });
         if (!result.ok) {throw new Error(`索引读取失败: ${result.status}`);}
         const data = await result.json();
         if (data.version !== sentenceVersion || !data.index || typeof data.index !== "object") {
@@ -162,7 +181,7 @@ async function loadIndex(asset, cookie, kv) {
 }
 
 async function fetchSentences(asset, cookie) {
-    const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual", signal: timeoutSignal(FETCH_TIMEOUT_MS) });
     if (!result.ok) {throw new Error(`句子库读取失败: ${result.status}`);}
     const records = await result.json();
     if (!Array.isArray(records)) {throw new Error("句子库格式错误");}

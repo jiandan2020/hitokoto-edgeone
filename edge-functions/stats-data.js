@@ -3,6 +3,25 @@ const host = "teo.tencentcloudapi.com";
 const zone = "zone-3ry57u0agvak";
 const domain = "hitokoto.xzccs.top";
 const FETCH_TIMEOUT_MS = 10000;
+
+// EdgeOne 运行时可能没有 AbortSignal.timeout（较新的静态方法），
+// 用 AbortController + setTimeout 兜底；两者都没有时返回 undefined（不设超时）。
+// 整个函数绝不抛错，最坏情况就是退回 4.9.8 之前的无超时行为。
+function timeoutSignal(ms) {
+    try {
+        if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+            return AbortSignal.timeout(ms);
+        }
+        if (typeof AbortController === "function") {
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), ms);
+            return controller.signal;
+        }
+    } catch {
+        // 超时机制不可用时不设超时，请求照常发出。
+    }
+    return undefined;
+}
 const encoder = new TextEncoder();
 let cached;
 let pending;
@@ -90,7 +109,7 @@ async function query(secretId, secretKey, start, end, kind) {
             "X-TC-Timestamp": String(timestamp),
         },
         body,
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        signal: timeoutSignal(FETCH_TIMEOUT_MS),
     });
     if (!response.ok) {throw new Error("统计服务请求失败");}
     const result = (await response.json()).Response;

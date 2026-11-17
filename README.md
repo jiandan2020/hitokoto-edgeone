@@ -29,6 +29,10 @@
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见 `/docs` 接口文档。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为。
 
+## 优化记录（4.9.9）
+
+- **修复 4.9.8 的回归**：EdgeOne 运行时没有 `AbortSignal.timeout`（较新的静态方法），直接调用会抛错，导致 `/status` 取不到版本号（`version`/`sentenceVersion` 为 null）、`/stats-data` 因腾讯云请求失败返回 503。服务端改用 `timeoutSignal()` 兜底：优先 `AbortSignal.timeout`，没有就用 `AbortController` + `setTimeout`，两者都没有时返回 `undefined`（不设超时，退回旧行为）；函数本身绝不抛错。新增回归测试（模拟缺失 `AbortSignal.timeout` 时 `/status` 仍正常）。
+
 ## 优化记录（4.9.8）
 
 - `/status` 两次静态取数改并行：`/package.json` 与 `/sentence-index.json` 改用 `Promise.all` 一起取，省一次往返。

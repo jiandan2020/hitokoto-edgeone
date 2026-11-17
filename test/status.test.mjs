@@ -129,6 +129,20 @@ test("status fetches package.json and sentence-index.json in parallel, both with
     }
 });
 
+test("status still works when AbortSignal.timeout is missing (EdgeOne fallback)", async () => {
+    const originalTimeout = AbortSignal.timeout;
+    AbortSignal.timeout = undefined;
+    try {
+        const res = await req("/status?format=json&probe=read");
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.version, pkg.version);
+        assert.equal(data.sentenceVersion, indexData.version);
+    } finally {
+        AbortSignal.timeout = originalTimeout;
+    }
+});
+
 test(`KV bound and populated: ok true, 12 categories, ${sentenceCount} sentences`, async () => {
     const kv = makeKv();
     populateKv(kv);

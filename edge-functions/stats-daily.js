@@ -8,6 +8,25 @@ const DAILY_STATS_URL = "https://cdn.jsdelivr.net/gh/jiandan2020/hitokoto-edgeon
 const DAILY_KV_KEY = "daily_stats_cache";
 const DAILY_TTL_MS = 60 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 10000;
+
+// EdgeOne 运行时可能没有 AbortSignal.timeout（较新的静态方法），
+// 用 AbortController + setTimeout 兜底；两者都没有时返回 undefined（不设超时）。
+// 整个函数绝不抛错，最坏情况就是退回 4.9.8 之前的无超时行为。
+function timeoutSignal(ms) {
+    try {
+        if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+            return AbortSignal.timeout(ms);
+        }
+        if (typeof AbortController === "function") {
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), ms);
+            return controller.signal;
+        }
+    } catch {
+        // 超时机制不可用时不设超时，请求照常发出。
+    }
+    return undefined;
+}
 // 上游失败时允许返回过期不久的缓存，避免短暂抖动直接 503。
 const DAILY_STALE_GRACE_MS = 24 * 60 * 60 * 1000;
 let cached;
@@ -49,7 +68,7 @@ function validateDaily(data) {
     return true;
 }
 async function loadDaily() {
-    const response = await fetch(DAILY_STATS_URL, { redirect: "manual", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    const response = await fetch(DAILY_STATS_URL, { redirect: "manual", signal: timeoutSignal(FETCH_TIMEOUT_MS) });
     if (!response.ok) {throw new Error("每日汇总请求失败");}
     const data = await response.json();
     if (!validateDaily(data)) {throw new Error("每日汇总格式错误");}
