@@ -45,7 +45,7 @@ const page = `<!doctype html>
   <p><a href="/docs">接口文档</a> · <a href="/stats">运行状况</a></p>
   <div class="footer-sources"><a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer">语录数据来自 sentences-bundle</a> · <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener noreferrer">项目源码</a></div>
   <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><img src="/icp-beian.png" alt="" width="16" height="16">赣ICP备2025074916号-1</a>
-  <div><a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer"><img src="/edgeone-logo.png" alt="Tencent EdgeOne" width="138" height="20">本站由 EdgeOne 提供加速服务</a></div>
+  <div><a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer"><img src="/edgeone-logo.png" alt="Tencent EdgeOne" width="140" height="20">本站由 EdgeOne 提供加速服务</a></div>
 </footer>
 <script>
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
