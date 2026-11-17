@@ -43,7 +43,6 @@
                     <select v-model="mode">
                         <option value="weighted">weighted（默认）</option>
                         <option value="category">category（均衡）</option>
-                        <option value="balanced">balanced（同 category）</option>
                     </select>
                 </label>
                 <p v-if="paramError" class="param-error">{{ paramError }}</p>
