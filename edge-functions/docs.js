@@ -10,20 +10,20 @@ const page = `<!doctype html>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{
       color-scheme:light;
-      --md-primary:#c2185b;--md-on-primary:#fff;--md-primary-container:#ffd9e3;--md-on-primary-container:#3f0016;
-      --md-secondary:#7a4a55;--md-on-secondary:#fff;--md-secondary-container:#ffd9e3;--md-on-secondary-container:#2e1218;
-      --md-tertiary:#8a5a00;--md-on-tertiary:#fff;--md-tertiary-container:#ffe1a8;--md-on-tertiary-container:#2a1a00;
+      --md-primary:#b23c00;--md-on-primary:#fff;--md-primary-container:#ffdcc3;--md-on-primary-container:#3a1400;
+      --md-secondary:#775a44;--md-on-secondary:#fff;--md-secondary-container:#ffdcc3;--md-on-secondary-container:#2d1707;
+      --md-tertiary:#8a6100;--md-on-tertiary:#fff;--md-tertiary-container:#ffdea6;--md-on-tertiary-container:#2a1a00;
       --md-error:#b3261e;--md-on-error:#fff;--md-error-container:#f9dedc;--md-on-error-container:#410e0b;
-      --md-surface:#fff0f2;--md-surface-dim:#e7d6d8;
-      --md-surface-container-lowest:#fff;--md-surface-container-low:#ffeef1;--md-surface-container:#fbe3e8;
-      --md-surface-container-high:#f5d6dd;--md-surface-container-highest:#efc9d2;
-      --md-on-surface:#221a1d;--md-on-surface-variant:#544247;
-      --md-outline:#8a767b;--md-outline-variant:#dcc2c8;
-      --md-inverse-surface:#372e31;--md-inverse-on-surface:#ffeded;
+      --md-surface:#fff8f2;--md-surface-dim:#e9d8cb;
+      --md-surface-container-lowest:#fff;--md-surface-container-low:#fff3ea;--md-surface-container:#fbe9dc;
+      --md-surface-container-high:#f5dcd0;--md-surface-container-highest:#efd0c0;
+      --md-on-surface:#221a14;--md-on-surface-variant:#53443a;
+      --md-outline:#857265;--md-outline-variant:#dcc7b8;
+      --md-inverse-surface:#372e27;--md-inverse-on-surface:#ffede2;
       --md-success-container:#dce9dc;--md-on-success-container:#1b4d1f;
       --md-elev-1:0 1px 2px rgba(0,0,0,.3),0 1px 3px 1px rgba(0,0,0,.15);
       --md-elev-2:0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15);
@@ -32,7 +32,7 @@ const page = `<!doctype html>
     }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
-    body{margin:0;min-height:100vh;color:var(--md-on-surface);background:var(--md-surface);font-family:"Roboto Flex","Roboto","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;font-size:16px;line-height:1.5}
+    body{margin:0;min-height:100vh;color:var(--md-on-surface);background:var(--md-surface);font-family:"Google Sans","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;font-size:16px;line-height:1.5}
     a{color:var(--md-primary);text-decoration:none}
     a:hover{text-decoration:underline}
     a:focus-visible{outline:2px solid var(--md-primary);outline-offset:3px;border-radius:4px}
@@ -42,10 +42,10 @@ const page = `<!doctype html>
     h1{font-size:clamp(32px,6vw,45px);font-weight:500;line-height:1.2;letter-spacing:0;margin:16px 0 12px;color:var(--md-on-surface)}
     header p{color:var(--md-on-surface-variant);max-width:600px;margin:0 auto 24px}
     .button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;line-height:1.5;text-decoration:none;cursor:pointer;transition:box-shadow .2s var(--md-ease),background .2s var(--md-ease)}
-    .button:hover{background:#a31545;box-shadow:var(--md-elev-1);text-decoration:none}
+    .button:hover{background:#8f2f00;box-shadow:var(--md-elev-1);text-decoration:none}
     .button:active{transform:scale(.98)}
     .button.ghost{background:transparent;color:var(--md-primary);border:1px solid var(--md-outline)}
-    .button.ghost:hover{background:rgba(194,24,91,.08);box-shadow:none}
+    .button.ghost:hover{background:rgba(178,60,0,.08);box-shadow:none}
     header .note{margin-top:20px;font-size:12px;color:var(--md-on-surface-variant)}
     section{background:var(--md-surface-container);border-radius:28px;padding:32px;margin-bottom:24px}
     h2{font-size:22px;font-weight:400;line-height:1.27;margin:0 0 16px;color:var(--md-on-surface)}
@@ -76,9 +76,30 @@ const page = `<!doctype html>
     .reveal.visible{opacity:1;transform:none}
     @media(max-width:600px){header{padding-top:48px;padding-bottom:32px}section{padding:24px 20px;border-radius:24px}th,td{min-width:110px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.icp-link,.edgeone-badge{transition:none}.reveal{opacity:1;transform:none}}
+  
+    .aurora{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+    .aurora-blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5}
+    .aurora-blob-1{width:480px;height:480px;left:-120px;top:-140px;background:#ffb25e;animation:drift 26s ease-in-out infinite alternate}
+    .aurora-blob-2{width:420px;height:420px;right:-100px;top:12%;background:#ff8a3d;animation:drift 32s ease-in-out infinite alternate-reverse}
+    .aurora-blob-3{width:380px;height:380px;left:38%;bottom:-160px;background:#ffd9a0;animation:drift 38s ease-in-out infinite alternate}
+    @keyframes drift{to{transform:translate(40px,30px) scale(1.08)}}
+    .app-bar{position:sticky;top:0;z-index:10;background:var(--md-surface-container-low);box-shadow:var(--md-elev-1)}
+    .app-bar-inner{max-width:960px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px}
+    .app-logo{display:inline-flex;align-items:center;gap:10px;color:var(--md-on-surface);font-size:17px;font-weight:500;text-decoration:none}
+    .app-logo:hover{text-decoration:none}
+    .app-logo img{width:28px;height:28px;display:block}
+    .app-nav-links{display:flex;align-items:center;gap:4px;margin-left:auto}
+    .app-nav-links a{padding:8px 12px;border-radius:999px;color:var(--md-on-surface-variant);font-size:14px;font-weight:500;text-decoration:none}
+    .app-nav-links a:hover{background:rgba(178,60,0,.08);color:var(--md-on-surface);text-decoration:none}
+    .app-cta{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 20px;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;text-decoration:none}
+    .app-cta:hover{background:#8f2f00;text-decoration:none}
+    @media(max-width:600px){.app-nav-links{display:none}.app-bar-inner{gap:12px}}
+    @media(prefers-reduced-motion:reduce){.aurora-blob{animation:none}}
   </style>
 </head>
 <body>
+<div class="aurora" aria-hidden="true"><span class="aurora-blob aurora-blob-1"></span><span class="aurora-blob aurora-blob-2"></span><span class="aurora-blob aurora-blob-3"></span></div>
+<nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><a class="app-cta" href="/api" target="_blank" rel="noopener">试试接口</a></div></nav>
 <header>
   <div class="eyebrow">HITOKOTO · 接口文档</div>
   <h1>接口文档</h1>

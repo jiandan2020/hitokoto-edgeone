@@ -88,10 +88,10 @@ test("stats page keeps hourly average and weekly summaries", async () => {
 
 test("stats page uses the Material Design palette", async () => {
     const html = await render();
-    for (const token of ["--md-primary", "#c2185b", "#fff0f2", "Roboto Flex", "HITOKOTO · STATUS"]) {
+    for (const token of ["--md-primary", "#b23c00", "#fff8f2", "Google Sans", "HITOKOTO · STATUS"]) {
         assert.ok(html.includes(token), `Material style token missing: ${token}`);
     }
-    for (const token of ["#fff7e8", "#a83d5c", "#30283f", "bubbles", "Songti", "#edf2ee", "#0c8a5f"]) {
+    for (const token of ["#fff7e8", "#a83d5c", "#30283f", "bubbles", "Songti", "Roboto Flex", "#edf2ee", "#0c8a5f"]) {
         assert.ok(!html.includes(token), `old palette token must be gone: ${token}`);
     }
 });

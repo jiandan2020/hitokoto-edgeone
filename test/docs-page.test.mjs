@@ -66,8 +66,9 @@ test("footer shows the EdgeOne acceleration badge", async () => {
 
 test("page uses Material Design styles", async () => {
     const html = await render();
-    assert.ok(html.includes("Roboto Flex"), "Material font missing");
+    assert.ok(html.includes("Google Sans"), "Material font missing");
     assert.ok(html.includes("--md-primary"), "Material tokens missing");
     assert.ok(!html.includes("Songti"), "old serif font must be gone");
     assert.ok(!html.includes("bubbles"), "old bubbles must be gone");
+    assert.ok(html.includes("app-bar"), "app bar missing");
 });

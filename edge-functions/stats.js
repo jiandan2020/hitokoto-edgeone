@@ -10,19 +10,19 @@ const page = `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>运行状况 · 小周的一言API</title><link rel="icon" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&display=swap" rel="stylesheet"><style>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet"><style>
 :root{
   color-scheme:light;
-  --md-primary:#c2185b;--md-on-primary:#fff;--md-primary-container:#ffd9e3;--md-on-primary-container:#3f0016;
-  --md-secondary:#7a4a55;--md-on-secondary:#fff;--md-secondary-container:#ffd9e3;--md-on-secondary-container:#2e1218;
-  --md-tertiary:#8a5a00;--md-on-tertiary:#fff;--md-tertiary-container:#ffe1a8;--md-on-tertiary-container:#2a1a00;
+  --md-primary:#b23c00;--md-on-primary:#fff;--md-primary-container:#ffdcc3;--md-on-primary-container:#3a1400;
+  --md-secondary:#775a44;--md-on-secondary:#fff;--md-secondary-container:#ffdcc3;--md-on-secondary-container:#2d1707;
+  --md-tertiary:#8a6100;--md-on-tertiary:#fff;--md-tertiary-container:#ffdea6;--md-on-tertiary-container:#2a1a00;
   --md-error:#b3261e;--md-on-error:#fff;--md-error-container:#f9dedc;--md-on-error-container:#410e0b;
-  --md-surface:#fff0f2;--md-surface-dim:#e7d6d8;
-  --md-surface-container-lowest:#fff;--md-surface-container-low:#ffeef1;--md-surface-container:#fbe3e8;
-  --md-surface-container-high:#f5d6dd;--md-surface-container-highest:#efc9d2;
-  --md-on-surface:#221a1d;--md-on-surface-variant:#544247;
-  --md-outline:#8a767b;--md-outline-variant:#dcc2c8;
-  --md-inverse-surface:#372e31;--md-inverse-on-surface:#ffeded;
+  --md-surface:#fff8f2;--md-surface-dim:#e9d8cb;
+  --md-surface-container-lowest:#fff;--md-surface-container-low:#fff3ea;--md-surface-container:#fbe9dc;
+  --md-surface-container-high:#f5dcd0;--md-surface-container-highest:#efd0c0;
+  --md-on-surface:#221a14;--md-on-surface-variant:#53443a;
+  --md-outline:#857265;--md-outline-variant:#dcc7b8;
+  --md-inverse-surface:#372e27;--md-inverse-on-surface:#ffede2;
   --md-success-container:#dce9dc;--md-on-success-container:#1b4d1f;
   --md-elev-1:0 1px 2px rgba(0,0,0,.3),0 1px 3px 1px rgba(0,0,0,.15);
   --md-elev-2:0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15);
@@ -30,13 +30,13 @@ const page = `<!doctype html>
   --md-ease:cubic-bezier(.2,0,0,1);
 }
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;color:var(--md-on-surface);background:var(--md-surface);font-family:"Roboto Flex","Roboto","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;font-size:16px;line-height:1.5}
+body{margin:0;min-height:100vh;color:var(--md-on-surface);background:var(--md-surface);font-family:"Google Sans","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;font-size:16px;line-height:1.5}
 main{max-width:960px;margin:auto;padding:56px 24px;position:relative;z-index:1}
 a{color:var(--md-primary);text-decoration:none}
 a:hover{text-decoration:underline}
 a:focus-visible{outline:2px solid var(--md-primary);outline-offset:3px;border-radius:4px}
 main>a:first-child{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;margin-bottom:8px;border-radius:999px;color:var(--md-primary);font-size:14px;font-weight:500}
-main>a:first-child:hover{background:rgba(194,24,91,.08);text-decoration:none}
+main>a:first-child:hover{background:rgba(178,60,0,.08);text-decoration:none}
 .eyebrow{font-size:12px;font-weight:500;line-height:1.5;letter-spacing:.12em;text-transform:uppercase;color:var(--md-primary)}
 h1{font-size:clamp(32px,6vw,45px);font-weight:500;line-height:1.2;margin:16px 0 8px;color:var(--md-on-surface)}
 h2{font-size:22px;font-weight:400;line-height:1.27;margin:0 0 8px;color:var(--md-on-surface)}
@@ -72,10 +72,10 @@ p.note{font-size:14px}
 .kv-value{font-size:20px;font-weight:500;line-height:1.4;margin-top:8px;font-variant-numeric:tabular-nums;color:var(--md-on-surface)}
 .kv-sub{font-size:12px;color:var(--md-on-surface-variant);margin-top:2px}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin-top:8px;padding:0 24px;border:0;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;line-height:1.5;font-family:inherit;cursor:pointer;transition:box-shadow .2s var(--md-ease),background .2s var(--md-ease)}
-.btn:hover{background:#a31545;box-shadow:var(--md-elev-1)}
+.btn:hover{background:#8f2f00;box-shadow:var(--md-elev-1)}
 .btn:active{transform:scale(.98)}
 .btn.ghost{background:transparent;color:var(--md-primary);border:1px solid var(--md-outline)}
-.btn.ghost:hover{background:rgba(194,24,91,.08);box-shadow:none}
+.btn.ghost:hover{background:rgba(178,60,0,.08);box-shadow:none}
 .mini-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0 4px}
 .mini{padding:16px;border-radius:16px;background:var(--md-surface-container-highest)}
 .mini .label{font-size:13px}
@@ -106,7 +106,26 @@ footer{max-width:960px;margin:auto;padding:24px 24px 64px;text-align:center;font
 .edgeone-badge img{height:20px;width:auto;display:block}
 @media(max-width:600px){main{padding:40px 18px}.card{padding:20px}.hero-side{align-items:flex-start}.hero-side .meta{text-align:left}.kv-grid{grid-template-columns:repeat(2,1fr)}}
 @media(prefers-reduced-motion:reduce){.value.loading{animation:none}.btn,.edgeone-badge{transition:none}}
-</style></head><body><main><a href="/">← 返回首页</a><div class="eyebrow">HITOKOTO · STATUS</div><h1>运行状况</h1><p>hitokoto.xzccs.top · 运行状态、一言与访问统计</p><section class="card hero" id="health-banner"><div class="hero-main"><span class="pill idle" id="health-pill">检查中…</span><div class="hero-title" id="health-title">正在检查运行状态…</div><div class="meta" id="health-version" style="font-size:14px;color:var(--muted)"></div><div class="meta" id="health-time" style="font-size:14px;color:var(--muted)"></div></div><div class="hero-side"><button class="btn ghost" id="refresh" type="button">刷新数据</button><div class="meta" id="updated">统计每 10 分钟自动刷新一次，运行状态每分钟刷新一次。</div></div></section><div class="cards"><div class="card"><div class="label">昨日请求</div><div class="value loading" id="yesterday-requests">—</div><div class="sub" id="yesterday-date"></div></div><div class="card"><div class="label">24 小时请求</div><div class="value loading" id="requests">—</div><div class="sub" id="requests-sub"></div></div><div class="card"><div class="label">5xx 错误率</div><div class="value loading" id="rate">—</div><div class="sub" id="rate-sub"></div></div><div class="card"><div class="label">接口往返</div><div class="value loading" id="latency">—</div><div class="sub">最近一次状态探针的往返耗时</div></div></div><p id="status" role="status">正在加载统计数据…</p><section class="card"><h2>KV 缓存状态</h2><p class="note">KV 状态由运行状态探针提供。</p><p id="kv-status" class="note" role="status">正在加载 KV 状态…</p><div class="kv-grid" id="kv-grid"></div></section><section class="card"><h2>每小时访问量</h2><p class="note">域名请求数 · 最近 24 个完整小时 · 北京时间；缺失数据处折线断开，金色点为峰值小时。</p><div class="mini-row"><div class="mini"><div class="label">EdgeOne 响应流量</div><div class="num" id="traffic">—</div></div><div class="mini"><div class="label">/api 请求数</div><div class="num" id="api-requests">—</div></div><div class="mini"><div class="label">/api 请求占比</div><div class="num" id="api-share">—</div></div><div class="mini"><div class="label">小时均值</div><div class="num" id="hourly-avg">—</div></div></div><p id="hourly-status" class="note" role="status">正在加载每小时数据…</p><div class="hourly-container"><svg id="hourly-chart" class="hourly-svg" viewBox="0 0 680 220" role="img" aria-label="每小时域名请求数折线图，鼠标移动或触摸查看详情"></svg><div id="hourly-tooltip" class="hourly-tooltip" role="tooltip" hidden></div></div><p class="note" id="hourly-summary"></p><details><summary>查看每小时数据</summary><div id="hourly-list" class="data-grid"></div></details></section><section class="card"><div class="label">自 2026-11-15 起累计请求数</div><div class="value loading" id="cumulative">—</div><p class="note" id="history-status" role="status">正在加载每日汇总…</p><h2>每日请求趋势</h2><p class="note">最近 30 个北京时间自然日；缺失数据处折线断开，不代表零，金色点为最高单日。</p><div class="mini-row"><div class="mini"><div class="label">近 7 日合计</div><div class="num" id="week-total">—</div></div><div class="mini"><div class="label">已采集日均</div><div class="num" id="day-average">—</div></div><div class="mini"><div class="label">最高单日</div><div class="num" id="best-day">—</div></div></div><div class="hourly-container"><svg id="daily-chart" class="hourly-svg" viewBox="0 0 680 220" role="img" aria-label="每日请求数折线图，鼠标移动或触摸查看详情"></svg><div id="daily-tooltip" class="hourly-tooltip" role="tooltip" hidden></div></div><details><summary>查看每日数据</summary><div id="history-list" class="data-grid"></div></details></section></main><footer><div><a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">本站由 <img src="/edgeone-logo.png" alt="Tencent EdgeOne" width="140" height="20"> 提供加速服务</a></div></footer><script>
+
+.aurora{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.aurora-blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5}
+.aurora-blob-1{width:480px;height:480px;left:-120px;top:-140px;background:#ffb25e;animation:drift 26s ease-in-out infinite alternate}
+.aurora-blob-2{width:420px;height:420px;right:-100px;top:12%;background:#ff8a3d;animation:drift 32s ease-in-out infinite alternate-reverse}
+.aurora-blob-3{width:380px;height:380px;left:38%;bottom:-160px;background:#ffd9a0;animation:drift 38s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate(40px,30px) scale(1.08)}}
+.app-bar{position:sticky;top:0;z-index:10;background:var(--md-surface-container-low);box-shadow:var(--md-elev-1)}
+.app-bar-inner{max-width:960px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px}
+.app-logo{display:inline-flex;align-items:center;gap:10px;color:var(--md-on-surface);font-size:17px;font-weight:500;text-decoration:none}
+.app-logo:hover{text-decoration:none}
+.app-logo img{width:28px;height:28px;display:block}
+.app-nav-links{display:flex;align-items:center;gap:4px;margin-left:auto}
+.app-nav-links a{padding:8px 12px;border-radius:999px;color:var(--md-on-surface-variant);font-size:14px;font-weight:500;text-decoration:none}
+.app-nav-links a:hover{background:rgba(178,60,0,.08);color:var(--md-on-surface);text-decoration:none}
+.app-cta{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 20px;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;text-decoration:none}
+.app-cta:hover{background:#8f2f00;text-decoration:none}
+@media(max-width:600px){.app-nav-links{display:none}.app-bar-inner{gap:12px}}
+@media(prefers-reduced-motion:reduce){.aurora-blob{animation:none}}
+</style></head><body><div class="aurora" aria-hidden="true"><span class="aurora-blob aurora-blob-1"></span><span class="aurora-blob aurora-blob-2"></span><span class="aurora-blob aurora-blob-3"></span></div><nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><a class="app-cta" href="/api" target="_blank" rel="noopener">试试接口</a></div></nav><main><div class="eyebrow">HITOKOTO · STATUS</div><h1>运行状况</h1><p>hitokoto.xzccs.top · 运行状态、一言与访问统计</p><section class="card hero" id="health-banner"><div class="hero-main"><span class="pill idle" id="health-pill">检查中…</span><div class="hero-title" id="health-title">正在检查运行状态…</div><div class="meta" id="health-version" style="font-size:14px;color:var(--muted)"></div><div class="meta" id="health-time" style="font-size:14px;color:var(--muted)"></div></div><div class="hero-side"><button class="btn ghost" id="refresh" type="button">刷新数据</button><div class="meta" id="updated">统计每 10 分钟自动刷新一次，运行状态每分钟刷新一次。</div></div></section><div class="cards"><div class="card"><div class="label">昨日请求</div><div class="value loading" id="yesterday-requests">—</div><div class="sub" id="yesterday-date"></div></div><div class="card"><div class="label">24 小时请求</div><div class="value loading" id="requests">—</div><div class="sub" id="requests-sub"></div></div><div class="card"><div class="label">5xx 错误率</div><div class="value loading" id="rate">—</div><div class="sub" id="rate-sub"></div></div><div class="card"><div class="label">接口往返</div><div class="value loading" id="latency">—</div><div class="sub">最近一次状态探针的往返耗时</div></div></div><p id="status" role="status">正在加载统计数据…</p><section class="card"><h2>KV 缓存状态</h2><p class="note">KV 状态由运行状态探针提供。</p><p id="kv-status" class="note" role="status">正在加载 KV 状态…</p><div class="kv-grid" id="kv-grid"></div></section><section class="card"><h2>每小时访问量</h2><p class="note">域名请求数 · 最近 24 个完整小时 · 北京时间；缺失数据处折线断开，金色点为峰值小时。</p><div class="mini-row"><div class="mini"><div class="label">EdgeOne 响应流量</div><div class="num" id="traffic">—</div></div><div class="mini"><div class="label">/api 请求数</div><div class="num" id="api-requests">—</div></div><div class="mini"><div class="label">/api 请求占比</div><div class="num" id="api-share">—</div></div><div class="mini"><div class="label">小时均值</div><div class="num" id="hourly-avg">—</div></div></div><p id="hourly-status" class="note" role="status">正在加载每小时数据…</p><div class="hourly-container"><svg id="hourly-chart" class="hourly-svg" viewBox="0 0 680 220" role="img" aria-label="每小时域名请求数折线图，鼠标移动或触摸查看详情"></svg><div id="hourly-tooltip" class="hourly-tooltip" role="tooltip" hidden></div></div><p class="note" id="hourly-summary"></p><details><summary>查看每小时数据</summary><div id="hourly-list" class="data-grid"></div></details></section><section class="card"><div class="label">自 2026-11-15 起累计请求数</div><div class="value loading" id="cumulative">—</div><p class="note" id="history-status" role="status">正在加载每日汇总…</p><h2>每日请求趋势</h2><p class="note">最近 30 个北京时间自然日；缺失数据处折线断开，不代表零，金色点为最高单日。</p><div class="mini-row"><div class="mini"><div class="label">近 7 日合计</div><div class="num" id="week-total">—</div></div><div class="mini"><div class="label">已采集日均</div><div class="num" id="day-average">—</div></div><div class="mini"><div class="label">最高单日</div><div class="num" id="best-day">—</div></div></div><div class="hourly-container"><svg id="daily-chart" class="hourly-svg" viewBox="0 0 680 220" role="img" aria-label="每日请求数折线图，鼠标移动或触摸查看详情"></svg><div id="daily-tooltip" class="hourly-tooltip" role="tooltip" hidden></div></div><details><summary>查看每日数据</summary><div id="history-list" class="data-grid"></div></details></section></main><footer><div><a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">本站由 <img src="/edgeone-logo.png" alt="Tencent EdgeOne" width="140" height="20"> 提供加速服务</a></div></footer><script>
 const dateFormat = new Intl.DateTimeFormat('zh-CN', { timeZone:'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
 function setLoading(id, on) { const el = document.getElementById(id); if (el) el.classList.toggle('loading', on); }
 function pill(ok, goodText, badText) { return ok ? '✓ ' + goodText : '✗ ' + badText; }
@@ -173,8 +192,8 @@ function renderHourly(hourly) {
   const defs = document.createElementNS(ns, 'defs');
   const grad = document.createElementNS(ns, 'linearGradient');
   grad.setAttribute('id', 'hourly-gradient'); grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0'); grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
-  const stop1 = document.createElementNS(ns, 'stop'); stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', '#c2185b'); stop1.setAttribute('stop-opacity', '0.18');
-  const stop2 = document.createElementNS(ns, 'stop'); stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', '#c2185b'); stop2.setAttribute('stop-opacity', '0');
+  const stop1 = document.createElementNS(ns, 'stop'); stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', '#b23c00'); stop1.setAttribute('stop-opacity', '0.18');
+  const stop2 = document.createElementNS(ns, 'stop'); stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', '#b23c00'); stop2.setAttribute('stop-opacity', '0');
   grad.append(stop1, stop2); defs.append(grad); svg.append(defs);
   const values = hourly.map(p => Number.isSafeInteger(p.requests) && p.requests >= 0 ? p.requests : null);
   const max = Math.max(1, ...values.filter(v => v !== null));
@@ -286,8 +305,8 @@ function loadDaily() {
     const defs = document.createElementNS(ns, 'defs');
     const grad = document.createElementNS(ns, 'linearGradient');
     grad.setAttribute('id', 'daily-gradient'); grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0'); grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
-    const stop1 = document.createElementNS(ns, 'stop'); stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', '#c2185b'); stop1.setAttribute('stop-opacity', '0.18');
-    const stop2 = document.createElementNS(ns, 'stop'); stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', '#c2185b'); stop2.setAttribute('stop-opacity', '0');
+    const stop1 = document.createElementNS(ns, 'stop'); stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', '#b23c00'); stop1.setAttribute('stop-opacity', '0.18');
+    const stop2 = document.createElementNS(ns, 'stop'); stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', '#b23c00'); stop2.setAttribute('stop-opacity', '0');
     grad.append(stop1, stop2); defs.append(grad); svg.append(defs);
     const values = recent.map(e => e.value);
     for (let i = 0; i <= 2; i++) { const y = 15 + i * 75; shape('line', {x1:50,y1:y,x2:655,y2:y,class:'hourly-grid'}); shape('text',{x:45,y:y+4,'text-anchor':'end',class:'axis-label'},Math.round(max * (2-i)/2).toLocaleString('zh-CN')); }
