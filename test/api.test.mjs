@@ -154,13 +154,47 @@ test("KV miss populates KV from static files", async () => {
         assert.equal(res.status, 200);
         const data = await res.json();
         assert.equal(data.type, "b");
-        assert.ok(kv.store.has(`sentence_index_${indexData.version}`));
+        // 索引已内联进 api.js，不再经过 KV；句子仍按分类写回 KV。
+        assert.ok(!kv.store.has(`sentence_index_${indexData.version}`));
         assert.ok(kv.store.has(`sentences_b_${indexData.version}`));
         const cached = JSON.parse(kv.store.get(`sentences_b_${indexData.version}`));
         assert.ok(Array.isArray(cached) && cached.length > 0);
     } finally {
         delete globalThis.hitokoto_kv;
     }
+});
+
+test("embedded index serves without fetching sentence-index.json", async () => {
+    // 新模块实例 + 只拦截索引文件请求：证明冷启动不再取 sentence-index.json。
+    const fresh = (await import("../edge-functions/api.js?embedded-index")).default;
+    const noIndexFetch = async (input) => {
+        const url = new URL(input);
+        if (url.pathname === "/sentence-index.json") {
+            throw new Error("索引文件不应被请求（已内联）");
+        }
+        return staticFetch(input);
+    };
+    globalThis.fetch = noIndexFetch;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api") });
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(typeof data.hitokoto, "string");
+        assert.ok(data.hitokoto.length > 0);
+    } finally {
+        globalThis.fetch = staticFetch;
+    }
+});
+
+test("generated api.js embeds the sentence index", async () => {
+    const source = readFileSync(new URL("../edge-functions/api.js", import.meta.url), "utf8");
+    const prefix = "const embeddedSentenceIndex = ";
+    const start = source.indexOf(prefix);
+    assert.ok(start >= 0, "api.js 应包含内嵌索引");
+    const end = source.indexOf(";\n", start);
+    assert.ok(end > start);
+    const embedded = JSON.parse(source.slice(start + prefix.length, end));
+    assert.deepEqual(embedded, indexData.index);
 });
 
 test("KV hit serves without fetching static files", async () => {

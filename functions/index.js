@@ -120,6 +120,11 @@ async function loadSentences(asset, cookie, kv, category) {
 const indexCache = new Map();
 const indexPending = new Map();
 async function loadIndex(asset, cookie, kv) {
+    // 生成时已把完整索引内联进 api.js，冷启动直接用内嵌索引，不用再取一次
+    // sentence-index.json；内嵌索引缺失时才走下面的 KV / 静态文件后备。
+    if (typeof embeddedSentenceIndex !== "undefined" && embeddedSentenceIndex && typeof embeddedSentenceIndex === "object") {
+        return embeddedSentenceIndex;
+    }
     const key = asset.toString();
     const cached = indexCache.get(key);
     if (cached && cached.expires > Date.now()) {return cached.index;}
