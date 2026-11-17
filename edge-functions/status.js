@@ -4,8 +4,8 @@
 //   1. KV 是否绑定（变量名 hitokoto_kv）；
 //   2. 写读是否通：往 KV 写一个很小的探针键 status_probe 再读回，比对内容并计时；
 //   3. 索引和 12 个分类是否已在 KV 里（按语料版本分键核对），以及统计缓存是否在 KV 里。
-// 默认每次打开都会做一次探针写入（固定键、很小的值）；加 ?probe=read 只读不写，
-// 适合监控定时拉取；?format=json 仍可加，但返回一直是 JSON。
+// 默认只读不写 KV；加 ?probe=write 才做一次探针写入（固定键、很小的值），
+// 适合主动检查；?probe=read 与默认相同（只读），?format=json 仍可加，但返回一直是 JSON。
 // 注意：本函数与 /api 不共享实例内缓存，查到的是跨实例共享的 KV 真实状态。
 const STATUS_PROBE_KEY = "status_probe";
 const STATS_KV_KEY = "stats_data_cache";
@@ -52,7 +52,7 @@ export default async function onRequest(context) {
         return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET" } });
     }
     const url = new URL(request.url);
-    const readOnly = url.searchParams.get("probe") === "read";
+    const doWrite = url.searchParams.get("probe") === "write";
     const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim())
         .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
 
@@ -78,7 +78,7 @@ export default async function onRequest(context) {
 
     if (kv) {
         // 写读探针：写固定小键再读回，比对内容；失败也不影响接口，只如实报告。
-        if (!readOnly) {
+        if (doWrite) {
             const probeValue = JSON.stringify({ checkedAt: new Date().toISOString(), version: sentenceVersion });
             try {
                 const writeStart = Date.now();
@@ -111,7 +111,7 @@ export default async function onRequest(context) {
             && daily.data.days !== undefined && typeof daily.data.days === "object" && Number.isFinite(daily.expires) && daily.expires > Date.now();
     }
 
-    const writeOk = readOnly ? true : result.writeRead === "ok";
+    const writeOk = doWrite ? result.writeRead === "ok" : true;
     const ok = result.bound && writeOk && result.indexCached
         && result.categoriesTotal > 0 && result.categoriesCached === result.categoriesTotal;
     const status = {

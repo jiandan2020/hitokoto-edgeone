@@ -47,7 +47,7 @@ test("KV unbound reports not bound and ok false", async () => {
     assert.equal(data.kv.bound, false);
     assert.equal(data.kv.writeRead, "skipped");
     assert.equal(data.ok, false);
-    assert.equal(data.version, "4.7.0");
+    assert.equal(data.version, "4.7.1");
 });
 
 test("status returns JSON even without format=json", async () => {
@@ -70,11 +70,11 @@ test("status without any params returns JSON, not HTML", async () => {
     assert.equal(JSON.parse(text).kv.bound, false);
 });
 
-test("KV bound but empty: write-read ok, nothing cached yet", async () => {
+test("KV bound but empty: write probe via ?probe=write ok, nothing cached yet", async () => {
     const kv = makeKv();
     globalThis.hitokoto_kv = kv;
     try {
-        const res = await req("/status?format=json");
+        const res = await req("/status?format=json&probe=write");
         const data = await res.json();
         assert.equal(data.kv.bound, true);
         assert.equal(data.kv.writeRead, "ok");
@@ -94,7 +94,7 @@ test("KV bound and populated: ok true, 12 categories, 11276 sentences", async ()
     populateKv(kv);
     globalThis.hitokoto_kv = kv;
     try {
-        const res = await req("/status?format=json");
+        const res = await req("/status?format=json&probe=write");
         const data = await res.json();
         assert.equal(data.ok, true);
         assert.equal(data.kv.writeRead, "ok");
@@ -114,6 +114,34 @@ test("read-only probe does not write to KV", async () => {
     globalThis.hitokoto_kv = kv;
     try {
         const res = await req("/status?format=json&probe=read");
+        const data = await res.json();
+        assert.equal(data.kv.writeRead, "skipped");
+        assert.equal(kv.store.has("status_probe"), false);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("default probe (no probe param) is read-only", async () => {
+    const kv = makeKv();
+    populateKv(kv);
+    globalThis.hitokoto_kv = kv;
+    try {
+        const res = await req("/status?format=json");
+        const data = await res.json();
+        assert.equal(data.kv.writeRead, "skipped");
+        assert.equal(data.ok, true);
+        assert.equal(kv.store.has("status_probe"), false);
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("unknown probe value is treated as read-only", async () => {
+    const kv = makeKv();
+    globalThis.hitokoto_kv = kv;
+    try {
+        const res = await req("/status?format=json&probe=foo");
         const data = await res.json();
         assert.equal(data.kv.writeRead, "skipped");
         assert.equal(kv.store.has("status_probe"), false);

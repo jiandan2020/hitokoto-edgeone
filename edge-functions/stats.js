@@ -5,7 +5,7 @@
 // 样式与首页统一（暖底、玫瑰红强调、金色峰值、漂浮气泡）。
 // 数据全部由同源服务端接口提供：运行状态走 /status（只读探针，不写 KV），
 // 每日汇总走 /stats-daily（KV 缓存），一言走 /api；访客浏览器不直接访问第三方。
-// 公开页上没有写 KV 的按钮，完整写读探针请去 /status（JSON）。
+// 公开页上没有写 KV 的按钮，完整写读探针请去 /status?probe=write（JSON）。
 const page = `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>运行状况 · 一言 API</title><link rel="icon" href="/favicon.svg"><style>
 :root{color-scheme:light;--ink:#30283f;--muted:#6d6279;--line:#ebdfe5;--accent:#a83d5c;--accent-soft:#f8edf0;--gold:#b97622;--card:rgba(255,255,255,.76);--danger:#a83232}
@@ -32,7 +32,7 @@ function loadStatus() {
       {label:'分类缓存', state: catOk ? 'ok' : 'bad', value: (kv.categoriesCached || 0) + ' / ' + (kv.categoriesTotal || 0) + ' 类', sub: (kv.sentencesCached || 0).toLocaleString('zh-CN') + ' 条句子'},
       {label:'统计缓存', state: kv.statsCached ? 'ok' : 'idle', value: kv.statsCached ? '已缓存' : '无 / 已过期', sub:'10 分钟缓存'},
       {label:'每日汇总缓存', state: kv.dailyStatsCached ? 'ok' : 'idle', value: kv.dailyStatsCached ? '已缓存' : '无 / 已过期', sub:'1 小时缓存'},
-      {label:'写入读取', state:'idle', value:'只读模式', sub:'完整检测见 /status JSON'},
+      {label:'写入读取', state:'idle', value:'只读模式', sub:'完整检测见 /status?probe=write'},
     ];
     const grid = document.getElementById('kv-grid');
     grid.innerHTML = '';
