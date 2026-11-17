@@ -120,6 +120,7 @@ async function load(env) {
     });
     return { domain, start: start.toISOString(), end: end.toISOString(), fetchedAt: new Date().toISOString(), requests, bytes, errorCount, errorRate: errorCount !== null && requests > 0 ? errorCount / requests : null, apiRequests: apiRequests !== null && apiRequests <= requests ? apiRequests : null, hourly };
 }
+export { query, load };
 export default async function onRequest({ request, env }) {
     if (request.method !== "GET") {return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET" } });}
     try {
