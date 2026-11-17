@@ -13,12 +13,31 @@
             <a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener">
                 本站由 <img src="/edgeone-logo.png" alt="EdgeOne" class="edgeone-logo" /> 提供加速服务
             </a>
-            <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">赣ICP备2025074916号-1</a>
+            <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><img src="/icp-beian.png" alt="备案" class="icp-icon" />赣ICP备2025074916号-1</a>
+            <span class="footer-version" v-if="version">v{{ version }}</span>
         </div>
     </footer>
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
+
+const version = ref("");
+
+onMounted(async () => {
+    try {
+        const response = await fetch("/package.json");
+        if (!response.ok) {
+            return;
+        }
+        const data = await response.json();
+        if (data && typeof data.version === "string" && data.version) {
+            version.value = data.version;
+        }
+    } catch {
+        // 拉不到版本号时不显示，不影响页脚其他内容
+    }
+});
 </script>
 
 <style scoped>
@@ -75,6 +94,9 @@
 }
 
 .icp-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 13px;
     color: var(--color-text-muted);
     padding: 4px 14px;
@@ -85,5 +107,15 @@
 .icp-link:hover {
     color: var(--color-primary);
     text-decoration: none;
+}
+
+.icp-icon {
+    height: 15px;
+    width: auto;
+}
+
+.footer-version {
+    font-size: 12px;
+    color: var(--color-text-muted);
 }
 </style>

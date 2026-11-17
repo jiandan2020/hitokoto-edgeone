@@ -100,4 +100,16 @@ async function copy() {
 .code-block code {
     white-space: pre;
 }
+
+@media (max-width: 600px) {
+    .code-block {
+        overflow-x: visible;
+        padding: 12px 14px;
+    }
+
+    .code-block code {
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+}
 </style>

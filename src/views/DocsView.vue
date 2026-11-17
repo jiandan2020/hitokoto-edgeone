@@ -488,4 +488,32 @@ onUnmounted(() => {
         padding: 22px 20px;
     }
 }
+
+@media (max-width: 600px) {
+    .docs-header {
+        padding: 36px 0 24px;
+    }
+
+    .docs-body section {
+        padding: 20px 16px;
+    }
+
+    .docs-body section h2 {
+        font-size: 20px;
+    }
+
+    .table-wrap table {
+        font-size: 13px;
+    }
+
+    .table-wrap th,
+    .table-wrap td {
+        padding: 8px 10px;
+    }
+
+    .table-wrap td code {
+        white-space: normal;
+        word-break: break-all;
+    }
+}
 </style>

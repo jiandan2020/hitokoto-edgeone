@@ -386,7 +386,8 @@ async function sendRequest() {
 .result-meta {
     display: flex;
     align-items: center;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 8px 12px;
     padding: 10px 14px;
     border-bottom: 1px solid var(--color-border);
     font-size: 13.5px;
