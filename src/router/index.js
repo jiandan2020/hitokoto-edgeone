@@ -4,7 +4,7 @@ const routes = [
     { path: "/", name: "home", component: () => import("../views/HomeView.vue"), meta: { title: "小周的一言 API" } },
     { path: "/docs", name: "docs", component: () => import("../views/DocsView.vue"), meta: { title: "接口文档 · 小周的一言 API" } },
     { path: "/stats", name: "stats", component: () => import("../views/StatsView.vue"), meta: { title: "运行状况 · 小周的一言 API" } },
-    { path: "/:pathMatch(.*)*", redirect: "/" },
+    { path: "/:pathMatch(.*)*", name: "not-found", component: () => import("../views/NotFoundView.vue"), meta: { title: "页面不存在 · 小周的一言 API" } },
 ];
 
 const router = createRouter({

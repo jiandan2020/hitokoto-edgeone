@@ -20,18 +20,20 @@ describe("router", () => {
         expect(resolved.matched.length).toBe(1);
     });
 
-    it("未知路径重定向到首页", async () => {
+    it("未知路径渲染 404 页", async () => {
         const routes = router.getRoutes();
         const catchAll = routes.find((r) => r.path === "/:pathMatch(.*)*");
         expect(catchAll).toBeDefined();
-        expect(catchAll.redirect).toBe("/");
+        expect(catchAll.name).toBe("not-found");
+        expect(catchAll.redirect).toBeUndefined();
         const resolved = router.resolve("/not-a-page");
-        expect(resolved.matched[0].redirect).toBe("/");
+        expect(resolved.name).toBe("not-found");
+        expect(resolved.matched.length).toBe(1);
     });
 
-    it("三条命名路由均为懒加载", async () => {
+    it("四条命名路由均为懒加载", async () => {
         const routes = router.getRoutes().filter((r) => r.name);
-        expect(routes).toHaveLength(3);
+        expect(routes).toHaveLength(4);
         for (const route of routes) {
             expect(typeof route.components.default).toBe("function");
         }
