@@ -89,12 +89,6 @@ const page = `<!doctype html>
     @media(max-width:600px){header{padding-top:48px;padding-bottom:32px}section{padding:24px 20px;border-radius:24px}th,td{min-width:110px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.btn,.chip,.icp-link,.edgeone-badge{transition:none}.reveal{opacity:1;transform:none}}
   
-    .aurora{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
-    .aurora-blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5}
-    .aurora-blob-1{width:480px;height:480px;left:-120px;top:-140px;background:#ffb25e;animation:drift 26s ease-in-out infinite alternate}
-    .aurora-blob-2{width:420px;height:420px;right:-100px;top:12%;background:#ff8a3d;animation:drift 32s ease-in-out infinite alternate-reverse}
-    .aurora-blob-3{width:380px;height:380px;left:38%;bottom:-160px;background:#ffd9a0;animation:drift 38s ease-in-out infinite alternate}
-    @keyframes drift{to{transform:translate(40px,30px) scale(1.08)}}
     .app-bar{position:sticky;top:0;z-index:10;background:var(--md-surface-container-low);box-shadow:var(--md-elev-1)}
     .app-bar-inner{max-width:960px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px}
     .app-logo{display:inline-flex;align-items:center;gap:10px;color:var(--md-on-surface);font-size:17px;font-weight:500;text-decoration:none}
@@ -106,7 +100,6 @@ const page = `<!doctype html>
     .app-cta{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 20px;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:14px;font-weight:500;text-decoration:none}
     .app-cta:hover{background:#8f2f00;text-decoration:none}
     @media(max-width:600px){.app-nav-links{display:none}.app-bar-inner{gap:12px}}
-    @media(prefers-reduced-motion:reduce){.aurora-blob{animation:none}}
     .api-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:20px}
     .api-card{padding:20px 22px;border-radius:20px;background:var(--md-surface-container-low);box-shadow:var(--md-elev-1)}
     .api-card-header{display:flex;align-items:center;gap:12px}
@@ -119,7 +112,6 @@ const page = `<!doctype html>
   </style>
 </head>
 <body>
-<div class="aurora" aria-hidden="true"><span class="aurora-blob aurora-blob-1"></span><span class="aurora-blob aurora-blob-2"></span><span class="aurora-blob aurora-blob-3"></span></div>
 <nav class="app-bar"><div class="app-bar-inner"><a class="app-logo" href="/"><img src="/favicon.svg" alt="" width="28" height="28"><span>小周的一言API</span></a><div class="app-nav-links"><a href="/">首页</a><a href="/docs">接口文档</a><a href="/stats">运行状况</a></div><a class="app-cta" href="/api" target="_blank" rel="noopener">试试接口</a></div></nav>
 <header>
   <div class="eyebrow">HITOKOTO · API</div>
