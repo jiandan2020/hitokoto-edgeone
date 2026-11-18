@@ -5,7 +5,7 @@ const responseHeaders = {
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
     "X-Content-Type-Options": "nosniff",
-    "X-Source-Code": "https://github.com/molikai-work/hitokoto-cloudflare",
+    "X-Source-Code": "https://github.com/jiandan2020/hitokoto-edgeone",
 };
 const FETCH_TIMEOUT_MS = 10000;
 

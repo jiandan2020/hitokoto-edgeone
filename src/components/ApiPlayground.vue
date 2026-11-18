@@ -122,7 +122,7 @@ const previewUrl = computed(() => {
     if (encode.value && encode.value !== "json") {
         params.set("encode", encode.value);
     }
-    if (encode.value === "js" && callback.value) {
+    if (callback.value) {
         params.set("callback", callback.value);
     }
     if (mode.value && mode.value !== "weighted") {
