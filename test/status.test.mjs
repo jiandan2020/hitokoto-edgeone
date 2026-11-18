@@ -37,7 +37,7 @@ function populateKv(kv) {
     kv.store.set(`sentence_index_${indexData.version}`, JSON.stringify(indexData));
     for (const category of Object.keys(indexData.index)) {
         const records = JSON.parse(readFileSync(new URL(`../sentences/${category}.json`, import.meta.url), "utf8"));
-        kv.store.set(`sentences_${category}_${indexData.version}`, JSON.stringify(records));
+        kv.store.set(`sentences_${category}_${indexData.hashes[category]}`, JSON.stringify(records));
     }
     kv.store.set("stats_data_cache", JSON.stringify({ data: { requests: 1 }, expires: Date.now() + 600000 }));
     kv.store.set("daily_stats_cache", JSON.stringify({ data: { domain: "hitokoto.xzccs.top", startDate: "2026-11-15", days: { "2026-11-15": 10 } }, expires: Date.now() + 3600000 }));
@@ -169,7 +169,7 @@ test("ok is true when the index is not in KV but all 12 categories are cached", 
     const kv = makeKv();
     for (const category of Object.keys(indexData.index)) {
         const records = JSON.parse(readFileSync(new URL(`../sentences/${category}.json`, import.meta.url), "utf8"));
-        kv.store.set(`sentences_${category}_${indexData.version}`, JSON.stringify(records));
+        kv.store.set(`sentences_${category}_${indexData.hashes[category]}`, JSON.stringify(records));
     }
     globalThis.hitokoto_kv = kv;
     try {

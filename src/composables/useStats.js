@@ -14,6 +14,17 @@ function formatDate(value) {
     return dateFormat.format(new Date(value));
 }
 
+// 北京时间今天（YYYY-MM-DD），与 dailyEntries 共用同一口径。
+function beijingTodayKey(nowMs = Date.now()) {
+    return new Date(nowMs + 8 * 3600000).toISOString().slice(0, 10);
+}
+
+// 日期键按北京时间自然日平移。
+function shiftDateKey(key, days) {
+    const ms = Date.parse(`${key}T00:00:00+08:00`) + days * 86400000;
+    return new Date(ms + 8 * 3600000).toISOString().slice(0, 10);
+}
+
 function fetchJson(url, timeoutMs = 10000) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -169,7 +180,7 @@ export function useStats() {
         }
         const data = dailyData.value;
         const start = Date.parse(`${data.startDate}T00:00:00+08:00`);
-        const today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
+        const today = beijingTodayKey();
         const end = Date.parse(`${today}T00:00:00+08:00`);
         if (data.domain !== "hitokoto.xzccs.top" || data.startDate !== "2026-11-15" || !Number.isFinite(start) || !data.days || typeof data.days !== "object" || Array.isArray(data.days)) {
             return null;
@@ -200,17 +211,37 @@ export function useStats() {
         }
         return `已采集 ${known} 天，缺失 ${missing} 天；缺失天数不计入累计值。统计截至昨天（北京时间），不含今天。`;
     });
+    // 北京时间昨日：按自然日取键，不是最后一条已采集的日期。
+    // 缺失时返回该日期的条目（value 为 null），由界面显示「待采集」；
+    // 真实采集到的 0 仍是 0，显示「0 次」。
+    const yesterdayKey = computed(() => (dailyEntries.value ? shiftDateKey(beijingTodayKey(), -1) : null));
     const yesterday = computed(() => {
-        if (!dailyCollected.value.length) {
+        if (!dailyEntries.value || !yesterdayKey.value) {
             return null;
         }
-        return dailyCollected.value[dailyCollected.value.length - 1];
+        return dailyEntries.value.find((e) => e.key === yesterdayKey.value) || null;
     });
+    // 近七个北京时间自然日（昨日往前推 6 天），只累计窗口内已采集的日期。
+    const weekEntries = computed(() => {
+        if (!dailyEntries.value || !yesterdayKey.value) {
+            return [];
+        }
+        const startKey = shiftDateKey(yesterdayKey.value, -6);
+        return dailyEntries.value.filter((e) => e.key >= startKey && e.key <= yesterdayKey.value);
+    });
+    const weekCollected = computed(() => weekEntries.value.filter((e) => e.value !== null));
     const weekTotal = computed(() => {
-        if (!dailyCollected.value.length) {
+        if (!weekCollected.value.length) {
             return null;
         }
-        return dailyCollected.value.slice(-7).reduce((sum, e) => sum + e.value, 0);
+        return weekCollected.value.reduce((sum, e) => sum + e.value, 0);
+    });
+    // 近七日覆盖情况：已采集 X/7 天（窗口外的旧记录不计入）。
+    const weekCoverageText = computed(() => {
+        if (!dailyEntries.value) {
+            return "";
+        }
+        return `已采集 ${weekCollected.value.length}/7 天`;
     });
     const dayAverage = computed(() => {
         if (!dailyCollected.value.length || cumulative.value === null) {
@@ -321,6 +352,7 @@ export function useStats() {
         dailyStatusText,
         yesterday,
         weekTotal,
+        weekCoverageText,
         dayAverage,
         bestDay,
         dailyPoints,

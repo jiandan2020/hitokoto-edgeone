@@ -120,7 +120,10 @@ export default async function onRequest(context) {
             const stored = await kvGetJson(kv, `sentence_index_${sentenceVersion}`);
             result.indexCached = stored !== null && stored.version === sentenceVersion && stored.index && typeof stored.index === "object";
             const checks = await Promise.all(categories.map(async (category) => {
-                const records = await kvGetJson(kv, `sentences_${category}_${sentenceVersion}`);
+                // 句子 KV 键按内容摘要分键（与 /api 的回填一致），摘要缺失时退回版本键。
+                const hash = indexData?.hashes && typeof indexData.hashes[category] === "string" ? indexData.hashes[category] : null;
+                const key = hash ? `sentences_${category}_${hash}` : `sentences_${category}_${sentenceVersion}`;
+                const records = await kvGetJson(kv, key);
                 return Array.isArray(records) ? records.length : 0;
             }));
             result.categoriesCached = checks.filter(count => count > 0).length;

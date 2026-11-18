@@ -60,8 +60,32 @@ function resolveKv(env) {
 function indexKvKey() {
     return `sentence_index_${sentenceVersion}`;
 }
+// 每类语料的内容摘要（构建时生成，随 api.js 内联）；KV 键按摘要分键，
+// 内容一变键就变，旧键自然失效，不怕 KV 的最终一致性读到旧数据。
+function expectedSentenceHash(category) {
+    if (typeof embeddedSentenceHashes !== "undefined" && embeddedSentenceHashes && typeof embeddedSentenceHashes === "object") {
+        const h = embeddedSentenceHashes[category];
+        if (typeof h === "string" && h) {return h;}
+    }
+    return null;
+}
 function sentencesKvKey(category) {
+    const h = expectedSentenceHash(category);
+    if (h) {return `sentences_${category}_${h}`;}
     return `sentences_${category}_${sentenceVersion}`;
+}
+// 对原始字节算 sha256，与构建时生成的摘要比对。运行时没有 Web Crypto
+// 时返回 null，调用方退回结构校验，接口不因此中断。
+async function sha256Hex(data) {
+    try {
+        if (typeof crypto !== "undefined" && crypto.subtle && typeof crypto.subtle.digest === "function") {
+            const digest = await crypto.subtle.digest("SHA-256", data);
+            return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+        }
+    } catch {
+        // 摘要不可用时返回 null。
+    }
+    return null;
 }
 async function kvGetJson(kv, key) {
     try {
@@ -141,9 +165,10 @@ async function loadSentences(asset, cookie, kv, category, waitUntil) {
                 return fromKv;
             }
         }
-        // L3：静态文件是数据源；读到后顺手写回 KV，下一实例就不用再取了。
+        // L3：静态文件是数据源；先按内容摘要校验，通过才进缓存与 KV，
+        // 摘要不符（错版/截断）时不缓存、不回填，直接抛错走 500。
         // 回填放后台跑（waitUntil 已验证支持），响应不等它；没有 waitUntil 时同步写。
-        const records = await fetchSentences(asset, cookie);
+        const records = await fetchSentences(asset, cookie, category);
         cacheSentences(key, records);
         if (kv && category) {
             if (waitUntil) { waitUntil(kvPutJson(kv, sentencesKvKey(category), records)); }
@@ -202,11 +227,19 @@ async function loadIndex(asset, cookie, kv, waitUntil) {
     }
 }
 
-async function fetchSentences(asset, cookie) {
+async function fetchSentences(asset, cookie, category) {
     const result = await fetch(asset.toString(), { headers: cookie ? { cookie } : {}, redirect: "manual", signal: timeoutSignal(FETCH_TIMEOUT_MS) });
     if (!result.ok) {throw new Error(`句子库读取失败: ${result.status}`);}
-    const records = await result.json();
+    // 按原始字节核验内容摘要：摘要不符说明文件错版或损坏，不解析、不缓存。
+    const buf = await result.arrayBuffer();
+    const expected = category ? expectedSentenceHash(category) : null;
+    if (expected) {
+        const actual = await sha256Hex(buf);
+        if (actual && actual !== expected) {throw new Error("句子库内容校验失败");}
+    }
+    const records = JSON.parse(new TextDecoder("utf-8").decode(buf));
     if (!Array.isArray(records)) {throw new Error("句子库格式错误");}
+    if (category && !isValidSentenceRecords(records, category)) {throw new Error("句子库结构校验失败");}
     return records;
 }
 
@@ -321,7 +354,7 @@ export async function onRequest(context) {
             let categoryTotal = 0;
             for (const [length, indexes] of Object.entries(sentenceIndex[key])) {
                 if (Number(length) < minLength || Number(length) > maxLength) {continue;}
-                buckets.push({ indexes });
+                buckets.push({ length: Number(length), indexes });
                 categoryTotal += indexes.length;
             }
             if (categoryTotal > 0) {
@@ -332,19 +365,20 @@ export async function onRequest(context) {
         if (!total) {return createResponse(404, categoryKey
             ? "没有在该类别找到符合长度条件的一言" : "没有找到符合长度条件的一言");}
         let chosen;
+        let chosenLength;
         let selected;
         if (balancedMode && perCategory.length > 1) {
             const category = perCategory[Math.floor(Math.random() * perCategory.length)];
             selected = Math.floor(Math.random() * category.total);
             for (const bucket of category.buckets) {
-                if (selected < bucket.indexes.length) {chosen = { key: category.key, indexes: bucket.indexes }; break;}
+                if (selected < bucket.indexes.length) {chosen = { key: category.key, indexes: bucket.indexes }; chosenLength = bucket.length; break;}
                 selected -= bucket.indexes.length;
             }
         } else {
             selected = Math.floor(Math.random() * total);
             for (const category of perCategory) {
                 for (const bucket of category.buckets) {
-                    if (selected < bucket.indexes.length) {chosen = { key: category.key, indexes: bucket.indexes }; break;}
+                    if (selected < bucket.indexes.length) {chosen = { key: category.key, indexes: bucket.indexes }; chosenLength = bucket.length; break;}
                     selected -= bucket.indexes.length;
                 }
                 if (chosen) {break;}
@@ -353,7 +387,9 @@ export async function onRequest(context) {
         const asset = new URL(`/sentences/${chosen.key}.json?v=${encodeURIComponent(sentenceVersion)}`, url.origin);
         const records = await loadSentences(asset, cookie, kv, chosen.key, waitUntil);
         const randomSentence = records[chosen.indexes[selected]];
-        if (!randomSentence || randomSentence.type !== chosen.key) {
+        // 选中后再核对：分类、索引长度、请求范围三者都对不上就当数据错版，
+        // 清掉实例缓存并走 500，不把错版句子返回给调用方。
+        if (!randomSentence || randomSentence.type !== chosen.key || randomSentence.length !== chosenLength || randomSentence.length < minLength || randomSentence.length > maxLength) {
             sentenceCache.delete(asset.toString());
             throw new Error("句子库与索引不一致");
         }

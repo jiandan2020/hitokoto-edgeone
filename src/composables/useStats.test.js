@@ -106,6 +106,110 @@ describe("useStats", () => {
         expect(stats.bestDay.value.key).toBe(keyFor(-1));
     });
 
+    // 固定北京时间 2026-11-19 10:00：昨日为 11-18，近七日窗口为 11-12 至 11-18。
+    const fixedNow = Date.UTC(2026, 10, 19, 2, 0, 0);
+    function mockNow() {
+        vi.spyOn(Date, "now").mockReturnValue(fixedNow);
+    }
+
+    it("昨日缺失时昨日为待采集，近七日只计已采集", async () => {
+        mockNow();
+        mockFetchByUrl({
+            "/stats-daily": {
+                domain: "hitokoto.xzccs.top",
+                startDate: "2026-11-15",
+                days: { "2026-11-15": 369, "2026-11-16": 11311, "2026-11-17": 3475 },
+            },
+        });
+        const stats = useStats();
+        await stats.loadDaily();
+        expect(stats.yesterday.value.key).toBe("2026-11-18");
+        expect(stats.yesterday.value.value).toBeNull();
+        expect(stats.weekTotal.value).toBe(369 + 11311 + 3475);
+        expect(stats.weekCoverageText.value).toBe("已采集 3/7 天");
+        expect(stats.cumulative.value).toBe(369 + 11311 + 3475);
+    });
+
+    it("七日中途缺失时合计跳过缺失日", async () => {
+        mockNow();
+        mockFetchByUrl({
+            "/stats-daily": {
+                domain: "hitokoto.xzccs.top",
+                startDate: "2026-11-15",
+                days: { "2026-11-15": 100, "2026-11-16": 200, "2026-11-18": 400 },
+            },
+        });
+        const stats = useStats();
+        await stats.loadDaily();
+        expect(stats.yesterday.value.value).toBe(400);
+        expect(stats.weekTotal.value).toBe(700);
+        expect(stats.weekCoverageText.value).toBe("已采集 3/7 天");
+    });
+
+    it("窗口外旧记录不计入近七日", async () => {
+        mockNow();
+        mockFetchByUrl({
+            "/stats-daily": {
+                domain: "hitokoto.xzccs.top",
+                startDate: "2026-11-15",
+                days: { "2026-11-15": 100, "2026-11-16": 200, "2026-11-17": 300, "2026-11-18": 400 },
+            },
+        });
+        const stats = useStats();
+        await stats.loadDaily();
+        // 11-15 在窗口内（11-12 至 11-18），11-15 之前的数据不在 dailyEntries 中。
+        // 若误取最后 7 条已采集，会把窗口外更早的记录也算进来；这里窗口内共 4 天。
+        expect(stats.weekTotal.value).toBe(1000);
+        expect(stats.weekCoverageText.value).toBe("已采集 4/7 天");
+    });
+
+    it("近七日全部缺失时合计为暂无数据", async () => {
+        mockNow();
+        mockFetchByUrl({
+            "/stats-daily": { domain: "hitokoto.xzccs.top", startDate: "2026-11-15", days: {} },
+        });
+        const stats = useStats();
+        await stats.loadDaily();
+        expect(stats.yesterday.value.key).toBe("2026-11-18");
+        expect(stats.yesterday.value.value).toBeNull();
+        expect(stats.weekTotal.value).toBeNull();
+        expect(stats.weekCoverageText.value).toBe("已采集 0/7 天");
+        expect(stats.cumulative.value).toBeNull();
+    });
+
+    it("昨日真实零值显示 0 而不是待采集", async () => {
+        mockNow();
+        mockFetchByUrl({
+            "/stats-daily": {
+                domain: "hitokoto.xzccs.top",
+                startDate: "2026-11-15",
+                days: { "2026-11-17": 100, "2026-11-18": 0 },
+            },
+        });
+        const stats = useStats();
+        await stats.loadDaily();
+        expect(stats.yesterday.value.value).toBe(0);
+        expect(stats.weekTotal.value).toBe(100);
+        expect(stats.weekCoverageText.value).toBe("已采集 2/7 天");
+    });
+
+    it("北京时间午夜时昨日仍为前一日", async () => {
+        // 北京时间 2026-11-19 00:00（UTC 11-18 16:00）：今天是 11-19，昨日是 11-18。
+        vi.spyOn(Date, "now").mockReturnValue(Date.UTC(2026, 10, 18, 16, 0, 0));
+        mockFetchByUrl({
+            "/stats-daily": {
+                domain: "hitokoto.xzccs.top",
+                startDate: "2026-11-15",
+                days: { "2026-11-17": 3475, "2026-11-18": 500 },
+            },
+        });
+        const stats = useStats();
+        await stats.loadDaily();
+        expect(stats.yesterday.value.key).toBe("2026-11-18");
+        expect(stats.yesterday.value.value).toBe(500);
+        expect(stats.weekTotal.value).toBe(3975);
+    });
+
     it("loadDaily 域名不符时 entries 为 null", async () => {
         mockFetchByUrl({
             "/stats-daily": { domain: "other.example.com", startDate: "2026-11-15", days: {} },

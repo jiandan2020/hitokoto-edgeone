@@ -156,8 +156,8 @@ test("KV miss populates KV from static files", async () => {
         assert.equal(data.type, "b");
         // 索引已内联进 api.js，不再经过 KV；句子仍按分类写回 KV。
         assert.ok(!kv.store.has(`sentence_index_${indexData.version}`));
-        assert.ok(kv.store.has(`sentences_b_${indexData.version}`));
-        const cached = JSON.parse(kv.store.get(`sentences_b_${indexData.version}`));
+        assert.ok(kv.store.has(`sentences_b_${indexData.hashes.b}`));
+        const cached = JSON.parse(kv.store.get(`sentences_b_${indexData.hashes.b}`));
         assert.ok(Array.isArray(cached) && cached.length > 0);
     } finally {
         delete globalThis.hitokoto_kv;
@@ -172,7 +172,7 @@ test("corrupted KV sentences fall back to static files and repair KV", async () 
         { id: 1, type: "b", from: "x", from_who: null, length: 5 },
         { id: 2, hitokoto: "正常句子", type: "a", from: "x", from_who: null, length: 4 },
     ];
-    kv.store.set(`sentences_b_${indexData.version}`, JSON.stringify(badRecords));
+    kv.store.set(`sentences_b_${indexData.hashes.b}`, JSON.stringify(badRecords));
     globalThis.hitokoto_kv = kv;
     const fresh = (await import("../edge-functions/api.js?kv-corrupt")).default;
     try {
@@ -182,7 +182,7 @@ test("corrupted KV sentences fall back to static files and repair KV", async () 
         assert.equal(data.type, "b");
         assert.equal(typeof data.hitokoto, "string");
         assert.ok(data.hitokoto.length > 0);
-        const repaired = JSON.parse(kv.store.get(`sentences_b_${indexData.version}`));
+        const repaired = JSON.parse(kv.store.get(`sentences_b_${indexData.hashes.b}`));
         assert.ok(Array.isArray(repaired) && repaired.length > 0);
         assert.ok(repaired.every((r) => r.type === "b" && typeof r.hitokoto === "string" && r.hitokoto));
     } finally {
@@ -244,7 +244,7 @@ test("KV hit serves without fetching static files", async () => {
     const kv = makeKv();
     kv.store.set(`sentence_index_${indexData.version}`, JSON.stringify(indexData));
     const sentencesA = JSON.parse(readFileSync(new URL("../sentences/a.json", import.meta.url), "utf8"));
-    kv.store.set(`sentences_a_${indexData.version}`, JSON.stringify(sentencesA));
+    kv.store.set(`sentences_a_${indexData.hashes.a}`, JSON.stringify(sentencesA));
     globalThis.hitokoto_kv = kv;
     // 用带查询参数的新模块实例：实例内缓存是空的，只能走 KV，静态请求会抛错。
     const fresh = (await import("../edge-functions/api.js?kv-hit")).default;
@@ -290,8 +290,8 @@ test("KV backfill runs in background via waitUntil: response does not wait for K
         assert.ok(typeof resolvePut === "function");
         resolvePut();
         await background[0];
-        assert.ok(store.has(`sentences_b_${indexData.version}`));
-        const cached = JSON.parse(store.get(`sentences_b_${indexData.version}`));
+        assert.ok(store.has(`sentences_b_${indexData.hashes.b}`));
+        const cached = JSON.parse(store.get(`sentences_b_${indexData.hashes.b}`));
         assert.ok(Array.isArray(cached) && cached.length > 0);
     } finally {
         delete globalThis.hitokoto_kv;
@@ -327,9 +327,118 @@ test("concurrent requests for the same cold category fetch the static file once"
         assert.equal(sentenceFetchCount, 1);
         assert.equal(background.length, 1);
         await background[0];
-        assert.ok(kv.store.has(`sentences_b_${indexData.version}`));
+        assert.ok(kv.store.has(`sentences_b_${indexData.hashes.b}`));
     } finally {
         globalThis.fetch = staticFetch;
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("content hash mismatch in static file returns 500 and does not backfill KV", async () => {
+    // 静态文件字节被改动（摘要失效）时不解析、不缓存、不回填，直接 500。
+    const kv = makeKv();
+    globalThis.hitokoto_kv = kv;
+    const fresh = (await import("../edge-functions/api.js?hash-mismatch")).default;
+    const tamperedFetch = async (input) => {
+        const url = new URL(input);
+        if (url.pathname === "/sentences/b.json") {
+            const body = readFileSync(new URL("../sentences/b.json", import.meta.url));
+            return new Response(Buffer.concat([body, Buffer.from(" ")]), { headers: { "Content-Type": "application/json" } });
+        }
+        return staticFetch(input);
+    };
+    globalThis.fetch = tamperedFetch;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=b") });
+        assert.equal(res.status, 500);
+        assert.ok(!kv.store.has(`sentences_b_${indexData.hashes.b}`));
+    } finally {
+        globalThis.fetch = staticFetch;
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("old version-based KV key is ignored, new hash key is backfilled", async () => {
+    // 旧版键下即使有正确数据也不再使用，接口回退静态文件并回填新键。
+    const kv = makeKv();
+    const sentencesB = JSON.parse(readFileSync(new URL("../sentences/b.json", import.meta.url), "utf8"));
+    kv.store.set(`sentences_b_${indexData.version}`, JSON.stringify(sentencesB));
+    globalThis.hitokoto_kv = kv;
+    const fresh = (await import("../edge-functions/api.js?kv-old-key")).default;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=b") });
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.type, "b");
+        assert.ok(kv.store.has(`sentences_b_${indexData.hashes.b}`));
+    } finally {
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("truncated static file returns 500 and does not backfill KV", async () => {
+    const kv = makeKv();
+    globalThis.hitokoto_kv = kv;
+    const fresh = (await import("../edge-functions/api.js?hash-truncated")).default;
+    const truncatedFetch = async (input) => {
+        const url = new URL(input);
+        if (url.pathname === "/sentences/b.json") {
+            const body = readFileSync(new URL("../sentences/b.json", import.meta.url));
+            return new Response(body.subarray(0, Math.floor(body.length / 2)), { headers: { "Content-Type": "application/json" } });
+        }
+        return staticFetch(input);
+    };
+    globalThis.fetch = truncatedFetch;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=b") });
+        assert.equal(res.status, 500);
+        assert.ok(!kv.store.has(`sentences_b_${indexData.hashes.b}`));
+    } finally {
+        globalThis.fetch = staticFetch;
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("same-length records reordered in static file are rejected by content hash", async () => {
+    // 两条同长度记录互换位置：长度分布不变，但字节变了，摘要失效。
+    const kv = makeKv();
+    globalThis.hitokoto_kv = kv;
+    const fresh = (await import("../edge-functions/api.js?hash-reorder")).default;
+    const reorderedFetch = async (input) => {
+        const url = new URL(input);
+        if (url.pathname === "/sentences/b.json") {
+            const records = JSON.parse(readFileSync(new URL("../sentences/b.json", import.meta.url), "utf8"));
+            const i5 = records.findIndex((r) => r.length === 5);
+            const j5 = records.findIndex((r, i) => r.length === 5 && i !== i5);
+            [records[i5], records[j5]] = [records[j5], records[i5]];
+            return new Response(JSON.stringify(records), { headers: { "Content-Type": "application/json" } });
+        }
+        return staticFetch(input);
+    };
+    globalThis.fetch = reorderedFetch;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=b") });
+        assert.equal(res.status, 500);
+        assert.ok(!kv.store.has(`sentences_b_${indexData.hashes.b}`));
+    } finally {
+        globalThis.fetch = staticFetch;
+        delete globalThis.hitokoto_kv;
+    }
+});
+
+test("KV data with mismatched lengths at indexed positions returns 500", async () => {
+    // KV 里的记录结构完整、但长度全错：索引位置上的长度对不上，
+    // 选中后的核对（分类、索引长度、请求范围）应拦截并返回 500。
+    const kv = makeKv();
+    const sentencesB = JSON.parse(readFileSync(new URL("../sentences/b.json", import.meta.url), "utf8"));
+    const wrong = sentencesB.map((r) => ({ ...r, length: 999 }));
+    kv.store.set(`sentences_b_${indexData.hashes.b}`, JSON.stringify(wrong));
+    globalThis.hitokoto_kv = kv;
+    const fresh = (await import("../edge-functions/api.js?kv-length-mismatch")).default;
+    try {
+        const res = await fresh({ request: new Request("https://hitokoto.xzccs.top/api?c=b") });
+        assert.equal(res.status, 500);
+    } finally {
         delete globalThis.hitokoto_kv;
     }
 });

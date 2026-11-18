@@ -97,6 +97,7 @@
                     <div class="mini"><div class="label">已采集日均</div><div class="num">{{ dayAverageText }}</div></div>
                     <div class="mini"><div class="label">最高单日</div><div class="num">{{ bestDayText }}</div></div>
                 </div>
+                <p v-if="weekCoverageText" class="note" role="status">{{ weekCoverageText }}（近 7 个北京时间自然日，缺失天数不计入合计）</p>
                 <LineChart
                     v-if="dailyPoints"
                     :points="dailyPoints"
@@ -148,6 +149,7 @@ const {
     dailyStatusText,
     yesterday,
     weekTotal,
+    weekCoverageText,
     dayAverage,
     bestDay,
     dailyPoints,
@@ -182,6 +184,9 @@ const yesterdayText = computed(() => {
     }
     if (!yesterday.value) {
         return "—";
+    }
+    if (yesterday.value.value === null) {
+        return "待采集";
     }
     return `${yesterday.value.value.toLocaleString("zh-CN")} 次`;
 });
