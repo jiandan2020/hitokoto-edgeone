@@ -10,15 +10,12 @@
                 <span class="sep">·</span>
                 <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener">项目源码</a>
             </nav>
-            <a class="edgeone-badge" href="https://edgeone.ai/" target="_blank" rel="noopener">
-                本站由 <img src="/edgeone-logo.png" alt="EdgeOne" class="edgeone-logo" /> 提供加速服务
-            </a>
             <p v-if="apiVersion || bundleVersion" class="version-info" aria-busy="false">
                 <template v-if="apiVersion">
-                    当前 API 版本：v{{ apiVersion }}<template v-if="apiUpdated"> · 更新时间：{{ apiUpdated }}</template><br />
+                    当前 API 版本：v{{ apiVersion }}<br />
                 </template>
                 <template v-if="bundleVersion">
-                    当前句子库版本：{{ bundleVersion }}<template v-if="bundleUpdated"> · 上游更新时间：{{ bundleUpdated }}</template>
+                    当前句子库版本：{{ bundleVersion }}
                 </template>
             </p>
             <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><img src="/icp-beian.png" alt="备案" class="icp-icon" />赣ICP备2025074916号-1</a>
@@ -30,29 +27,7 @@
 import { ref, onMounted } from "vue";
 
 const apiVersion = ref("");
-const apiUpdated = ref("");
 const bundleVersion = ref("");
-const bundleUpdated = ref("");
-
-function formatTime(value) {
-    if ((typeof value !== "number" && typeof value !== "string") || value === "") {
-        return "";
-    }
-    const date = new Date(value);
-    if (!Number.isFinite(date.getTime())) {
-        return "";
-    }
-    return new Intl.DateTimeFormat("zh-CN", {
-        timeZone: "Asia/Shanghai",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-    }).format(date) + "（北京时间）";
-}
 
 async function loadApiVersion() {
     try {
@@ -64,7 +39,6 @@ async function loadApiVersion() {
         if (data && typeof data.version === "string" && data.version) {
             apiVersion.value = data.version;
         }
-        apiUpdated.value = formatTime(data && data.apiUpdatedAt);
     } catch {
         // 拉不到时不显示，不影响页脚其他内容
     }
@@ -80,7 +54,6 @@ async function loadBundleVersion() {
         if (data && typeof data.bundle_version === "string" && data.bundle_version) {
             bundleVersion.value = data.bundle_version;
         }
-        bundleUpdated.value = formatTime(data && data.updated_at);
     } catch {
         // 拉不到时不显示，不影响页脚其他内容
     }
@@ -125,24 +98,6 @@ onMounted(() => {
 
 .sep {
     color: var(--color-text-muted);
-}
-
-.edgeone-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--color-text-muted);
-}
-
-.edgeone-badge:hover {
-    color: var(--color-primary);
-    text-decoration: none;
-}
-
-.edgeone-logo {
-    height: 20px;
-    width: auto;
 }
 
 .version-info {

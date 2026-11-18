@@ -73,7 +73,6 @@ export function useStats() {
         const catOk = (kv.categoriesTotal || 0) > 0 && kv.categoriesCached === kv.categoriesTotal;
         return [
             { label: "KV 绑定", state: kv.bound ? "ok" : "bad", value: kv.bound ? "已绑定" : "未绑定", sub: kv.bound ? "变量 hitokoto_kv" : "请在控制台绑定" },
-            { label: "索引缓存", state: kv.indexCached ? "ok" : "bad", value: kv.indexCached ? "已缓存" : "未缓存", sub: status.value && status.value.sentenceVersion ? `语料 ${status.value.sentenceVersion.slice(0, 12)}` : "" },
             { label: "分类缓存", state: catOk ? "ok" : "bad", value: `${kv.categoriesCached || 0} / ${kv.categoriesTotal || 0} 类`, sub: `${(kv.sentencesCached || 0).toLocaleString("zh-CN")} 条句子` },
             { label: "统计缓存", state: kv.statsCached ? "ok" : "idle", value: kv.statsCached ? "已缓存" : "无 / 已过期", sub: "10 分钟缓存" },
             { label: "每日汇总缓存", state: kv.dailyStatsCached ? "ok" : "idle", value: kv.dailyStatsCached ? "已缓存" : "无 / 已过期", sub: "1 小时缓存" },

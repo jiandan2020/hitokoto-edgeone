@@ -50,7 +50,7 @@ describe("AppFooter", () => {
         expect(icon.attributes("src")).toBe("/icp-beian.png");
     });
 
-    it("显示 API 版本与更新时间、句子库版本与上游更新时间", async () => {
+    it("显示 API 版本与句子库版本，不显示更新时间", async () => {
         mockVersionFetches(
             { version: "5.0.0", apiUpdatedAt: "2026-11-18T02:39:23+08:00" },
             { bundle_version: "1.0.1382", updated_at: 1794917954795 },
@@ -63,10 +63,9 @@ describe("AppFooter", () => {
         expect(info.exists()).toBe(true);
         const text = info.text();
         expect(text).toContain("当前 API 版本：v5.0.0");
-        expect(text).toContain("更新时间：");
-        expect(text).toContain("（北京时间）");
         expect(text).toContain("当前句子库版本：1.0.1382");
-        expect(text).toContain("上游更新时间：");
+        expect(text).not.toContain("更新时间");
+        expect(text).not.toContain("北京时间");
     });
 
     it("只拉到 API 版本时只显示 API 那行", async () => {

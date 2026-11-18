@@ -39,9 +39,9 @@ describe("useStats", () => {
         expect(stats.healthState.value).toBe("ok");
         expect(stats.healthTitle.value).toBe("一切正常，缓存已生效");
         expect(stats.healthVersion.value).toContain("5.0.0");
-        expect(stats.kvCards.value).toHaveLength(5);
+        expect(stats.kvCards.value).toHaveLength(4);
         expect(stats.kvCards.value[0].value).toBe("已绑定");
-        expect(stats.kvCards.value[2].value).toBe("12 / 12 类");
+        expect(stats.kvCards.value[1].value).toBe("12 / 12 类");
         expect(stats.latencyMs.value).not.toBeNull();
     });
 
