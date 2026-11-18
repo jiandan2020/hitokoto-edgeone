@@ -62,8 +62,9 @@ describe("AppFooter", () => {
         const info = wrapper.find(".version-info");
         expect(info.exists()).toBe(true);
         const text = info.text();
-        expect(text).toContain("当前 API 版本：v5.0.0");
-        expect(text).toContain("当前句子库版本：1.0.1382");
+        expect(text).toContain("API 版本：v5.0.0");
+        expect(text).toContain("句子库版本：1.0.1382");
+        expect(text).not.toContain("当前");
         expect(text).not.toContain("更新时间");
         expect(text).not.toContain("北京时间");
     });
@@ -79,7 +80,7 @@ describe("AppFooter", () => {
         await flushPromises();
         const info = wrapper.find(".version-info");
         expect(info.exists()).toBe(true);
-        expect(info.text()).toContain("当前 API 版本：v5.0.0");
+        expect(info.text()).toContain("API 版本：v5.0.0");
         expect(info.text()).not.toContain("句子库");
     });
 

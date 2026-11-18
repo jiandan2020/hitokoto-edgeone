@@ -11,12 +11,7 @@
                 <a href="https://github.com/jiandan2020/hitokoto-edgeone" target="_blank" rel="noopener">项目源码</a>
             </nav>
             <p v-if="apiVersion || bundleVersion" class="version-info" aria-busy="false">
-                <template v-if="apiVersion">
-                    当前 API 版本：v{{ apiVersion }}<br />
-                </template>
-                <template v-if="bundleVersion">
-                    当前句子库版本：{{ bundleVersion }}
-                </template>
+                <template v-if="apiVersion">API 版本：v{{ apiVersion }}</template><template v-if="apiVersion && bundleVersion"> · </template><template v-if="bundleVersion">句子库版本：{{ bundleVersion }}</template>
             </p>
             <a class="icp-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener"><img src="/icp-beian.png" alt="备案" class="icp-icon" />赣ICP备2025074916号-1</a>
         </div>

@@ -25,15 +25,6 @@
                     @share="shareQuote"
                     @retry="refresh"
                 />
-                <QuoteFilters
-                    :category="category"
-                    :min-length="minLength"
-                    :max-length="maxLength"
-                    @update:category="category = $event"
-                    @update:min-length="minLength = $event"
-                    @update:max-length="maxLength = $event"
-                    @change="fetchQuote"
-                />
                 <p class="api-url">
                     当前请求：<code>{{ buildUrl() }}</code>
                     <button type="button" class="url-copy" @click="copyUrl">复制</button>
@@ -42,10 +33,6 @@
                 </p>
             </div>
         </section>
-
-        <div class="container">
-            <ApiExamples />
-        </div>
 
         <section class="intro-section">
             <div class="container intro-grid">
@@ -69,8 +56,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import QuoteCard from "../components/QuoteCard.vue";
-import QuoteFilters from "../components/QuoteFilters.vue";
-import ApiExamples from "../components/ApiExamples.vue";
 import { useHitokoto } from "../composables/useHitokoto.js";
 import { copyText } from "../utils/copy.js";
 
@@ -78,9 +63,6 @@ const {
     quote,
     loading,
     error,
-    category,
-    minLength,
-    maxLength,
     copied,
     copyFailed,
     buildUrl,
