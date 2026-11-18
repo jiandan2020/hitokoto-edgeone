@@ -34,7 +34,7 @@
                         <option value="js">JavaScript</option>
                     </select>
                 </label>
-                <label class="field" v-if="encode === 'js'">
+                <label class="field">
                     <span class="field-label">回调函数</span>
                     <input type="text" v-model="callback" placeholder="如 show" />
                 </label>

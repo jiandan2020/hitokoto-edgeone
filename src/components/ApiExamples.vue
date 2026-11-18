@@ -35,6 +35,7 @@
 
 <script setup>
 import { ref } from "vue";
+import { copyText } from "../utils/copy.js";
 
 const origin = typeof window !== "undefined" ? window.location.origin : "https://hitokoto.xzccs.top";
 
@@ -93,25 +94,11 @@ const exampleText = `GET ${origin}/api?c=a
   "timestamp": 1794938934411
 }`;
 
-async function copyText(text) {
-    try {
-        await navigator.clipboard.writeText(text);
-        return true;
-    } catch {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-        return true;
-    }
-}
-
 async function copyCard(card) {
-    await copyText(`${origin}${card.path}`);
+    const ok = await copyText(`${origin}${card.path}`);
+    if (!ok) {
+        return;
+    }
     copiedPath.value = card.path;
     if (copyTimer) {
         clearTimeout(copyTimer);
@@ -122,7 +109,10 @@ async function copyCard(card) {
 }
 
 async function copyExample() {
-    await copyText(exampleText);
+    const ok = await copyText(exampleText);
+    if (!ok) {
+        return;
+    }
     exampleCopied.value = true;
     if (copyTimer) {
         clearTimeout(copyTimer);

@@ -15,7 +15,7 @@
             <select
                 class="category-select"
                 :value="modelCategory"
-                aria-label="全部的分分类"
+                aria-label="全部分类"
                 @change="onSelectCategory($event.target.value)"
             >
                 <option v-for="cat in categories" :key="cat.key" :value="cat.key">
