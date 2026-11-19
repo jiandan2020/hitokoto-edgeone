@@ -1,7 +1,7 @@
 {
   "name": "hitokoto-edgeone",
-  "version": "5.0.2",
-  "apiUpdatedAt": "2026-11-19T02:00:45+08:00",
+  "version": "5.0.3",
+  "apiUpdatedAt": "2026-11-19T10:18:30+08:00",
   "description": "Hitokoto API for Tencent EdgeOne",
   "type": "module",
   "scripts": {
@@ -17,9 +17,10 @@
     "@vitejs/plugin-vue": "^5.2.4",
     "@vue/test-utils": "^2.5.1",
     "eslint": "^9.18.0",
+    "eslint-plugin-vue": "^10.12.1",
     "jsdom": "^26.1.0",
     "vite": "^6.4.6",
-    "vitest": "^3.2.4",
+    "vitest": "^4.1.12",
     "vue-router": "^4.6.5"
   },
   "dependencies": {

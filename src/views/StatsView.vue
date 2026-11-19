@@ -9,8 +9,9 @@
 
             <section class="card hero" aria-label="运行状态总览">
                 <div class="hero-main">
-                    <span class="pill" :class="healthState">{{ healthPillText }}</span>
-                    <div class="hero-title">{{ healthTitle }}</div>
+                    <span class="pill" :class="apiState">{{ apiPillText }}</span>
+                    <div class="hero-title">{{ apiTitle }}</div>
+                    <div class="meta">{{ kvSummaryText }}</div>
                     <div class="meta">{{ healthVersion }}</div>
                     <div class="meta">{{ healthTime }}</div>
                 </div>
@@ -114,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
 import LineChart from "../components/LineChart.vue";
 import { useStats } from "../composables/useStats.js";
 
@@ -127,8 +128,9 @@ const {
     latencyMs,
     lastUpdated,
     refreshing,
-    healthState,
     healthTitle,
+    apiState,
+    apiTitle,
     healthVersion,
     healthTime,
     kvCards,
@@ -143,8 +145,6 @@ const {
     hourlyAvg,
     hourlySummary,
     hourlyMissing,
-    dailyEntries,
-    dailyCollected,
     cumulative,
     dailyStatusText,
     yesterday,
@@ -154,15 +154,24 @@ const {
     bestDay,
     dailyPoints,
     loadStatus,
+    loadApiHealth,
     loadAll,
     formatDate,
 } = useStats();
 
-const healthPillText = computed(() => {
-    if (statusError.value) {
-        return "● 状态暂不可用";
+const apiPillText = computed(() => {
+    if (apiState.value === "unknown") {
+        return "● API 状态暂不可用";
     }
-    return healthState.value === "ok" ? "● 运行正常" : "● 运行异常";
+    return apiState.value === "ok" ? "● API 正常" : "● API 异常";
+});
+
+// KV 缓存状态单独一行，与 API 可用性分开显示。
+const kvSummaryText = computed(() => {
+    if (statusError.value) {
+        return "KV 缓存：状态暂不可用";
+    }
+    return `KV 缓存：${healthTitle.value}`;
 });
 
 const updatedText = computed(() => {
@@ -279,7 +288,10 @@ let statusTimer = null;
 onMounted(() => {
     loadAll();
     allTimer = setInterval(loadAll, 600000);
-    statusTimer = setInterval(loadStatus, 60000);
+    statusTimer = setInterval(() => {
+        loadStatus();
+        loadApiHealth();
+    }, 60000);
 });
 
 onUnmounted(() => {

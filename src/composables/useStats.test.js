@@ -218,4 +218,67 @@ describe("useStats", () => {
         await stats.loadDaily();
         expect(stats.dailyEntries.value).toBeNull();
     });
+
+    it("KV 未绑定但 API 正常：API 与 KV 分开显示", async () => {
+        mockFetchByUrl({
+            "/status": {
+                ok: false,
+                version: "5.0.2",
+                sentenceVersion: "abc123",
+                timestamp: 1794938934000,
+                kv: { bound: false, indexCached: false, categoriesCached: 0, categoriesTotal: 12, sentencesCached: 0, statsCached: false, dailyStatsCached: false },
+            },
+            "/api": { id: 1, hitokoto: "测试句子", type: "a", from: "测试", from_who: null, length: 4, timestamp: 1794938934000 },
+        });
+        const stats = useStats();
+        await stats.loadStatus();
+        await stats.loadApiHealth();
+        expect(stats.healthState.value).toBe("bad");
+        expect(stats.apiState.value).toBe("ok");
+        expect(stats.apiTitle.value).toBe("API 正常，可以取一言");
+    });
+
+    it("缓存齐全但 API 失败：API 与 KV 分开显示", async () => {
+        globalThis.fetch = vi.fn().mockImplementation((url) => {
+            if (url.startsWith("/status")) {
+                return Promise.resolve({ ok: true, json: async () => ({
+                    ok: true,
+                    version: "5.0.2",
+                    sentenceVersion: "abc123",
+                    timestamp: 1794938934000,
+                    kv: { bound: true, indexCached: false, categoriesCached: 12, categoriesTotal: 12, sentencesCached: 11277, statsCached: true, dailyStatsCached: true },
+                }) });
+            }
+            return Promise.resolve({ ok: false, status: 500 });
+        });
+        const stats = useStats();
+        await stats.loadStatus();
+        await stats.loadApiHealth();
+        expect(stats.healthState.value).toBe("ok");
+        expect(stats.apiState.value).toBe("bad");
+        expect(stats.apiTitle.value).toBe("API 异常，请查看下方详情");
+    });
+
+    it("API 探针请求失败时状态为未知", async () => {
+        globalThis.fetch = vi.fn().mockImplementation((url) => {
+            if (url.startsWith("/status")) {
+                return Promise.resolve({ ok: true, json: async () => ({ ok: true, kv: { bound: true, categoriesCached: 12, categoriesTotal: 12 } }) });
+            }
+            return Promise.reject(new Error("network error"));
+        });
+        const stats = useStats();
+        await stats.loadStatus();
+        await stats.loadApiHealth();
+        expect(stats.apiState.value).toBe("unknown");
+        expect(stats.apiTitle.value).toContain("暂不可用");
+    });
+
+    it("API 返回数据无效时状态为异常", async () => {
+        mockFetchByUrl({
+            "/api": { id: 1, type: "a" },
+        });
+        const stats = useStats();
+        await stats.loadApiHealth();
+        expect(stats.apiState.value).toBe("bad");
+    });
 });

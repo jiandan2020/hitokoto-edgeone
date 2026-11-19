@@ -28,7 +28,9 @@ export async function fetchDay(day, secretId, secretKey, fetcher = fetch) {
     const stringToSign = `TC3-HMAC-SHA256\n${now}\n${scope}\n${hash(canonical)}`;
     const signingKey = hmac(hmac(hmac(`TC3${secretKey}`, date), "teo"), "tc3_request");
     const signature = hmac(signingKey, stringToSign).toString("hex");
-    const response = await fetcher(`https://${host}`, { method: "POST", headers: { "Content-Type": contentType, "Authorization": `TC3-HMAC-SHA256 Credential=${secretId}/${scope}, SignedHeaders=content-type;host, Signature=${signature}`, "X-TC-Action": "DescribeTimingL7AnalysisData", "X-TC-Version": "2022-09-01", "X-TC-Timestamp": String(now) }, body });
+    // 上游请求设 30 秒超时，网络异常时不等它长期挂起。
+    const signal = typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(30000) : undefined;
+    const response = await fetcher(`https://${host}`, { method: "POST", headers: { "Content-Type": contentType, "Authorization": `TC3-HMAC-SHA256 Credential=${secretId}/${scope}, SignedHeaders=content-type;host, Signature=${signature}`, "X-TC-Action": "DescribeTimingL7AnalysisData", "X-TC-Version": "2022-09-01", "X-TC-Timestamp": String(now) }, body, signal });
     if (!response.ok) {throw new Error(`EdgeOne 返回 HTTP ${response.status}`);}
     const result = (await response.json()).Response;
     if (!result || result.Error || !Array.isArray(result.Data)) {throw new Error(`EdgeOne 查询失败: ${result?.Error?.Code || "响应格式错误"}`);}
@@ -45,9 +47,9 @@ export async function fetchDay(day, secretId, secretKey, fetcher = fetch) {
     return [...buckets.values()].reduce((sum, n) => sum + n, 0);
 }
 
-export async function collect({ secretId, secretKey, now = Date.now(), fetcher = fetch } = {}) {
+export async function collect({ secretId, secretKey, now = Date.now(), fetcher = fetch, statsPath = path } = {}) {
     if (!secretId || !secretKey) {throw new Error("缺少腾讯云凭证");}
-    const existing = JSON.parse(await readFile(path, "utf8"));
+    const existing = JSON.parse(await readFile(statsPath, "utf8"));
     if (existing.startDate !== startDate || existing.domain !== domain || !existing.days || Array.isArray(existing.days) || typeof existing.days !== "object") {throw new Error("统计文件格式不兼容");}
     for (const [day, count] of Object.entries(existing.days)) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || dayText(instant(day)) !== day || day < startDate || !Number.isSafeInteger(count) || count < 0) {throw new Error("统计文件包含无效记录");}
@@ -56,9 +58,12 @@ export async function collect({ secretId, secretKey, now = Date.now(), fetcher =
     const latest = dayText(now - 3600000 - dayMs);
     const minimum = dayText(now - 29 * dayMs);
     let failures = 0;
+    let historicalGaps = 0;
     for (let day = startDate; day <= latest; day = dayText(instant(day) + dayMs)) {
         if (Object.hasOwn(existing.days, day)) {continue;}
-        if (day < minimum) { failures++; continue; }
+        // 超出 29 天补采窗口的日期记为历史缺口，不计入失败：
+        // 之后每天采集成功时工作流不再因此持续报失败。
+        if (day < minimum) { historicalGaps++; continue; }
         try {
             existing.days[day] = await fetchDay(day, secretId, secretKey, fetcher);
             console.log(`${day}: ${existing.days[day]} 次`);
@@ -68,8 +73,9 @@ export async function collect({ secretId, secretKey, now = Date.now(), fetcher =
         }
     }
     existing.days = Object.fromEntries(Object.entries(existing.days).sort(([a], [b]) => a.localeCompare(b)));
-    await writeFile(path, `${JSON.stringify(existing, null, 2)}\n`);
-    if (failures) {console.error(`仍有 ${failures} 天缺失，请检查 Actions 日志；超过可查询范围的日期不能自动补齐。`);}
+    await writeFile(statsPath, `${JSON.stringify(existing, null, 2)}\n`);
+    if (historicalGaps) {console.warn(`有 ${historicalGaps} 天超出 29 天补采窗口，记为历史缺口，不影响本次采集结果。`);}
+    if (failures) {console.error(`仍有 ${failures} 天缺失，请检查 Actions 日志。`);}
     return failures;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

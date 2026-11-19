@@ -68,7 +68,10 @@ function routeFetch({ total, errors, api }) {
         const names = body.MetricNames || [];
         const filters = body.Filters || [];
         if (names.includes("l7Flow_outFlux")) { return okResponse(total); }
-        if (filters.some((f) => f.Key === "statusCode")) { return okResponse(errors); }
+        if (filters.some((f) => f.Key === "statusCode")) {
+            if (errors === null) { return { ok: false, status: 500, json: async () => ({}) }; }
+            return okResponse(errors);
+        }
         if (filters.some((f) => f.Key === "url")) {
             if (api === null) { return { ok: false, status: 500, json: async () => ({}) }; }
             return okResponse(api);
@@ -214,6 +217,50 @@ test("load() /api 查询失败时 apiRequests 为 null，其余照常", async ()
     }), async () => load(ENV));
     assert.equal(result.apiRequests, null);
     assert.equal(result.requests, 12090);
+});
+
+test("load() 5xx 查询失败时 errorCount 与 errorRate 为 null，其余照常", async () => {
+    const result = await withStubs(routeFetch({
+        total: totalData(buckets24(100)),
+        errors: null,
+        api: singleData(11000),
+    }), async () => load(ENV));
+    assert.equal(result.errorCount, null);
+    assert.equal(result.errorRate, null);
+    assert.equal(result.requests, 12090);
+    assert.equal(result.bytes, 50000000);
+    assert.equal(result.apiRequests, 11000);
+    assert.equal(result.hourly.length, 24);
+});
+
+test("load() 5xx 与 /api 查询同时失败时两项均为 null，其余照常", async () => {
+    const result = await withStubs(routeFetch({
+        total: totalData(buckets24(100)),
+        errors: null,
+        api: null,
+    }), async () => load(ENV));
+    assert.equal(result.errorCount, null);
+    assert.equal(result.errorRate, null);
+    assert.equal(result.apiRequests, null);
+    assert.equal(result.requests, 12090);
+    assert.equal(result.bytes, 50000000);
+});
+
+test("load() 总请求查询失败时整体抛错", async () => {
+    const failingFetch = async (url, init) => {
+        const body = JSON.parse(init.body);
+        if (body.MetricNames.includes("l7Flow_outFlux")) {
+            return { ok: false, status: 500, json: async () => ({}) };
+        }
+        return routeFetch({
+            total: totalData(buckets24(100)),
+            errors: singleData(0),
+            api: singleData(1),
+        })(url, init);
+    };
+    await withStubs(failingFetch, async () => {
+        await assert.rejects(() => load(ENV), /统计服务请求失败/);
+    });
 });
 
 test("load() 错误数超过请求数时抛错", async () => {

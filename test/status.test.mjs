@@ -50,7 +50,6 @@ test("KV unbound reports not bound and ok false", async () => {
     assert.match(res.headers.get("Content-Type"), /application\/json/);
     const data = await res.json();
     assert.equal(data.kv.bound, false);
-    assert.equal(data.kv.writeRead, "skipped");
     assert.equal(data.ok, false);
     assert.equal(data.version, pkg.version);
 });
@@ -75,20 +74,20 @@ test("status without any params returns JSON, not HTML", async () => {
     assert.equal(JSON.parse(text).kv.bound, false);
 });
 
-test("KV bound but empty: write probe via ?probe=write ok, nothing cached yet", async () => {
+test("probe=write no longer writes to KV: read-only, nothing cached yet", async () => {
     const kv = makeKv();
     globalThis.hitokoto_kv = kv;
     try {
         const res = await req("/status?format=json&probe=write");
         const data = await res.json();
         assert.equal(data.kv.bound, true);
-        assert.equal(data.kv.writeRead, "ok");
         assert.equal(data.kv.indexCached, false);
         assert.equal(data.kv.categoriesCached, 0);
         assert.equal(data.kv.statsCached, false);
         assert.equal(data.kv.dailyStatsCached, false);
         assert.equal(data.ok, false);
-        assert.ok(kv.store.has("status_probe"));
+        assert.equal("writeRead" in data.kv, false);
+        assert.equal(kv.store.has("status_probe"), false);
     } finally {
         delete globalThis.hitokoto_kv;
     }
@@ -148,10 +147,9 @@ test(`KV bound and populated: ok true, 12 categories, ${sentenceCount} sentences
     populateKv(kv);
     globalThis.hitokoto_kv = kv;
     try {
-        const res = await req("/status?format=json&probe=write");
+        const res = await req("/status?format=json&probe=read");
         const data = await res.json();
         assert.equal(data.ok, true);
-        assert.equal(data.kv.writeRead, "ok");
         assert.equal(data.kv.indexCached, true);
         assert.equal(data.kv.categoriesCached, 12);
         assert.equal(data.kv.categoriesTotal, 12);
@@ -190,8 +188,7 @@ test("read-only probe does not write to KV", async () => {
     globalThis.hitokoto_kv = kv;
     try {
         const res = await req("/status?format=json&probe=read");
-        const data = await res.json();
-        assert.equal(data.kv.writeRead, "skipped");
+        await res.json();
         assert.equal(kv.store.has("status_probe"), false);
     } finally {
         delete globalThis.hitokoto_kv;
@@ -205,7 +202,6 @@ test("default probe (no probe param) is read-only", async () => {
     try {
         const res = await req("/status?format=json");
         const data = await res.json();
-        assert.equal(data.kv.writeRead, "skipped");
         assert.equal(data.ok, true);
         assert.equal(kv.store.has("status_probe"), false);
     } finally {
@@ -218,8 +214,7 @@ test("unknown probe value is treated as read-only", async () => {
     globalThis.hitokoto_kv = kv;
     try {
         const res = await req("/status?format=json&probe=foo");
-        const data = await res.json();
-        assert.equal(data.kv.writeRead, "skipped");
+        await res.json();
         assert.equal(kv.store.has("status_probe"), false);
     } finally {
         delete globalThis.hitokoto_kv;

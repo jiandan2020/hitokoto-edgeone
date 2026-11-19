@@ -48,7 +48,7 @@ node scripts/warm-kv.mjs https://hitokoto.xzccs.top
 
 ## 排查
 
-- 打开 `/stats` 看运行状况：会直接显示 KV 是否绑定、索引和 12 个分类是否已在 KV 里，以及统计缓存和每日汇总缓存是否已在 KV 里，不用猜；完整的写读检测只在 `/status?probe=write` 里做，`/stats` 本身不写 KV；`/status` 只返回 JSON 探针数据。
+- 打开 `/stats` 看运行状况：会直接显示 KV 是否绑定、索引和 12 个分类是否已在 KV 里，以及统计缓存和每日汇总缓存是否已在 KV 里，不用猜；`/stats` 本身不写 KV；`/status` 只返回 JSON 探针数据（只读）。
 - KV 没绑定：接口正常，但每次冷启动仍要读静态文件；检查绑定变量名是否
   为 `hitokoto_kv`，以及是否重新部署。
 - 语料更新后：`npm run generate` 会生成新版本，函数自动读新键；旧键可

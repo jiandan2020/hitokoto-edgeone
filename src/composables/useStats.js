@@ -41,6 +41,8 @@ function fetchJson(url, timeoutMs = 10000) {
 export function useStats() {
     const status = ref(null);
     const statusError = ref(false);
+    const apiOk = ref(null);
+    const apiBusy = ref(false);
     const statsData = ref(null);
     const statsError = ref(false);
     const dailyData = ref(null);
@@ -63,6 +65,20 @@ export function useStats() {
             return "运行状态暂不可用，请稍后再试。";
         }
         return healthOk.value ? "一切正常，缓存已生效" : "有项目异常，请查看下方 KV 状态";
+    });
+    // API 可用性：直接请求 /api 判断（与 KV 缓存状态分开显示）。
+    // KV 未绑定或没热完时 API 仍可能正常；反过来缓存齐全也不代表 API 能用。
+    const apiState = computed(() => {
+        if (apiOk.value === null) {
+            return "unknown";
+        }
+        return apiOk.value ? "ok" : "bad";
+    });
+    const apiTitle = computed(() => {
+        if (apiOk.value === null) {
+            return "API 状态暂不可用，请稍后再试。";
+        }
+        return apiOk.value ? "API 正常，可以取一言" : "API 异常，请查看下方详情";
     });
     const healthVersion = computed(() => {
         if (!status.value) {
@@ -262,6 +278,33 @@ export function useStats() {
         return dailyEntries.value.slice(-30).map((e) => ({ time: e.key, value: e.value }));
     });
 
+    // API 可用性：直接请求 /api 判断（与 KV 缓存状态分开显示）。
+    // KV 未绑定或没热完时 API 仍可能正常；反过来缓存齐全也不代表 API 能用。
+    // response.ok 为假或返回数据无效 → false（API 异常）；
+    // 请求本身失败（网络/超时）→ null（探测结果暂不可用）。
+    async function loadApiHealth() {
+        if (apiBusy.value) {
+            return;
+        }
+        apiBusy.value = true;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10000);
+        try {
+            const response = await fetch("/api", { cache: "no-store", signal: controller.signal });
+            if (!response.ok) {
+                apiOk.value = false;
+                return;
+            }
+            const data = await response.json();
+            apiOk.value = typeof data.hitokoto === "string" && data.hitokoto.length > 0;
+        } catch {
+            apiOk.value = null;
+        } finally {
+            clearTimeout(timer);
+            apiBusy.value = false;
+        }
+    }
+
     async function loadStatus() {
         if (statusBusy.value) {
             return;
@@ -311,7 +354,7 @@ export function useStats() {
         allBusy.value = true;
         refreshing.value = true;
         try {
-            await Promise.all([loadStatus(), loadLive(), loadDaily()]);
+            await Promise.all([loadStatus(), loadLive(), loadDaily(), loadApiHealth()]);
             lastUpdated.value = new Date();
         } finally {
             allBusy.value = false;
@@ -332,6 +375,8 @@ export function useStats() {
         healthOk,
         healthState,
         healthTitle,
+        apiState,
+        apiTitle,
         healthVersion,
         healthTime,
         kvCards,
@@ -359,6 +404,7 @@ export function useStats() {
         loadStatus,
         loadLive,
         loadDaily,
+        loadApiHealth,
         loadAll,
         formatDate,
     };

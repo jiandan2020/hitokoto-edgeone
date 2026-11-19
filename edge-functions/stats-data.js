@@ -166,15 +166,23 @@ async function load(env) {
     const start = new Date(end.getTime() - 24 * 3600000);
     const startTime = start.toISOString().replace(".000Z", "Z");
     const endTime = end.toISOString().replace(".000Z", "Z");
+    // 总请求是必需输入，失败即整体失败；5xx 与 /api 小计各自独立容错，
+    // 单项失败只让该指标为空（页面显示暂无数据），不拖垮整份统计。
     const [total, errors, api] = await Promise.all([
         query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "total"),
-        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "errors"),
-        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "api").catch(() => null),
+        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "errors").catch((error) => {
+            console.warn("5xx 指标查询失败:", error);
+            return null;
+        }),
+        query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "api").catch((error) => {
+            console.warn("/api 小计查询失败:", error);
+            return null;
+        }),
     ]);
     const requests = total.metrics.l7Flow_request;
     const bytes = total.metrics.l7Flow_outFlux;
     if (!Number.isFinite(requests) || !Number.isFinite(bytes)) {throw new Error("统计数据不完整");}
-    const errorCount = errors.metrics.l7Flow_request ?? null;
+    const errorCount = errors?.metrics.l7Flow_request ?? null;
     if (errorCount !== null && errorCount > requests) {throw new Error("统计数据不一致");}
     const apiRequests = api?.metrics.l7Flow_request ?? null;
     const buckets = new Map();

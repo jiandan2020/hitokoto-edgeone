@@ -2,12 +2,10 @@
 // 可视化的运行状况见 /stats。公开接口，不含密钥。
 // 检查 KV 到底生没生效，而不是只看请求成不成功：
 //   1. KV 是否绑定（变量名 hitokoto_kv）；
-//   2. 写读是否通：往 KV 写一个很小的探针键 status_probe 再读回，比对内容并计时；
-//   3. 索引和 12 个分类是否已在 KV 里（按语料版本分键核对），以及统计缓存是否在 KV 里。
-// 默认只读不写 KV；加 ?probe=write 才做一次探针写入（固定键、很小的值），
-// 适合主动检查；?probe=read 与默认相同（只读），?format=json 仍可加，但返回一直是 JSON。
+//   2. 索引和 12 个分类是否已在 KV 里（按语料版本分键核对），以及统计缓存是否在 KV 里。
+// 探针只读，不写 KV：?probe=read 与默认相同（只读）；?probe=write 已移除，
+// 再传它也不会触发写入。?format=json 仍可加，但返回一直是 JSON。
 // 注意：本函数与 /api 不共享实例内缓存，查到的是跨实例共享的 KV 真实状态。
-const STATUS_PROBE_KEY = "status_probe";
 const STATS_KV_KEY = "stats_data_cache";
 const DAILY_KV_KEY = "daily_stats_cache";
 const FETCH_TIMEOUT_MS = 10000;
@@ -72,7 +70,6 @@ export default async function onRequest(context) {
         return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET" } });
     }
     const url = new URL(request.url);
-    const doWrite = url.searchParams.get("probe") === "write";
     const cookie = (request.headers.get("cookie") || "").split(";").map(part => part.trim())
         .filter(part => /^(eo_token|eo_time)=/.test(part)).join("; ");
 
@@ -87,9 +84,6 @@ export default async function onRequest(context) {
     const kv = resolveKv(env);
     const result = {
         bound: kv !== null,
-        writeRead: "skipped",
-        writeMs: null,
-        readMs: null,
         indexCached: false,
         categoriesCached: 0,
         categoriesTotal: 0,
@@ -99,21 +93,6 @@ export default async function onRequest(context) {
     };
 
     if (kv) {
-        // 写读探针：写固定小键再读回，比对内容；失败也不影响接口，只如实报告。
-        if (doWrite) {
-            const probeValue = JSON.stringify({ checkedAt: new Date().toISOString(), version: sentenceVersion });
-            try {
-                const writeStart = Date.now();
-                await kv.put(STATUS_PROBE_KEY, probeValue);
-                result.writeMs = Date.now() - writeStart;
-                const readStart = Date.now();
-                const back = await kv.get(STATUS_PROBE_KEY);
-                result.readMs = Date.now() - readStart;
-                result.writeRead = back === probeValue ? "ok" : "failed";
-            } catch {
-                result.writeRead = "failed";
-            }
-        }
         if (sentenceVersion && index) {
             const categories = Object.keys(index);
             result.categoriesTotal = categories.length;
@@ -136,9 +115,8 @@ export default async function onRequest(context) {
             && daily.data.days !== undefined && typeof daily.data.days === "object" && Number.isFinite(daily.expires) && daily.expires > Date.now();
     }
 
-    const writeOk = doWrite ? result.writeRead === "ok" : true;
     // 索引自 4.9.5 起嵌在 api.js 里，不再写入 KV，ok 不再要求索引在 KV 中。
-    const ok = result.bound && writeOk
+    const ok = result.bound
         && result.categoriesTotal > 0 && result.categoriesCached === result.categoriesTotal;
     const status = {
         ok,

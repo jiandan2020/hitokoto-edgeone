@@ -1,8 +1,11 @@
+import vue from "eslint-plugin-vue";
+
 export default [
     {
-        // dist 是 Vite 构建产物；src 是 Vue 代码，待接入 eslint-plugin-vue 后再纳入 lint。
-        ignores: ["node_modules", ".git", "dist", "src"],
+        // dist 是 Vite 构建产物。
+        ignores: ["node_modules", ".git", "dist"],
     },
+    ...vue.configs["flat/essential"],
     {
         languageOptions: {
             ecmaVersion: "latest",
