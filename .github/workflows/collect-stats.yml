@@ -18,16 +18,16 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: 检出最新采集脚本
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: main
           path: project
       - name: 检出独立统计数据分支
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: stats-data
           path: data
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: 采集每日数据

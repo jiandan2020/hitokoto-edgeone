@@ -17,19 +17,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 检出部署分支
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: main
           path: project
       - name: 检出上游句子库
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: hitokoto-osc/sentences-bundle
           ref: master
           path: upstream
           persist-credentials: false
       - name: 配置 Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: 验证、同步并生成函数
