@@ -4,22 +4,25 @@
 
 ## 部署
 
-在 EdgeOne Pages 从 GitHub 导入此仓库的 `main` 分支：
+前端是 Vue 3 + Vite 的单页应用（SPA），源码在 `src/`，构建产物在 `dist/`。在 EdgeOne Pages 从 GitHub 导入此仓库的 `main` 分支：
 
-- 构建命令：`npm run build`（只校验仓库已有的部署文件，不生成索引）
-- 首页：`edge-functions/index.js`，路由为 `/`；接口文档：`edge-functions/docs.js`，路由为 `/docs`；一言接口：`edge-functions/api.js`，路由为 `/api`（由 Pages 自动识别）
-- 一言 API 不需要环境变量或存储服务；可选的站点统计页面需要单独配置环境变量，见下文。想用 KV 做跨实例共享缓存时，在控制台开通 KV、创建命名空间并绑定到项目，变量名必须为 `hitokoto_kv`，部署后跑 `node scripts/warm-kv.mjs` 预热；不绑定也能正常运行，见 `docs/kv-setup.md`。
+- 构建命令：`npm run build`，依次跑 Vite 构建（`vite build`）、静态文件复制（`scripts/copy-static-to-dist.mjs`，把 `sentence-index.json`、`sentences/`、`package.json`、`version.json`、`LICENSE`、favicon 等复制进 `dist/`）和部署校验（`check-deployment.js`，校验索引与语料一致、每类语料摘要、生成的 `edge-functions/api.js` 与源码一致）。校验失败时构建停止。
+- 输出目录：`dist/`，EdgeOne Pages 以它为静态根目录。`/`、`/docs`、`/stats` 都由 SPA 入口 `dist/index.html` 提供；未知路由也返回 `index.html`，由前端路由渲染 404 页（见下文“单页应用回退”）。
+- 边缘函数：`edge-functions/` 里只有 `api.js`（由 `npm run generate` 从 `functions/index.js` 生成）、`stats-data.js`、`stats-daily.js`、`status.js`，路由分别为 `/api`、`/stats-data`、`/stats-daily`、`/status`。页面入口（`/`、`/docs`、`/stats`）不再是边缘函数。
 
-`npm run generate` 在本地或 GitHub Actions 中从 `sentences/` 生成独立的 `sentence-index.json`，并根据 `functions/index.js` 生成 `edge-functions/api.js`。两者均保存在仓库；更改语录或原始函数后应在提交前运行 `npm run generate` 并提交生成文件。EdgeOne 的 `npm run build` 只校验已提交的索引、语料和函数是否一致，不生成文件；校验失败时部署会停止。运行时先读实例内缓存，再读 KV（若已绑定），最后读同一部署的静态文件并核对版本；索引和句子按语料版本分键写进 KV，缓存未命中时会转发预览凭据；缓存命中时不再检查静态资源授权，因此不要依赖静态资源授权限制 API 访问。函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
+`npm run generate` 在本地或 GitHub Actions 中从 `sentences/` 生成独立的 `sentence-index.json`，并根据 `functions/index.js` 生成 `edge-functions/api.js`。两者均保存在仓库；更改语录或原始函数后应在提交前运行 `npm run generate` 并提交生成文件。构建时 `check-deployment.js` 校验已提交的索引、语料和函数是否一致，校验失败时部署会停止。运行时先读实例内缓存，再读 KV（若已绑定），最后读同一部署的静态文件并核对内容摘要；索引和句子按语料内容摘要分键写进 KV，缓存未命中时会转发预览凭据；缓存命中时不再检查静态资源授权，因此不要依赖静态资源授权限制 API 访问。函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
 
-如果项目此前在控制台手动设置了边缘函数或路由，请检查是否与本项目的 `/` 路由冲突，并确认部署的是最新提交。构建成功并不等同于运行验证成功。
+`dist/` 提交在仓库里（构建产物与源码同版本，便于回退时入口、索引与静态语料属于同一版本）。若后续确认 EdgeOne 生产与预览都从源码执行构建，可移除仓库内跟踪的 `dist/`（见优化方案第三期第 10 项）。
+
+如果项目此前在控制台手动设置了边缘函数或路由，请检查是否与本项目的路由冲突，并确认部署的是最新提交。构建成功并不等同于运行验证成功。
 
 ## 使用
 
 - `/`：首页（随机一言 + 入口）
 - `/docs`：接口文档（请求参数、返回字段、状态码与示例）
 - `/stats`：运行状况（健康横幅、KV 状态、24 小时与每日访问统计）
-- `/status`：运行状态探针数据，只返回 JSON（绑定、写读、索引与分类缓存）；可视化的运行状况见 `/stats`
+- `/status`：运行状态探针数据，只返回 JSON 且只读（绑定、索引与分类缓存）；可视化的运行状况见 `/stats`。公开接口没有任何写 KV 的路径。
+- `/LICENSE`：许可证正文（AGPL-3.0），构建时从仓库根目录复制进输出目录。
 - `/stats-daily`：每日汇总数据（KV 缓存，供统计页使用）
 - `/api`：随机一言，JSON 格式（原根路径接口已迁移）
 - `/api?c=a`：按分类获取（a–l）
@@ -28,6 +31,34 @@
 - `/api?min_length=10&max_length=20`：筛选长度
 
 `GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见 `/docs` 接口文档。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为。
+
+## 单页应用回退
+
+`/`、`/docs`、`/stats` 是同一 SPA 的三条路由，可直接访问（深链接由 EdgeOne 的静态回退返回 `dist/index.html`，前端路由再渲染对应页面）。未知路由也返回 `index.html`（HTTP 200），由前端路由渲染 404 页（显示所访路径与回首页/接口文档按钮），而不是真实的 HTTP 404。这样处理是为了不干扰深链接；只有在需要控制搜索引擎收录时才考虑单独返回真实 404。
+
+## 优化记录（5.0.4）
+
+- 在线调试（第 6 项）：发送时保存请求 URL 快照，结果区显示它实际对应的 URL；切预设或卸载组件时取消旧请求，晚到结果用序号挡掉；10 秒超时有明确提示；三个复制按钮各自独立恢复。
+- 部署文档与许可证（第 11 项）：README 按 Vue SPA 与 dist 修订，记录单页应用回退行为；LICENSE 复制进输出目录，`/LICENSE` 返回许可证正文。
+- 移动端交互（第 12 项）：触屏点选图表数据后提示保留，点其他位置关闭；移动菜单按 Esc 关闭后焦点回到菜单按钮；图表数据明细保留键盘可展开的 `<details>`。
+
+## 优化记录（5.0.3）
+
+- 依赖升级（第 3 项）：Vitest 3.2.4 → 4.1.12，覆盖 @vitest/mocker 代码注入公告；Tinypool 不再安装。新增 CI（`.github/workflows/ci.yml`，push 到 main 与 PR 时跑 npm ci、lint、两套测试、构建），接入 eslint-plugin-vue，`src/` 纳入 lint。
+- 公开探针只读化（第 4 项）：`/status` 的写读探针彻底移除，公开接口没有任何写 KV 的路径；监控面板改用 `?probe=read`。
+- 统计降级（第 5 项）：`/stats-data` 的 5xx 与 /api 小计查询独立容错，失败时对应指标为 null（页面显示“暂无数据”），不再整个 503。
+- 每日采集（第 7 项）：超出 29 天补采窗口的日期记为历史缺口，不计入失败；单次请求 30 秒超时，工作流 15 分钟总时限。
+- 健康与缓存分开（第 8 项）：`/stats` 用独立的 /api 请求判断 API 可用性，与 KV 缓存状态分开显示。
+
+## 优化记录（5.0.2）
+
+- 日期口径（第 1 项）：统计按北京时间自然日取昨日与连续七日，缺失显示“待采集”，真实 0 显示“0 次”，近七日显示“已采集 X/7 天”。
+- 语料完整性（第 2 项）：构建时为每类语料生成 sha256 摘要，KV 键按摘要分键；取数时按原始字节核验摘要，不符不解析、不缓存、不回填；选中后核对分类、索引长度与请求范围。
+
+## 优化记录（5.0.0）
+
+- 前端重构为 Vue 3 + Vite 单页应用：首页、接口文档（在线调试）、运行状况三页，靛蓝主色；后端 API、句库、缓存逻辑不动。旧服务端渲染页面及测试随页面下线移除。
+- 部署：EdgeOne Pages 以 `dist/` 为静态根目录；构建时把静态文件复制进 `dist/` 并校验部署一致性；`dist/` 提交进仓库。
 
 ## 优化记录（4.10.3）
 

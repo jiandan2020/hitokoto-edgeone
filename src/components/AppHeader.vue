@@ -22,6 +22,7 @@
                 <button
                     type="button"
                     class="menu-btn"
+                    ref="menuButtonRef"
                     aria-label="打开菜单"
                     :aria-expanded="menuOpen"
                     @click="toggleMenu"
@@ -46,6 +47,7 @@ import { useTheme } from "../composables/useTheme.js";
 
 const { theme, toggleTheme } = useTheme();
 const menuOpen = ref(false);
+const menuButtonRef = ref(null);
 
 function toggleMenu() {
     menuOpen.value = !menuOpen.value;
@@ -56,8 +58,12 @@ function closeMenu() {
 }
 
 function onKeydown(event) {
-    if (event.key === "Escape") {
+    if (event.key === "Escape" && menuOpen.value) {
         closeMenu();
+        // Esc 关闭后把焦点还给菜单按钮，键盘用户不丢位置。
+        if (menuButtonRef.value) {
+            menuButtonRef.value.focus();
+        }
     }
 }
 

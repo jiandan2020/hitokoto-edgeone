@@ -1,13 +1,13 @@
 <template>
     <div class="line-chart" :class="{ empty: !hasData }">
-        <div class="chart-container">
+        <div class="chart-container" ref="chartRef">
             <svg
                 class="chart-svg"
                 viewBox="0 0 680 220"
                 role="img"
                 :aria-label="ariaLabel"
                 @pointermove="onPointerMove"
-                @pointerdown="onPointerMove"
+                @pointerdown="onPointerDown"
                 @pointerleave="onPointerLeave"
                 @pointercancel="onPointerLeave"
             >
@@ -101,7 +101,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 
 const props = defineProps({
     points: { type: Array, default: () => [] },
@@ -116,6 +116,9 @@ const props = defineProps({
 const hoverIndex = ref(null);
 const hoverLabel = ref("");
 const tooltipLeft = ref(0);
+// 触屏点选后提示钉住：抬起手指不消失，点图表外面才关闭；鼠标仍是悬停即显、移开即藏。
+const touchPinned = ref(false);
+const chartRef = ref(null);
 
 const hasData = computed(() => props.points && props.points.length > 0);
 const count = computed(() => (props.points ? props.points.length : 0));
@@ -232,10 +235,38 @@ function onPointerMove(event) {
     tooltipLeft.value = Math.max(0, Math.min(rect.width - tooltipWidth, anchor - tooltipWidth / 2));
 }
 
+function onPointerDown(event) {
+    onPointerMove(event);
+    // 触屏点选：把提示钉住，抬起手指后不消失。
+    if (event.pointerType === "touch") {
+        touchPinned.value = true;
+    }
+}
+
 function onPointerLeave() {
+    // 钉住时移开也不藏，点图表外面才关。
+    if (touchPinned.value) {
+        return;
+    }
     hoverIndex.value = null;
     hoverLabel.value = "";
 }
+
+function onPointerOutside(event) {
+    if (touchPinned.value && chartRef.value && !chartRef.value.contains(event.target)) {
+        touchPinned.value = false;
+        hoverIndex.value = null;
+        hoverLabel.value = "";
+    }
+}
+
+onMounted(() => {
+    document.addEventListener("pointerdown", onPointerOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener("pointerdown", onPointerOutside);
+});
 </script>
 
 <style scoped>

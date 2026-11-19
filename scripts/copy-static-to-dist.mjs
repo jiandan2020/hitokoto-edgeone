@@ -19,6 +19,7 @@ copyFile("sentence-index.json");
 cpSync(new URL("../sentences/", import.meta.url), new URL("sentences", dist), { recursive: true });
 copyFile("package.json");
 copyFile("version.json");
+copyFile("LICENSE");
 for (const name of ["favicon.svg", "robots.txt", "edgeone-logo.png", "icp-beian.png", "_headers"]) {
     copyFile(name);
 }

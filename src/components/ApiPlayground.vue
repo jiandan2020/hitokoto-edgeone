@@ -56,6 +56,7 @@
                     {{ sending ? "请求中…" : "发送请求" }}
                 </button>
                 <div v-if="result" class="result-box">
+                    <div class="result-url"><span class="result-url-label">请求</span><code>{{ result.url }}</code></div>
                     <div class="result-meta">
                         <span class="status" :class="result.ok ? 'ok' : 'bad'">{{ result.status }} {{ result.statusText }}</span>
                         <span class="timing">{{ result.ms }} ms</span>
@@ -76,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onUnmounted } from "vue";
 import { CATEGORIES } from "../constants/index.js";
 import { copyText } from "../utils/copy.js";
 
@@ -106,7 +107,10 @@ const urlCopied = ref(false);
 const resultCopied = ref(false);
 const curlCopied = ref(false);
 let controller = null;
-let timer = null;
+let requestId = 0;
+const urlTimer = ref(null);
+const resultTimer = ref(null);
+const curlTimer = ref(null);
 
 const previewUrl = computed(() => {
     const params = new URLSearchParams();
@@ -144,7 +148,26 @@ function applyPreset() {
     mode.value = p.params.mode || "weighted";
     paramError.value = "";
     result.value = null;
+    // 切预设时取消进行中的请求，晚到的结果用序号挡掉。
+    requestId++;
+    if (controller) {
+        controller.abort();
+        controller = null;
+    }
 }
+
+onUnmounted(() => {
+    requestId++;
+    if (controller) {
+        controller.abort();
+        controller = null;
+    }
+    for (const t of [urlTimer.value, resultTimer.value, curlTimer.value]) {
+        if (t) {
+            clearTimeout(t);
+        }
+    }
+});
 
 function validateParams() {
     const min = minLength.value === "" || minLength.value === null ? null : Number(minLength.value);
@@ -161,18 +184,23 @@ function validateParams() {
     return true;
 }
 
-function flash(refValue, setter) {
-    setter(true);
-    if (timer) {
-        clearTimeout(timer);
+// 三个复制按钮各自独立恢复：共用一个 timer 时，先点的按钮会被后点的清掉，
+// "已复制" 状态就一直卡住不恢复。
+function flash(refValue, timerRef) {
+    refValue.value = true;
+    if (timerRef.value) {
+        clearTimeout(timerRef.value);
     }
-    timer = setTimeout(() => setter(false), 1500);
+    timerRef.value = setTimeout(() => {
+        refValue.value = false;
+        timerRef.value = null;
+    }, 1500);
 }
 
 async function copyUrl() {
     const ok = await copyText(`${origin}${previewUrl.value}`);
     if (ok) {
-        flash(urlCopied, (v) => { urlCopied.value = v; });
+        flash(urlCopied, urlTimer);
     }
 }
 
@@ -182,14 +210,14 @@ async function copyResult() {
     }
     const ok = await copyText(result.value.body);
     if (ok) {
-        flash(resultCopied, (v) => { resultCopied.value = v; });
+        flash(resultCopied, resultTimer);
     }
 }
 
 async function copyCurl() {
     const ok = await copyText(curlCommand.value);
     if (ok) {
-        flash(curlCopied, (v) => { curlCopied.value = v; });
+        flash(curlCopied, curlTimer);
     }
 }
 
@@ -200,14 +228,25 @@ async function sendRequest() {
     if (controller) {
         controller.abort();
     }
+    // 发送时把请求 URL 存成快照：结果区显示它实际对应的 URL，
+    // 发完再改参数也不会让结果和上面预览的 URL 对不上号。
+    const url = previewUrl.value;
+    const id = ++requestId;
     controller = new AbortController();
     const signal = controller.signal;
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, 10000);
     sending.value = true;
     const start = performance.now();
     try {
-        const response = await fetch(previewUrl.value, { signal });
+        const response = await fetch(url, { signal });
         const text = await response.text();
+        if (id !== requestId) {
+            return;
+        }
         let body = text;
         try {
             body = JSON.stringify(JSON.parse(text), null, 2);
@@ -220,9 +259,24 @@ async function sendRequest() {
             statusText: response.statusText || "",
             ms: Math.round(performance.now() - start),
             body,
+            url,
         };
     } catch (err) {
+        if (id !== requestId) {
+            return;
+        }
+        // 超时是明确的状态，要告诉用户；手动取消（切预设/卸载/新请求）才静默。
         if (err && err.name === "AbortError") {
+            if (timedOut) {
+                result.value = {
+                    ok: false,
+                    status: 0,
+                    statusText: "请求超时",
+                    ms: Math.round(performance.now() - start),
+                    body: "请求超时（10 秒），请重试。",
+                    url,
+                };
+            }
             return;
         }
         result.value = {
@@ -231,6 +285,7 @@ async function sendRequest() {
             statusText: "请求失败",
             ms: Math.round(performance.now() - start),
             body: String(err && err.message ? err.message : err),
+            url,
         };
     } finally {
         clearTimeout(timeoutId);
@@ -381,6 +436,28 @@ async function sendRequest() {
     border-radius: var(--radius-md);
     overflow: hidden;
     background: var(--color-surface);
+}
+
+.result-url {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 13px;
+}
+
+.result-url-label {
+    flex: none;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.result-url code {
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+    color: var(--color-text);
 }
 
 .result-meta {
