@@ -2,8 +2,8 @@ import vue from "eslint-plugin-vue";
 
 export default [
     {
-        // dist 是 Vite 构建产物。
-        ignores: ["node_modules", ".git", "dist"],
+        // dist 是 Vite 构建产物；edge-functions/api.js 是 esbuild 打包产物。
+        ignores: ["node_modules", ".git", "dist", "edge-functions"],
     },
     ...vue.configs["flat/essential"],
     {

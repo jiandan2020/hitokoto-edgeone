@@ -89,7 +89,7 @@ curl "https://hitokoto.xzccs.top/api?encode=text"
 
 ### 自定义域名
 
-当前 API 的域名校验允许 `hitokoto.xzccs.top` 和 `*.edgeone.cool`。使用其他自定义域名时，修改 `functions/index.js` 中的域名校验，再运行 `npm run generate`，提交源文件和生成产物。
+当前 API 的域名校验允许 `hitokoto.xzccs.top` 和 `*.edgeone.cool`。使用其他自定义域名时，修改 `api-core/handler.js` 中的域名校验，再运行 `npm run generate`，提交源文件和生成产物。
 
 边缘函数需要访问同一部署中的静态语料。部署后检查首页、`/docs`、`/stats` 和 `/api`，确认页面深链接与边缘函数路由均可访问。
 
@@ -160,7 +160,7 @@ npm run dev
 | `npm run test:web` | 运行前端测试 |
 | `npm run build` | 构建页面、复制静态文件并校验部署产物 |
 
-修改 `functions/index.js` 或 `sentences/` 后，运行 `npm run generate`，并提交对应的 `sentence-index.json` 与 `edge-functions/api.js`。随后执行 lint、两套测试与构建。CI 在推送到 `main` 或向 `main` 提交拉取请求时运行检查。
+修改 `api-core/` 或 `sentences/` 后，运行 `npm run generate`，并提交对应的 `sentence-index.json` 与 `edge-functions/api.js`。随后执行 lint、两套测试与构建。CI 在推送到 `main` 或向 `main` 提交拉取请求时运行检查。
 
 ### 同步上游语料
 
@@ -171,7 +171,8 @@ npm run dev
 | 位置 | 内容 |
 | --- | --- |
 | `src/` | Vue 页面、组件、样式与前端测试 |
-| `functions/index.js` | 语录 API 源处理函数 |
+| `api-core/` | 语录 API 源逻辑（参数、抽取、缓存、响应等模块） |
+| `functions/index.js` | 兼容入口，过渡期转发到 `api-core/handler.js` |
 | `edge-functions/` | EdgeOne 边缘函数入口 |
 | `sentences/` | 分类语料 |
 | `sentence-index.json` | 语料索引、版本与分类摘要 |
