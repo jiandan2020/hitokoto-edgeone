@@ -1,6 +1,7 @@
 // 从同一上游 Git 快照验证并同步语录和清单。
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { validateCategoryRecords } from "./scripts/validate-corpus.mjs";
 
 const upstream = process.argv[2];
 if (!upstream) {throw new Error("用法：node sync-sentences.js <上游仓库目录>");}
@@ -15,12 +16,15 @@ const categoryKeys = Array.isArray(categories) && categories.map(item => item.ke
 if (JSON.stringify(manifestKeys) !== JSON.stringify(keys) || JSON.stringify(categoryKeys) !== JSON.stringify(keys)) {
     throw new Error("上游分类与当前支持的 a–l 不一致，停止同步以供检查");
 }
+const seenIds = new Set();
 for (const key of keys) {
     const records = parse(`sentences/${key}.json`);
     if (!Array.isArray(records) || records.length === 0 || records.some(item =>
         !item || typeof item.hitokoto !== "string" || typeof item.length !== "number" ||
         !Number.isFinite(item.length) || item.type !== key || item.id === null || item.id === undefined,
     )) {throw new Error(`上游分类 ${key} 数据不完整或格式不兼容`);}
+    // 三项加固校验：ID 全局唯一、hitokoto 非空、length 与内容长度一致。
+    validateCategoryRecords(key, records, seenIds);
     const reduced = records.map(({ id, hitokoto, type, from, from_who, length }) => ({
         id, hitokoto, type, from: from ?? null, from_who: from_who ?? null, length,
     }));

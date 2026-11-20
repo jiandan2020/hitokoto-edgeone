@@ -1,15 +1,18 @@
 // 仅读取并校验仓库中的部署产物，不生成或修改文件。
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { validateCategoryRecords } from "./scripts/validate-corpus.mjs";
 
 const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
 const { version, index, hashes } = JSON.parse(read("./sentence-index.json"));
 const hash = createHash("sha256");
+const seenIds = new Set();
 for (const key of "abcdefghijkl") {
     const bytes = readFileSync(new URL(`./sentences/${key}.json`, import.meta.url));
     hash.update(key).update(bytes);
     if (!hashes || createHash("sha256").update(bytes).digest("hex") !== hashes[key]) {throw new Error(`句子库分类 ${key} 的内容摘要不一致`);}
     const records = JSON.parse(bytes.toString("utf8"));
+    validateCategoryRecords(key, records, seenIds);
     const buckets = index?.[key];
     if (!buckets || typeof buckets !== "object") {throw new Error(`缺少索引分类 ${key}`);}
     const seen = new Set();
