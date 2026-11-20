@@ -1,209 +1,190 @@
-# Hitokoto — EdgeOne Pages
+# Hitokoto EdgeOne
 
-一言 API。语录保存在仓库的 `sentences/`，边缘函数运行时读取同一部署的静态句子文件；可选的 EdgeOne KV 只做跨实例共享缓存，未绑定时退回静态文件，不需要 Blob 或 GitHub Raw 请求。KV 设置见 `docs/kv-setup.md`。
+基于腾讯云 EdgeOne Pages 的中文随机语录 API，支持分类与长度筛选、多种响应格式，提供配套的在线演示、接口文档和运行状况页面。
 
-## 部署
+前端使用 Vue 3 与 Vite，接口由 EdgeOne 边缘函数提供。语料随项目部署，支持可选的 KV 共享缓存。
 
-前端是 Vue 3 + Vite 的单页应用（SPA），源码在 `src/`，构建产物在 `dist/`。在 EdgeOne Pages 从 GitHub 导入此仓库的 `main` 分支：
+[在线体验](https://hitokoto.xzccs.top/) · [接口文档](https://hitokoto.xzccs.top/docs) · [运行状况](https://hitokoto.xzccs.top/stats) · [更新日志](CHANGELOG.md)
 
-- 构建命令：`npm run build`，依次跑 Vite 构建（`vite build`）、静态文件复制（`scripts/copy-static-to-dist.mjs`，把 `sentence-index.json`、`sentences/`、`package.json`、`version.json`、`LICENSE`、favicon 等复制进 `dist/`）和部署校验（`check-deployment.js`，校验索引与语料一致、每类语料摘要、生成的 `edge-functions/api.js` 与源码一致）。校验失败时构建停止。
-- 输出目录：`dist/`，EdgeOne Pages 以它为静态根目录。`/`、`/docs`、`/stats` 都由 SPA 入口 `dist/index.html` 提供；未知路由也返回 `index.html`，由前端路由渲染 404 页（见下文“单页应用回退”）。
-- 边缘函数：`edge-functions/` 里只有 `api.js`（由 `npm run generate` 从 `functions/index.js` 生成）、`stats-data.js`、`stats-daily.js`、`status.js`，路由分别为 `/api`、`/stats-data`、`/stats-daily`、`/status`。页面入口（`/`、`/docs`、`/stats`）不再是边缘函数。
+## 功能
 
-`npm run generate` 在本地或 GitHub Actions 中从 `sentences/` 生成独立的 `sentence-index.json`，并根据 `functions/index.js` 生成 `edge-functions/api.js`。两者均保存在仓库；更改语录或原始函数后应在提交前运行 `npm run generate` 并提交生成文件。构建时 `check-deployment.js` 校验已提交的索引、语料和函数是否一致，校验失败时部署会停止。运行时先读实例内缓存，再读 KV（若已绑定），最后读同一部署的静态文件并核对内容摘要；索引和句子按语料内容摘要分键写进 KV，缓存未命中时会转发预览凭据；缓存命中时不再检查静态资源授权，因此不要依赖静态资源授权限制 API 访问。函数需要能访问部署域名的静态资源；支持 `hitokoto.xzccs.top` 和 EdgeOne 的 `*.edgeone.cool` 域名。
+- 支持 12 个语录分类和包含边界的长度筛选。
+- 提供全库等概率与分类均衡两种抽取模式。
+- 支持 JSON、纯文本、JavaScript 脚本及回调输出。
+- 支持跨域调用，随机语录响应使用 `Cache-Control: no-store`。
+- 提供在线调试、语录复制与分享、深浅色主题和移动端布局。
+- 提供 API 可用性、KV 缓存状态与可选的访问统计展示。
 
-`dist/` 提交在仓库里（构建产物与源码同版本，便于回退时入口、索引与静态语料属于同一版本）。若后续确认 EdgeOne 生产与预览都从源码执行构建，可移除仓库内跟踪的 `dist/`（见优化方案第三期第 10 项）。
+## 快速调用
 
-如果项目此前在控制台手动设置了边缘函数或路由，请检查是否与本项目的路由冲突，并确认部署的是最新提交。构建成功并不等同于运行验证成功。
+```bash
+curl "https://hitokoto.xzccs.top/api"
+```
 
-## 使用
+在网页中获取并显示一条语录。
 
-- `/`：首页（随机一言 + 入口）
-- `/docs`：接口文档（请求参数、返回字段、状态码与示例）
-- `/stats`：运行状况（健康横幅、KV 状态、24 小时与每日访问统计）
-- `/status`：运行状态探针数据，只返回 JSON 且只读（绑定、索引与分类缓存）；可视化的运行状况见 `/stats`。公开接口没有任何写 KV 的路径。
-- `/LICENSE`：许可证正文（AGPL-3.0），构建时从仓库根目录复制进输出目录。
-- `/stats-daily`：每日汇总数据（KV 缓存，供统计页使用）
-- `/api`：随机一言，JSON 格式（原根路径接口已迁移）
-- `/api?c=a`：按分类获取（a–l）
-- `/api?mode=category`：先随机分类、再随机句子，小分类和大分类机会均等（默认 `mode=weighted` 为全库等概率）
-- `/api?encode=text`：纯文本
-- `/api?min_length=10&max_length=20`：筛选长度
+```html
+<p id="quote">正在获取语录…</p>
+<script>
+  const element = document.getElementById("quote");
 
-`GET /api` 的全部查询参数：`c`（单个分类 a–l）、`mode`（weighted、category、balanced）、`encode`（json、text、js）、`min_length`、`max_length`、`select`（用于 js）、`callback`。完整参数、字段、状态码和示例见 `/docs` 接口文档。不传 `max_length` 时不限制最大长度，传入时包含边界；长度按数据的 `length` 字段筛选。`callback` 在 JSON 格式下接收的是字符串而非对象。实现沿用原项目行为。
+  fetch("https://hitokoto.xzccs.top/api")
+    .then((response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    })
+    .then((data) => {
+      element.textContent = data.hitokoto;
+    })
+    .catch(() => {
+      element.textContent = "语录暂不可用，请稍后重试。";
+    });
+</script>
+```
 
-## 单页应用回退
+### 常用参数
 
-`/`、`/docs`、`/stats` 是同一 SPA 的三条路由，可直接访问（深链接由 EdgeOne 的静态回退返回 `dist/index.html`，前端路由再渲染对应页面）。未知路由也返回 `index.html`（HTTP 200），由前端路由渲染 404 页（显示所访路径与回首页/接口文档按钮），而不是真实的 HTTP 404。这样处理是为了不干扰深链接；只有在需要控制搜索引擎收录时才考虑单独返回真实 404。
+接口路径为 `/api`，支持 `GET` 与 `OPTIONS`。
 
-## 优化记录（5.0.4）
+| 参数 | 用途 | 示例 |
+| --- | --- | --- |
+| `c` | 指定一个分类，取值为 `a` 至 `l` | `c=a` |
+| `mode` | `weighted` 为默认的全库等概率抽取，`category` 为分类均衡抽取，`balanced` 为其别名 | `mode=category` |
+| `encode` | 返回格式，支持 `json`、`text`、`js`，默认为 JSON | `encode=text` |
+| `min_length` | 最小长度，正整数，包含边界 | `min_length=10` |
+| `max_length` | 最大长度，正整数，包含边界 | `max_length=20` |
+| `select` | JavaScript 输出的目标元素，仅用于 `encode=js`，支持简单的 ID、类名或标签选择器 | `select=%23quote` |
+| `callback` | 将结果包装为指定函数调用，支持合法的函数名或属性路径 | `callback=show` |
 
-- 在线调试（第 6 项）：发送时保存请求 URL 快照，结果区显示它实际对应的 URL；切预设或卸载组件时取消旧请求，晚到结果用序号挡掉；10 秒超时有明确提示；三个复制按钮各自独立恢复。
-- 部署文档与许可证（第 11 项）：README 按 Vue SPA 与 dist 修订，记录单页应用回退行为；LICENSE 复制进输出目录，`/LICENSE` 返回许可证正文。
-- 移动端交互（第 12 项）：触屏点选图表数据后提示保留，点其他位置关闭；移动菜单按 Esc 关闭后焦点回到菜单按钮；图表数据明细保留键盘可展开的 `<details>`。
+长度按语料记录的 `length` 字段筛选。省略长度参数时，对应方向不限长度。分类代码 `a` 至 `l` 依次对应动画、漫画、游戏、文学、原创、网络、其他、影视、诗词、网易云、哲学和抖机灵。
 
-## 优化记录（5.0.3）
+JSON 响应包含 `id`、`hitokoto`、`type`、`from`、`from_who`、`length` 和 `timestamp`。`from_who` 可为 `null`，`timestamp` 的单位为毫秒。JSON 回调接收 JSON 字符串，调用方可使用 `JSON.parse()` 解析。`encode=js` 返回向目标元素写入语录的脚本。
 
-- 依赖升级（第 3 项）：Vitest 3.2.4 → 4.1.12，覆盖 @vitest/mocker 代码注入公告；Tinypool 不再安装。新增 CI（`.github/workflows/ci.yml`，push 到 main 与 PR 时跑 npm ci、lint、两套测试、构建），接入 eslint-plugin-vue，`src/` 纳入 lint。
-- 公开探针只读化（第 4 项）：`/status` 的写读探针彻底移除，公开接口没有任何写 KV 的路径；监控面板改用 `?probe=read`。
-- 统计降级（第 5 项）：`/stats-data` 的 5xx 与 /api 小计查询独立容错，失败时对应指标为 null（页面显示“暂无数据”），不再整个 503。
-- 每日采集（第 7 项）：超出 29 天补采窗口的日期记为历史缺口，不计入失败；单次请求 30 秒超时，工作流 15 分钟总时限。
-- 健康与缓存分开（第 8 项）：`/stats` 用独立的 /api 请求判断 API 可用性，与 KV 缓存状态分开显示。
+```bash
+# 获取诗词分类
+curl "https://hitokoto.xzccs.top/api?c=i"
 
-## 优化记录（5.0.2）
+# 获取长度为 10 至 20 的语录
+curl "https://hitokoto.xzccs.top/api?min_length=10&max_length=20"
 
-- 日期口径（第 1 项）：统计按北京时间自然日取昨日与连续七日，缺失显示“待采集”，真实 0 显示“0 次”，近七日显示“已采集 X/7 天”。
-- 语料完整性（第 2 项）：构建时为每类语料生成 sha256 摘要，KV 键按摘要分键；取数时按原始字节核验摘要，不符不解析、不缓存、不回填；选中后核对分类、索引长度与请求范围。
+# 获取纯文本
+curl "https://hitokoto.xzccs.top/api?encode=text"
+```
 
-## 优化记录（5.0.0）
+完整参数规则、响应示例与错误说明见[接口文档](https://hitokoto.xzccs.top/docs)。
 
-- 前端重构为 Vue 3 + Vite 单页应用：首页、接口文档（在线调试）、运行状况三页，靛蓝主色；后端 API、句库、缓存逻辑不动。旧服务端渲染页面及测试随页面下线移除。
-- 部署：EdgeOne Pages 以 `dist/` 为静态根目录；构建时把静态文件复制进 `dist/` 并校验部署一致性；`dist/` 提交进仓库。
+## 部署到 EdgeOne Pages
 
-## 优化记录（4.10.3）
+将仓库导入 EdgeOne Pages，使用以下构建设置。建议使用 Node.js 22，与仓库 CI 环境保持一致。
 
-- KV 回填异步化：`/api` 冷缓存未命中读完静态文件后，写回 KV 不再堵响应，改用 `context.waitUntil` 放后台跑；没有 `waitUntil` 时回落到同步写。`loadSentences` 与 `loadIndex` 的后备路径同改，`onRequest` 传入绑定好的 `waitUntil`。请求合并（`sentencePending`）与 KV 写失败不影响响应这两点都不变。测试 128/128（新增 2 个：后台回填不等 KV 写完、并发请求只读一次静态文件）。
+| 配置 | 值 |
+| --- | --- |
+| 生产分支 | `main` |
+| 项目根目录 | 仓库根目录 |
+| 安装命令 | `npm ci` |
+| 构建命令 | `npm run build` |
+| 输出目录 | `dist` |
 
-## 优化记录（4.10.2）
+构建会生成前端页面、复制语料和静态文件，并校验索引、分类摘要与生成的边缘函数是否一致。`dist/` 由构建生成，已加入 Git 忽略列表。`edge-functions/` 位于仓库根目录，由 Pages 识别并提供对应接口。
 
-- 统计接口 SWR：缓存过期 30 分钟内，立即返回旧数据并用 `context.waitUntil` 在后台刷新（查腾讯云、更新内存缓存与 KV），不再让请求同步等 1-3 秒；过期更久或无缓存时仍同步加载；上游失败的 M4 兜底（1 小时内旧数据返回 200）不变。`waitUntil` 已在线上验证支持（临时探针实测后台 KV 写入完成）。入口改为接收完整 context 以取 `waitUntil`，无 `waitUntil` 时回落到同步加载；后台刷新复用 `pending` 合并，失败只记日志不影响本次响应。测试 126/126（新增 4 个 SWR 测试）。
+### 自定义域名
 
-## 优化记录（4.10.1）
+当前 API 的域名校验允许 `hitokoto.xzccs.top` 和 `*.edgeone.cool`。使用其他自定义域名时，修改 `functions/index.js` 中的域名校验，再运行 `npm run generate`，提交源文件和生成产物。
 
-- 深浅色切换改成导航栏旁边单独的按钮：手机上也不用再点开汉堡菜单找了，主题按钮和汉堡按钮并排在导航栏右侧；下拉菜单里不再重复放一个。
-- P2 打磨：运行状况统计卡片数值加大、移动端单列；图表坐标轴标签加大、容器固定最小高度；汉堡菜单支持 Esc 关闭；全站焦点样式统一；下拉菜单加淡入动画；/stats 刷新去重（进行中的请求不再重复发）。
-- 审查报告修复：接口从 KV 读句子时校验每条记录的结构（字段、类型、分类一致），损坏数据回退到静态文件并顺手修好 KV；同步句子库的工作流加 lint/test 门禁（生成后、提交前跑，失败即停）。
-- 测试 122/122。
+边缘函数需要访问同一部署中的静态语料。部署后检查首页、`/docs`、`/stats` 和 `/api`，确认页面深链接与边缘函数路由均可访问。
 
-## 优化记录（4.10.0）
+### 可选的 KV 缓存
 
-- UI/UX 全面优化（P0 + P1）：首页 Hero 恢复主标题与副标题；随机一言卡片重设计（快捷分类、复制/分享、骨架屏加载、错误重试）；6 张 API 卡片统一为内联 SVG 图标并加复制 URL；页脚版本信息加载失败时隐藏整组，不再显示“暂不可用”；新增首页在线调试器（选功能、改参数、实时 URL 预览、发请求看状态码与耗时、复制 curl）；全站深色模式（跟随系统 + 手动切换，持久化）；/docs 加左侧目录（当前章节高亮）与统一代码块。保留 M3 橙色与现有字体、接口不变。测试 117/117。
+在项目中绑定变量名为 `hitokoto_kv` 的 KV 命名空间，可启用跨实例共享缓存。未绑定时，语录接口使用实例内缓存和同源静态语料。
 
-## 优化记录（4.9.11）
+分类数据按需加载，当前索引内嵌在生成的边缘函数中。详细配置见 [KV 设置](docs/kv-setup.md)。
 
-- 修复 /status 的 ok 判断：不再要求索引在 KV 中。索引自 4.9.5 起嵌在 api.js 里，不再写入 KV，旧判断会让每次同步新版本后 ok 永远是 false，/stats 健康状态也跟着显示不正常。现在 ok 只要求 KV 绑定 + 12 个分类都缓存好。
+## 页面与接口
 
-## 优化记录（4.9.10）
+| 路径 | 功能 |
+| --- | --- |
+| `/` | 随机语录演示 |
+| `/docs` | 接口文档与在线调试 |
+| `/stats` | API 可用性、缓存状态与访问统计 |
+| `/api` | 随机语录接口 |
+| `/status` | 只读 JSON 状态探针 |
+| `/stats-data` | 最近 24 个完整小时的访问统计 |
+| `/stats-daily` | 每日请求汇总 |
+| `/LICENSE` | 项目许可证正文 |
 
-- 手机端导航栏加下拉菜单：宽度小于 600px 时，桌面端的三个链接隐藏，改为右上角汉堡按钮（☰），点开是 首页 / 接口文档 / 运行状况 的下拉菜单，当前页面高亮；点链接或点菜单外面自动收起。桌面端不变。
+前端使用 SPA 路由。未知页面路径由前端显示“页面不存在”，静态回退响应的 HTTP 状态为 200。
 
-## 优化记录（4.9.9）
+## 配置访问统计
 
-- **修复 4.9.8 的回归**：EdgeOne 运行时没有 `AbortSignal.timeout`（较新的静态方法），直接调用会抛错，导致 `/status` 取不到版本号（`version`/`sentenceVersion` 为 null）、`/stats-data` 因腾讯云请求失败返回 503。服务端改用 `timeoutSignal()` 兜底：优先 `AbortSignal.timeout`，没有就用 `AbortController` + `setTimeout`，两者都没有时返回 `undefined`（不设超时，退回旧行为）；函数本身绝不抛错。新增回归测试（模拟缺失 `AbortSignal.timeout` 时 `/status` 仍正常）。
+访问统计使用腾讯云 API 凭证。基础语录接口可以独立运行，统计功能按需配置。
 
-## 优化记录（4.9.8）
+| 配置位置 | 变量 | 用途 |
+| --- | --- | --- |
+| EdgeOne Pages 环境变量 | `TENCENT_SECRET_ID`、`TENCENT_SECRET_KEY` | 查询最近 24 个完整小时的统计 |
+| GitHub Actions Repository secrets | `TENCENT_SECRET_ID`、`TENCENT_SECRET_KEY` | 采集每日请求数 |
 
-- `/status` 两次静态取数改并行：`/package.json` 与 `/sentence-index.json` 改用 `Promise.all` 一起取，省一次往返。
-- 全仓库 fetch 加 10 秒超时：腾讯云接口、jsDelivr、同源静态文件、页面内取数、预热脚本全部加上 `AbortSignal.timeout(10000)`，上游挂住时快速失败并走现有失败路径（统计接口会触发 4.9.7 的旧数据兜底）。新增 4 个回归测试（并行取数、超时信号）。
+两处凭证分别配置。Pages 环境变量变更后重新部署。凭证需具备目标站点的 `teo:DescribeTimingL7AnalysisData` 查询权限。
 
-## 优化记录（4.9.7）
+**自行部署统计功能时，需要同步调整项目内的站点配置。** 当前统计目标为 `hitokoto.xzccs.top`，采集起始日期为 `2026-11-15`。请统一以下位置的站点、域名、数据仓库地址和日期。
 
-- 上游抖动时先返回过期不久的统计缓存，不直接 503：`/stats-data`（24 小时统计，宽限 1 小时）与 `/stats-daily`（每日汇总，宽限 24 小时）在取数失败时，若手头有过期不久的缓存（实例内或 KV）就先返回旧数据并记日志；只有完全没数据时才 503。新增 7 个回归测试（KV 旧数据兜底、过期太久仍 503、无数据仍 503、实例内旧数据兜底）。
+| 位置 | 需要核对的配置 |
+| --- | --- |
+| `edge-functions/stats-data.js` | 站点 ID、域名 |
+| `collect-stats.js` | 站点 ID、域名、采集起始日期 |
+| `edge-functions/stats-daily.js` | 数据地址、域名与日期校验 |
+| `src/composables/useStats.js`、`src/views/StatsView.vue` | 域名、起始日期与展示文字 |
+| `edge-functions/status.js` | 每日统计缓存的域名校验 |
+| `daily-stats.json`、`stats-data` 分支、相关工作流 | 数据清单、分支和仓库地址 |
 
-## 优化记录（4.9.6）
+每日采集工作流在北京时间 02:17 执行，也支持手动运行。首次启用前，创建 `stats-data` 分支并放入与配置一致的 `daily-stats.json`，允许工作流写入该分支。采集结果经 jsDelivr 提供给 `/stats-daily`，可能存在缓存与传播延迟。
 
-- 去掉 `_headers` 里 `immutable` 缓存：`/sentences/*.json` 与 `/sentence-index.json` 不再承诺“内容永远不变”，只保留 `max-age`，浏览器和边缘在需要时可以重新验证。API 靠查询串 `?v=版本号` 区分版本，线上实测查询串是生效的，这次是把“脆弱的假设”改成更稳妥的做法。
+统计按北京时间展示。每日累计从配置的起始日计算，缺失日期单独标记。实时统计覆盖整个目标域名，并单独展示 `/api` 请求数。统计接口公开提供汇总数据。
 
-## 优化记录（4.9.5）
+## 本地开发与维护
 
-- /api 冷启动只剩一次取数：生成时把完整索引（约 53KB）内联进 `api.js`，冷启动直接用内嵌索引，不用再取一次 `sentence-index.json`；索引不再经过 KV，句子仍按分类写回 KV。新增回归测试（拦截索引请求也能正常返回、生成产物内嵌索引与 `sentence-index.json` 一致）。
+```bash
+git clone https://github.com/jiandan2020/hitokoto-edgeone.git
+cd hitokoto-edgeone
+npm ci
+npm run dev
+```
 
-## 优化记录（4.9.4）
+`npm run dev` 启动 Vite 前端开发服务。仓库未配置本地边缘函数模拟或 API 代理，页面中的同源接口请求需要配合模拟数据、代理或 EdgeOne 预览部署调试。
 
-- 修复运行状况页“每日汇总暂不可用”：每日折线图的横轴标签写死了 30 天的下标（0/6/12/18/24/29），但现在只有 2 天数据，取第 7 天时直接报错，整段脚本中断——数据明明出来了，页面却还显示那句报错。改成只画已有天数的标签，鼠标悬停也做了同样的保护。新增 jsdom 回归测试（2 天和 1 天数据都能正常显示）。
+| 命令 | 用途 |
+| --- | --- |
+| `npm run dev` | 启动前端开发服务 |
+| `npm run generate` | 从语料与 API 源文件生成索引、摘要清单和边缘入口 |
+| `npm run lint` | 检查 JavaScript 与 Vue 源码 |
+| `npm test` | 运行后端测试 |
+| `npm run test:web` | 运行前端测试 |
+| `npm run build` | 构建页面、复制静态文件并校验部署产物 |
 
-## 优化记录（4.9.3）
+修改 `functions/index.js` 或 `sentences/` 后，运行 `npm run generate`，并提交对应的 `sentence-index.json` 与 `edge-functions/api.js`。随后执行 lint、两套测试与构建。CI 在推送到 `main` 或向 `main` 提交拉取请求时运行检查。
 
-- 修复运行状况页打不开的问题：每日折线图代码里 `known` 变量和同一作用域里已有的“已采集天数” `known` 重名，导致整段页面脚本语法错误、所有数据和图表都不加载；改名后恢复正常。导航栏去掉“试试接口”按钮（首页页头里还有）。
+### 同步上游语料
 
-## 优化记录（4.9.2）
+“同步一言句子库”工作流每天北京时间 03:17 检查上游，也可在 Actions 中手动运行。工作流从同一上游快照读取语料和清单，验证并生成部署文件后，仅在内容变化时提交到 `main`。自动上线取决于 EdgeOne 的仓库集成设置。
 
-- 全站改成橙色设计，页面结构参考 api.chksz.com：三页顶部新增吸顶导航栏（橙色图标 + 小周的一言API + 首页/接口文档/运行状况 + 试试接口按钮），背景换成流动的橙色光斑；主色改成深橙 #b23c00（与橙色网站图标 #ea580c 同一色系），字体换成 Google Sans + Noto Sans SC；首页新增“接口一览”卡片区（随机一言、分类筛选、长度筛选、多种返回格式、JSONP 回调、均衡抽取，六张卡片带 GET 方法标识）。接口与数据不变。
+### 目录说明
 
-## 优化记录（4.9.1）
+| 位置 | 内容 |
+| --- | --- |
+| `src/` | Vue 页面、组件、样式与前端测试 |
+| `functions/index.js` | 语录 API 源处理函数 |
+| `edge-functions/` | EdgeOne 边缘函数入口 |
+| `sentences/` | 分类语料 |
+| `sentence-index.json` | 语料索引、版本与分类摘要 |
+| `scripts/` | 静态文件复制与预热脚本 |
+| `test/` | 后端测试 |
+| `.github/workflows/` | CI、语料同步与统计采集 |
 
-- 全站样式改成 Material Design 3（Material 3 Expressive）：首页、接口文档、运行状况三页统一换成 Material 色板（玫瑰红主色）、Roboto Flex 字体、圆角卡片、填充/描边按钮与筛选芯片；去掉原来的宋体、暖底渐变、渐变标题、✦ 小标题与漂浮气泡；图表与峰值配色同步改成主色与琥珀色。接口与数据不变。
+## 版本与更新记录
 
-## 优化记录（4.9.0）
+项目版本由 `package.json` 管理，语料版本由 `version.json` 管理。发布 API 实现变更时，同步更新包版本、锁文件与 `apiUpdatedAt`。详细历史见 [CHANGELOG.md](CHANGELOG.md)。
 
-- 新增 `/docs` 接口文档页：内容以本项目 `/api` 的实际实现为准（请求地址、7 个参数、12 个分类、返回编码、7 个返回字段、状态码与错误、真实返回示例、注意事项）；首页不再写用法说明，只留随机一言区、试试接口与查看接口文档入口。
+## 数据来源与许可证
 
-## 优化记录（4.8.0）
+语料来自 [hitokoto-osc/sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)，使用语料时请查阅上游的著作权声明。
 
-- 随机一言从 `/stats` 运行状况页移到首页：首页顶部新增随机一言区（12 个分类筛选、换一句、显示往返耗时），同源请求 /api；`/stats` 的“接口往返”卡改由运行状态探针的往返耗时提供。
-
-## 优化记录（4.7.2）
-
-- `/stats` 运行状况页去掉 KV 状态里的“写入读取”卡片（原来固定显示只读模式），现在只剩五张状态卡；页面的完整写读检测入口仍指向 `/status?probe=write`。
-
-## 优化记录（4.7.1）
-
-- `/status` 默认只读：不再每次打开都写一次 KV 探针键，任意访客、爬虫都不会再触发 KV 写入；完整写读探针改成加 `?probe=write` 才触发，`?probe=read` 与默认相同（只读），未知 `probe` 值也按只读处理。JSON 字段不变，只读时 `writeRead` 为 `skipped`；`/stats` 的只读探针与健康判定不受影响。
-
-## 优化记录（4.7.0）
-
-- `/stats` 运行状况页重新设计为一览式仪表盘：顶部状态总览卡（健康状态、版本、检查时间、刷新按钮与更新时间）；四张关键数字卡（昨日请求、24 小时请求、5xx 错误率及约多少次、接口往返）；KV 状态由表格改为六张状态卡（绑定、索引、分类、统计缓存、每日汇总缓存、写入读取只读模式）；每小时趋势折线下加渐变面积填充，流量与 /api 小计（流量、/api 请求数、占比、小时均值）收进趋势区小卡片，单独的 /api 表格并入其中；每日趋势最高单日的柱顶标出数值。数据与接口不变，仍是同源只读探针，不写 KV。
-
-## 优化记录（4.6.0）
-
-- `/stats` 改为运行状况页：标题与眉题改为运行状况，健康横幅、KV 清单、一言、24 小时与每日统计全部保留；首页页脚链接同步改名。
-- `/status` 只返回 JSON 探针数据，不再渲染 HTML 页面；可视化的运行状况见 `/stats`。JSON 字段与探针行为不变，`?probe=read` 只读、`?format=json` 仍可加。
-
-## 优化记录（4.5.1）
-
-- /stats 样式与首页统一：暖底渐变、玫瑰红强调、渐变标题、✦ 小标题、半透明白卡片、漂浮气泡；布局和内容不变（健康横幅、KV 清单、一言、24 小时与每日统计）。
-- /status 页最上方新增随机一言区：12 个分类筛选、换一句、显示往返耗时，同源请求 /api；KV 探针表移至其下方。
-
-## 优化记录（4.5.0）
-
-- 统计页改成监控面板：浅绿底、白卡片、翡翠绿强调、金色峰值；顶部健康横幅（运行状态、API 版本）与 KV 状态清单（绑定、索引、12 个分类、统计与每日汇总缓存），状态用只读探针每分钟刷新；新增随机一言区（12 个分类筛选、换一句、显示往返耗时）；每小时折线图峰值点标金色，每日柱状图最高单日标金色；保留每小时均值、近 7 日合计/日均、骨架屏与 10 分钟自动刷新。数据全部同源直取（/status、/stats-data、/stats-daily、/api），不再经过服务端中转。
-- 安全取舍：面板的“检查记录”和“全面检查”没有搬过来——检查记录依赖空间的快照库，网站没有这套存储；全面检查会写 KV 探针键，放在公开页上等于让任意访客都能写 KV，所以公开页只读，完整写读检测请去 /status。
-
-## 优化记录（4.4.0）
-
-- 每日汇总进 KV：新增 `/stats-daily`，把 GitHub Actions 每天采集的 `daily-stats.json` 也放进 KV（键 `daily_stats_cache`，1 小时过期），三层缓存：实例内缓存 → KV → jsDelivr（`stats-data` 分支仍是数据源，采集流程不变）。统计页改为请求同源 `/stats-daily`，访客浏览器不再直接访问 jsDelivr；数据每天只更新一次，过期后重新拉取。`/status` 探针新增每日汇总缓存检查，预热脚本也多请求一次 `/stats-daily`。
-- 统计页显示优化：样式与首页统一（渐变背景、衬线标题、圆角卡片）；新增 /api 请求占比卡片、每小时均值与峰值小时、近 7 日合计、已采集日均、最高单日；每日柱状图最高单日用金色标出；加载时数字位显示骨架动画；新增手动刷新按钮，每 10 分钟自动刷新并显示更新时间；刷新时图表会清空重绘，不再叠加。
-
-## 优化记录（4.3.0）
-
-- 运行状态探针：新增 `/status`，公开显示 KV 是否真正生效——是否绑定、写读是否通（往 KV 写一个很小的探针键 `status_probe` 再读回比对并计时）、索引和 12 个分类是否已在 KV 里、统计缓存是否在 KV 里。加 `?format=json` 返回 JSON，加 `?probe=read` 只读不写（适合监控定时拉取）。首页页脚加了运行状态链接。
-
-## 优化记录（4.2.0）
-
-- KV 缓存：索引和句子改为三层缓存——实例内 Map（L1）→ EdgeOne KV（L2，跨实例共享）→ 同源静态文件（L3，数据源）。KV 未绑定、读写失败时自动退回静态文件；索引和句子按语料版本分键（`sentence_index_<版本>`、`sentences_<分类>_<版本>`），不怕 KV 最长 60 秒的最终一致性读到旧数据；并发请求用单飞合并，避免冷启动重复取数。部署后跑 `node scripts/warm-kv.mjs` 预热，设置见 `docs/kv-setup.md`。
-- 抽取模式：新增 `mode=category`（别名 `balanced`），先在符合条件的分类中等概率抽一个分类，再在分类内等概率抽一句；默认 `mode=weighted` 仍是全库等概率。非法 `mode` 返回 400；只指定一个分类时两种模式结果相同。
-- 统计缓存：统计接口的 10 分钟缓存也放进 KV（键 `stats_data_cache`，值里带 `expires`），跨实例共享，腾讯云 API 调用不再随实例数放大；KV 未绑定时退回原有实例内缓存。
-
-## 优化记录（4.1.0）
-
-- 安全：`callback` 只接受合法 JS 函数名，`select` 只接受简单选择器，JS/JSONP 输出改用 `JSON.stringify` 转义，修复了此前可注入任意 JS 的问题。
-- 参数：`min_length` / `max_length` 只接受纯正整数，`12abc` 等不再被截取解析，改为 400。
-- 正确性：非 GET/OPTIONS 请求返回 405，不支持的域名返回 403（此前为 500）；删掉未使用的句子导入和 `sentencesMap`；索引缓存不再整表清空。
-- 性能：`/api` 响应显式 `Cache-Control: no-store`，避免缓存随机结果；`_headers` 给 `sentences/*.json` 加 `immutable`、给 `sentence-index.json` 加 1 小时缓存；删除了实测无效的 `_redirects`（`/sentences/*.json` 本就直接返回 200）。
-- 工程：新增 `npm run lint` 和 `npm test`，修复全部 ESLint 报错，新增 `test/api.test.mjs` 单元测试。
-
-## 版本维护
-
-首页 API 版本取自 `package.json` 的 `version`，表示本项目的版本，不是上游接口版本。发布包含 API 实现变更的版本时同步更新 `package.json` 和 `package-lock.json`：不兼容变更递增主版本，兼容的新功能递增次版本，兼容的修复或性能优化递增修订版本。仅更新句子数据、文档或首页样式不递增 API 版本；句子库有自己的版本号。发布 API 新版本时同时更新 `package.json` 的 `apiUpdatedAt`（带时区的发布时间）；首页句子库上游更新时间来自 `version.json` 的 `updated_at`，并非本项目的同步或部署时间。
-
-## 运行状况
-
-`/stats` 是运行状况页，展示固定域名 `hitokoto.xzccs.top` 最近 24 个完整小时的请求数、EdgeOne 响应流量和 5xx 错误率，并单独展示路径精确等于 `/api` 的请求数（不包含查询参数）；数据包含首页和静态资源，默认不包含 Web 防护缓释请求。时间窗口结束于至少 10 分钟以前，统计接口的数据也可能延迟。统计接口公开，无身份验证；所有访问者可查看汇总数据。缓存 10 分钟并合并并发请求：先读实例内缓存，再读 KV（键 `stats_data_cache`，跨实例共享），未命中才调用腾讯云 API；KV 未绑定时退回实例内缓存。页面顶部是状态总览卡与四张关键数字卡（昨日请求、24 小时请求、5xx 错误率、接口往返），再是 KV 状态卡片、每小时趋势与每日统计；公开页上没有写 KV 的按钮，`/status` 只返回 JSON 探针数据（只读，不写 KV）。
-
-在 EdgeOne Pages 项目的 Project Settings → Environment Management 中为对应环境设置 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`，然后重新部署；变更只作用于新部署。使用具备站点 `zone-3ry57u0agvak` 的 `teo:DescribeTimingL7AnalysisData` 必要权限的子用户，避免管理员密钥；具体资源级授权能力以腾讯云 CAM 实际支持为准。不要将真实密钥提交仓库、写入客户端或日志，保护项目管理权限与旧部署。未配置、鉴权失败或查询失败时显示暂不可用；5xx 查询无记录时显示暂无数据，不直接假定为零。官方配置参考：https://pages.edgeone.ai/document/build-guide
-
-### 每日累计和趋势
-
-GitHub Actions 每天北京时间 02:17 采集前一天完整的 24 个小时，保存到公开仓库 `stats-data` 分支的 `daily-stats.json`；统计页通过同源 `/stats-daily` 接口读取该文件，展示自 **2026-11-15** 起的已采集累计值及最近 30 天柱状图，更新不依赖 EdgeOne 重新部署。`/stats-daily` 先读实例内缓存，再读 KV（键 `daily_stats_cache`，1 小时），未命中才请求 jsDelivr 并在校验通过后写回 KV，访客浏览器不再直接访问 jsDelivr。缺失天数明确标注，不当成零，也不含当天。此时间不是网站成立时间，不能称为历史总量。该文件及其 Git 历史公开，默认口径是 EdgeOne 防护后的整个域名请求。采集工作流每次运行后请求刷新 CDN 缓存，刷新可能失败或有传播延迟；失败时查看 Actions 日志并重新运行。网络不可用时页面显示暂不可用，不回退到旧部署数据。
-
-在 GitHub 仓库 **Settings → Secrets and variables → Actions → Repository secrets** 单独添加 `TENCENT_SECRET_ID` 和 `TENCENT_SECRET_KEY`（Pages 的环境变量不会同步到 GitHub），并确保工作流有 `contents: write` 权限；可在 Actions →「采集域名每日请求数」手动运行。任务按日期幂等保存，失败后再次运行会补采仍处于保守 29 天范围内的缺失日期；API 实际数据保留时长未确认，超期或无数据不会视为零，需检查 Actions 日志。采集成功后只推送 `stats-data` 分支，不推送 `main`；确保 EdgeOne 生产部署跟踪 `main`，并检查其他分支的预览部署设置，否则统计分支推送仍可能触发预览构建。首次使用须先部署读取 `stats-data` 分支的页面。
-
-## 句子库手动同步
-
-在 GitHub Actions 的“同步一言句子库”中手动运行，从 [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle) 的 `master` 检查最新语料；不再定时执行。工作流从同一上游提交读取语录及清单，验证分类和基本字段后重新生成索引与 API，并与语料一起提交；仅在文件变化时提交到 `main`。分类变化或验证失败时停止，不会提交不完整数据。
-
-工作流定义位于仓库默认分支 `main`，需要允许 Actions 对该分支写入；手动同步有变化时推送 `main`，EdgeOne 是否自动上线取决于部署集成，需查看部署记录验证。统计采集是独立的定时任务，GitHub 定时任务可能延迟，仓库长期不活跃时也可能暂停。
-
-## 数据与许可
-
-语录数据基于 [hitokoto-osc/sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)，详见该项目的著作权声明。程序遵循 [AGPL-3.0](LICENSE)；修改后对外提供服务时，请遵守相应的源码提供义务。
+项目代码采用 [AGPL-3.0 许可证](LICENSE)。使用、修改与分发时请遵循许可证条款。
