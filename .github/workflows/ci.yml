@@ -33,3 +33,5 @@ jobs:
         run: npm run test:web
       - name: 构建与部署校验
         run: npm run build
+      - name: 确定性构建检查
+        run: npm run check:deterministic

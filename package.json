@@ -7,6 +7,7 @@
     "scripts": {
         "build": "npm run build:web && node scripts/copy-static-to-dist.mjs && node check-deployment.js",
         "build:web": "vite build",
+        "check:deterministic": "node scripts/check-deterministic-build.mjs",
         "dev": "vite",
         "generate": "node build.js",
         "lint": "eslint .",
