@@ -1,6 +1,6 @@
 # Hitokoto EdgeOne
 
-基于腾讯云 EdgeOne Pages 的中文随机语录 API，支持分类与长度筛选、多种响应格式，提供配套的在线演示、接口文档和运行状况页面。
+基于腾讯云 EdgeOne Makers 的中文随机语录 API，支持分类与长度筛选、多种响应格式，提供配套的在线演示、接口文档和运行状况页面。
 
 前端使用 Vue 3 与 Vite，接口由 EdgeOne 边缘函数提供。语料随项目部署，支持可选的 KV 共享缓存。
 
@@ -73,9 +73,9 @@ curl "https://hitokoto.xzccs.top/api?encode=text"
 
 完整参数规则、响应示例与错误说明见[接口文档](https://hitokoto.xzccs.top/docs)。
 
-## 部署到 EdgeOne Pages
+## 部署到 EdgeOne Makers
 
-将仓库导入 EdgeOne Pages，使用以下构建设置。建议使用 Node.js 22，与仓库 CI 环境保持一致。
+将仓库导入 EdgeOne Makers，使用以下构建设置。建议使用 Node.js 22，与仓库 CI 环境保持一致。
 
 | 配置 | 值 |
 | --- | --- |
@@ -85,7 +85,7 @@ curl "https://hitokoto.xzccs.top/api?encode=text"
 | 构建命令 | `npm run build` |
 | 输出目录 | `dist` |
 
-构建会生成前端页面、复制语料和静态文件，并校验索引、分类摘要与生成的边缘函数是否一致。`dist/` 由构建生成，已加入 Git 忽略列表。`edge-functions/` 位于仓库根目录，由 Pages 识别并提供对应接口。
+构建会生成前端页面、复制语料和静态文件，并校验索引、分类摘要与生成的边缘函数是否一致。`dist/` 由构建生成，已加入 Git 忽略列表。`edge-functions/` 位于仓库根目录，由 Makers 识别并提供对应接口。
 
 ### 自定义域名
 
@@ -120,10 +120,10 @@ curl "https://hitokoto.xzccs.top/api?encode=text"
 
 | 配置位置 | 变量 | 用途 |
 | --- | --- | --- |
-| EdgeOne Pages 环境变量 | `TENCENT_SECRET_ID`、`TENCENT_SECRET_KEY` | 查询最近 24 个完整小时的统计 |
+| EdgeOne Makers 环境变量 | `TENCENT_SECRET_ID`、`TENCENT_SECRET_KEY` | 查询最近 24 个完整小时的统计 |
 | GitHub Actions Repository secrets | `TENCENT_SECRET_ID`、`TENCENT_SECRET_KEY` | 采集每日请求数 |
 
-两处凭证分别配置。Pages 环境变量变更后重新部署。凭证需具备目标站点的 `teo:DescribeTimingL7AnalysisData` 查询权限。
+两处凭证分别配置。Makers 环境变量变更后重新部署。凭证需具备目标站点的 `teo:DescribeTimingL7AnalysisData` 查询权限。
 
 **自行部署统计功能时，需要同步调整项目内的站点配置。** 当前统计目标为 `hitokoto.xzccs.top`，采集起始日期为 `2026-11-15`。请统一以下位置的站点、域名、数据仓库地址和日期。
 

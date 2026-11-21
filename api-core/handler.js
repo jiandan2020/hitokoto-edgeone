@@ -4,6 +4,7 @@
 import { responseHeaders } from "./constants.js";
 import { clearSentenceCache, loadIndex, loadSentences } from "./corpus.js";
 import { resolveKv } from "./kv.js";
+import { log } from "./log.js";
 import { CALLBACK_PATTERN, SELECTOR_PATTERN, parsePositiveInt } from "./parse.js";
 import { createResponse, handleError, jsonResponse } from "./response.js";
 import { selectSentence } from "./select.js";
@@ -167,7 +168,7 @@ export default async function onRequest(context) {
             });
         }
     } catch (error) {
-        console.error("Unexpected error:", error);
+        log("error", "unexpected_error", { error });
         return handleError(500, error, env?.DEV_ENV);
     }
 }

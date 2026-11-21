@@ -25,7 +25,7 @@
                 <section id="sec-1">
                     <h2>1. 概述</h2>
                     <p>一言（Hitokoto）指一句语录，内容可为动漫台词、网络段子等。本接口用于随机返回一句语录，支持按分类和长度筛选，并提供 JSON、纯文本、JavaScript 脚本三种返回格式。</p>
-                    <p>本服务提供单一随机语录接口。语录数据来自 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer"><code>sentences-bundle</code></a>，当前共收录 11,277 条，分为 12 个分类。接口部署于腾讯云 EdgeOne Pages，域名为 <code>hitokoto.xzccs.top</code>。</p>
+                    <p>本服务提供单一随机语录接口。语录数据来自 <a href="https://github.com/hitokoto-osc/sentences-bundle" target="_blank" rel="noopener noreferrer"><code>sentences-bundle</code></a>，当前共收录 11,280 条，分为 12 个分类。接口部署于腾讯云 EdgeOne Makers，域名为 <code>hitokoto.xzccs.top</code>。</p>
                 </section>
                 <section id="sec-2">
                     <h2>2. 请求地址</h2>

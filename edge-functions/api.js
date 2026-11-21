@@ -18,6 +18,28 @@ var FETCH_TIMEOUT_MS = 1e4;
 var CACHE_LIMIT = 12;
 var CACHE_TTL_MS = 60 * 60 * 1e3;
 
+// api-core/log.js
+function serializeError(error) {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message, stack: error.stack };
+  }
+  return String(error);
+}
+function log(level, event, details = {}) {
+  const record = { ts: (/* @__PURE__ */ new Date()).toISOString(), level, event };
+  for (const [key, value] of Object.entries(details)) {
+    record[key] = value instanceof Error ? serializeError(value) : value;
+  }
+  const text = JSON.stringify(record);
+  if (level === "error") {
+    console.error(text);
+  } else if (level === "warn") {
+    console.warn(text);
+  } else {
+    console.log(text);
+  }
+}
+
 // api-core/kv.js
 function resolveKv(env) {
   const fromGlobal = globalThis.hitokoto_kv;
@@ -77,7 +99,7 @@ async function kvPutJson(kv, key, value) {
   try {
     await kv.put(key, JSON.stringify(value));
   } catch (error) {
-    console.error("KV \u5199\u5165\u5931\u8D25\uFF0C\u9000\u56DE\u9759\u6001\u6587\u4EF6:", error);
+    log("error", "kv_write_failed", { error });
   }
 }
 
@@ -472,7 +494,7 @@ async function onRequest(context) {
       });
     }
   } catch (error) {
-    console.error("Unexpected error:", error);
+    log("error", "unexpected_error", { error });
     return handleError(500, error, env?.DEV_ENV);
   }
 }

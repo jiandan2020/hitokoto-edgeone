@@ -27,6 +27,26 @@ function timeoutSignal(ms) {
     }
     return undefined;
 }
+
+// 结构化日志：每条日志一行 JSON（时间、级别、事件、上下文），便于在
+// Makers 控制台按字段检索。本文件是独立边缘函数，不从 api-core 导入，
+// 故在此处内联一份相同的记录函数。
+function log(level, event, details = {}) {
+    const record = { ts: new Date().toISOString(), level, event };
+    for (const [key, value] of Object.entries(details)) {
+        record[key] = value instanceof Error
+            ? { name: value.name, message: value.message, stack: value.stack }
+            : value;
+    }
+    const text = JSON.stringify(record);
+    if (level === "error") {
+        console.error(text);
+    } else if (level === "warn") {
+        console.warn(text);
+    } else {
+        console.log(text);
+    }
+}
 // 上游失败时允许返回过期不久的缓存，避免短暂抖动直接 503。
 const DAILY_STALE_GRACE_MS = 24 * 60 * 60 * 1000;
 let cached;
@@ -53,7 +73,7 @@ async function writeDailyKv(kv, entry) {
     try {
         await kv.put(DAILY_KV_KEY, JSON.stringify(entry));
     } catch (error) {
-        console.error("每日汇总 KV 写入失败:", error);
+        log("error", "daily_kv_write_failed", { error });
     }
 }
 
@@ -110,7 +130,7 @@ export default async function onRequest({ request, env }) {
     } catch (error) {
         const stale = await readStaleDaily(env);
         if (stale) {
-            console.warn("每日汇总失败，返回过期不久的缓存:", error);
+            log("warn", "daily_serving_stale", { error });
             return new Response(JSON.stringify(stale), { headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
         }
         return new Response(JSON.stringify({ error: "每日汇总暂不可用" }), { status: 503, headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store" } });

@@ -22,6 +22,26 @@ function timeoutSignal(ms) {
     }
     return undefined;
 }
+
+// 结构化日志：每条日志一行 JSON（时间、级别、事件、上下文），便于在
+// Makers 控制台按字段检索。本文件是独立边缘函数，不从 api-core 导入，
+// 故在此处内联一份相同的记录函数。
+function log(level, event, details = {}) {
+    const record = { ts: new Date().toISOString(), level, event };
+    for (const [key, value] of Object.entries(details)) {
+        record[key] = value instanceof Error
+            ? { name: value.name, message: value.message, stack: value.stack }
+            : value;
+    }
+    const text = JSON.stringify(record);
+    if (level === "error") {
+        console.error(text);
+    } else if (level === "warn") {
+        console.warn(text);
+    } else {
+        console.log(text);
+    }
+}
 const encoder = new TextEncoder();
 let cached;
 let pending;
@@ -57,7 +77,7 @@ async function writeStatsKv(kv, entry) {
     try {
         await kv.put(STATS_KV_KEY, JSON.stringify(entry));
     } catch (error) {
-        console.error("统计 KV 写入失败:", error);
+        log("error", "stats_kv_write_failed", { error });
     }
 }
 
@@ -90,7 +110,7 @@ async function refreshStats(env) {
         if (kv) { await writeStatsKv(kv, cached); }
         return data;
     } catch (error) {
-        console.warn("统计刷新失败:", error);
+        log("warn", "stats_refresh_failed", { error });
         return null;
     }
 }
@@ -171,11 +191,11 @@ async function load(env) {
     const [total, errors, api] = await Promise.all([
         query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "total"),
         query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "errors").catch((error) => {
-            console.warn("5xx 指标查询失败:", error);
+            log("warn", "stats_errors_query_failed", { error });
             return null;
         }),
         query(env.TENCENT_SECRET_ID, env.TENCENT_SECRET_KEY, startTime, endTime, "api").catch((error) => {
-            console.warn("/api 小计查询失败:", error);
+            log("warn", "stats_api_query_failed", { error });
             return null;
         }),
     ]);
@@ -240,7 +260,7 @@ export default async function onRequest(context) {
     } catch (error) {
         const stale = await readStaleStats(env);
         if (stale) {
-            console.warn("统计服务失败，返回过期不久的缓存:", error);
+            log("warn", "stats_serving_stale", { error });
             return jsonResponse(stale);
         }
         return new Response(JSON.stringify({ error: "统计数据暂不可用" }), { status: 503, headers: { "Content-Type": "application/json; charset=UTF-8", "Cache-Control": "no-store" } });

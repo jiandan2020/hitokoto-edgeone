@@ -9,6 +9,8 @@
 //
 // 本模块引用构建时注入的全局量 sentenceVersion 与 embeddedSentenceHashes
 //（见 build.js 前缀的常量声明），运行时由打包产物提供。
+import { log } from "./log.js";
+
 export function resolveKv(env) {
     const fromGlobal = globalThis.hitokoto_kv;
     if (fromGlobal && typeof fromGlobal.get === "function") {return fromGlobal;}
@@ -60,6 +62,6 @@ export async function kvPutJson(kv, key, value) {
     try {
         await kv.put(key, JSON.stringify(value));
     } catch (error) {
-        console.error("KV 写入失败，退回静态文件:", error);
+        log("error", "kv_write_failed", { error });
     }
 }
