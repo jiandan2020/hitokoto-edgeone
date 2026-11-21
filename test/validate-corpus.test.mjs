@@ -83,8 +83,10 @@ test("validateCategoryRecords：真实语料库 12 分类全部通过", () => {
         const records = JSON.parse(readFileSync(new URL(`../sentences/${key}.json`, import.meta.url), "utf8"));
         total += validateCategoryRecords(key, records, seen);
     }
-    assert.equal(total, 11278);
-    assert.equal(seen.size, 11278);
+    // 总数不写死：上游一加句子总数就变，写死会让同步工作流在有新句子时必失败。
+    // 只断言两点：确实是完整语料库（过万句），且 ID 全局唯一。
+    assert.ok(total > 10000, `真实语料库应超过 10000 句，实际 ${total} 句`);
+    assert.equal(seen.size, total);
 });
 
 test("check-deployment.js 在真实仓库上通过（含三项校验）", async () => {
