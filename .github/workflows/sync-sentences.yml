@@ -36,9 +36,9 @@ jobs:
         working-directory: project
         run: |
           set -euo pipefail
+          npm ci
           node sync-sentences.js ../upstream
           npm run generate
-          npm ci
           npm run build
           npm run lint
           npm test
