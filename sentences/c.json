@@ -1205,5 +1205,7 @@
   {"id":13637,"hitokoto":"不等霜寒拂青翠，半山红火自成夷。","type":"c","from":"明日方舟：终末地","from_who":"祀","length":16},
   {"id":13638,"hitokoto":"犹拘霜下叶，但为故人留。","type":"c","from":"明日方舟：终末地","from_who":null,"length":12},
   {"id":13642,"hitokoto":"指挥官，愿你今后的路途，常有和煦的春风相伴。","type":"c","from":"少女前线","from_who":"露尼西亚","length":22},
-  {"id":13646,"hitokoto":"大丘丘病了二丘丘瞧，三丘丘采药四丘丘熬。","type":"c","from":"原神","from_who":"胡桃","length":20}
+  {"id":13646,"hitokoto":"大丘丘病了二丘丘瞧，三丘丘采药四丘丘熬。","type":"c","from":"原神","from_who":"胡桃","length":20},
+  {"id":13654,"hitokoto":"请签署生死状……还有，我是庄家。","type":"c","from":"恶魔轮盘","from_who":"庄家","length":16},
+  {"id":13655,"hitokoto":"不再有心脏除颤器，也没有输血。现在，你我二人，在生与死的边缘起舞。","type":"c","from":"恶魔轮盘","from_who":"庄家","length":33}
 ]
